@@ -12,15 +12,14 @@
 #include "flutter/lib/ui/window/pointer_data_packet.h"
 #include "flutter/lib/ui/window/viewport_metrics.h"
 #include "lib/fxl/time/time_point.h"
+#include "lib/tonic/dart_persistent_value.h"
 #include "third_party/skia/include/gpu/GrContext.h"
-#include "third_party/tonic/dart_persistent_value.h"
 
 namespace tonic {
 class DartLibraryNatives;
 }  // namespace tonic
 
 namespace blink {
-class FontCollection;
 class Scene;
 
 Dart_Handle ToByteData(const std::vector<uint8_t>& buffer);
@@ -32,7 +31,6 @@ class WindowClient {
   virtual void Render(Scene* scene) = 0;
   virtual void UpdateSemantics(SemanticsUpdate* update) = 0;
   virtual void HandlePlatformMessage(fxl::RefPtr<PlatformMessage> message) = 0;
-  virtual FontCollection& GetFontCollection() = 0;
 
  protected:
   virtual ~WindowClient();
@@ -54,7 +52,6 @@ class Window final {
                     const std::string& country_code);
   void UpdateUserSettingsData(const std::string& data);
   void UpdateSemanticsEnabled(bool enabled);
-  void UpdateAssistiveTechnologyEnabled(bool enabled);
   void DispatchPlatformMessage(fxl::RefPtr<PlatformMessage> message);
   void DispatchPointerDataPacket(const PointerDataPacket& packet);
   void DispatchSemanticsAction(int32_t id,

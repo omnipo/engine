@@ -7,7 +7,6 @@
 #include "flutter/lib/ui/compositing/scene.h"
 #include "flutter/lib/ui/compositing/scene_builder.h"
 #include "flutter/lib/ui/dart_runtime_hooks.h"
-#include "flutter/lib/ui/isolate_name_server/isolate_name_server_natives.h"
 #include "flutter/lib/ui/painting/canvas.h"
 #include "flutter/lib/ui/painting/codec.h"
 #include "flutter/lib/ui/painting/frame_info.h"
@@ -26,8 +25,8 @@
 #include "flutter/lib/ui/text/paragraph_builder.h"
 #include "flutter/lib/ui/window/window.h"
 #include "lib/fxl/build_config.h"
-#include "third_party/tonic/converter/dart_converter.h"
-#include "third_party/tonic/logging/dart_error.h"
+#include "lib/tonic/converter/dart_converter.h"
+#include "lib/tonic/logging/dart_error.h"
 
 using tonic::ToDart;
 
@@ -61,7 +60,6 @@ void DartUI::InitForGlobal() {
     FrameInfo::RegisterNatives(g_natives);
     ImageFilter::RegisterNatives(g_natives);
     ImageShader::RegisterNatives(g_natives);
-    IsolateNameServerNatives::RegisterNatives(g_natives);
     Paragraph::RegisterNatives(g_natives);
     ParagraphBuilder::RegisterNatives(g_natives);
     Picture::RegisterNatives(g_natives);

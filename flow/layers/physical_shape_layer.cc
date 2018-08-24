@@ -9,8 +9,7 @@
 
 namespace flow {
 
-PhysicalShapeLayer::PhysicalShapeLayer(Clip clip_behavior)
-    : isRect_(false), clip_behavior_(clip_behavior) {}
+PhysicalShapeLayer::PhysicalShapeLayer() : isRect_(false) {}
 
 PhysicalShapeLayer::~PhysicalShapeLayer() = default;
 
@@ -91,25 +90,16 @@ void PhysicalShapeLayer::Paint(PaintContext& context) const {
   paint.setColor(color_);
   context.canvas.drawPath(path_, paint);
 
-  int saveCount = context.canvas.save();
-  switch (clip_behavior_) {
-    case Clip::hardEdge:
-      context.canvas.clipPath(path_, false);
-      break;
-    case Clip::antiAlias:
-      context.canvas.clipPath(path_, true);
-      break;
-    case Clip::antiAliasWithSaveLayer:
-      context.canvas.clipPath(path_, true);
-      context.canvas.saveLayer(paint_bounds(), nullptr);
-      break;
-    case Clip::none:
-      break;
+  SkAutoCanvasRestore save(&context.canvas, false);
+  if (isRect_) {
+    context.canvas.save();
+  } else {
+    context.canvas.saveLayer(path_.getBounds(), nullptr);
   }
-
+  context.canvas.clipPath(path_, true);
   PaintChildren(context);
-
-  context.canvas.restoreToCount(saveCount);
+  if (context.checkerboard_offscreen_layers && !isRect_)
+    DrawCheckerboard(&context.canvas, path_.getBounds());
 }
 
 void PhysicalShapeLayer::DrawShadow(SkCanvas* canvas,
@@ -132,12 +122,11 @@ void PhysicalShapeLayer::DrawShadow(SkCanvas* canvas,
   SkColor inAmbient = SkColorSetA(color, kAmbientAlpha * SkColorGetA(color));
   SkColor inSpot = SkColorSetA(color, kSpotAlpha * SkColorGetA(color));
   SkColor ambientColor, spotColor;
-  SkShadowUtils::ComputeTonalColors(inAmbient, inSpot, &ambientColor,
-                                    &spotColor);
-  SkShadowUtils::DrawShadow(
-      canvas, path, SkPoint3::Make(0, 0, dpr * elevation),
-      SkPoint3::Make(shadow_x, shadow_y, dpr * kLightHeight),
-      dpr * kLightRadius, ambientColor, spotColor, flags);
+  SkShadowUtils::ComputeTonalColors(inAmbient, inSpot,
+                                    &ambientColor, &spotColor);
+  SkShadowUtils::DrawShadow(canvas, path, SkPoint3::Make(0, 0, dpr * elevation),
+                            SkPoint3::Make(shadow_x, shadow_y, dpr * kLightHeight),
+                            dpr * kLightRadius, ambientColor, spotColor, flags);
 }
 
 }  // namespace flow

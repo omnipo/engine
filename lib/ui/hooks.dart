@@ -39,7 +39,7 @@ void _updateWindowMetrics(double devicePixelRatio,
   _invoke(window.onMetricsChanged, window._onMetricsChangedZone);
 }
 
-typedef _LocaleClosure = String Function();
+typedef String _LocaleClosure();
 
 String _localeClosure() => window._locale.toString();
 
@@ -68,11 +68,6 @@ void _updateAlwaysUse24HourFormat(bool alwaysUse24HourFormat) {
 void _updateSemanticsEnabled(bool enabled) {
   window._semanticsEnabled = enabled;
   _invoke(window.onSemanticsEnabledChanged, window._onSemanticsEnabledChangedZone);
-}
-
-void _updateAssistiveTechnologyEnabled(bool enabled) {
-  window._assistiveTechnologyEnabled = enabled;
-  _invoke(window.onAssistiveTechnologyEnabled, window._onAssistiveTechnologyEnabledZone);
 }
 
 void _dispatchPlatformMessage(String name, ByteData data, int responseId) {

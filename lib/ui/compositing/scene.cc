@@ -4,17 +4,18 @@
 
 #include "flutter/lib/ui/compositing/scene.h"
 
-#include "flutter/fml/trace_event.h"
+#include "flutter/glue/trace_event.h"
 #include "flutter/lib/ui/painting/image.h"
 #include "lib/fxl/functional/make_copyable.h"
+#include "lib/tonic/converter/dart_converter.h"
+#include "lib/tonic/dart_args.h"
+#include "lib/tonic/dart_binding_macros.h"
+#include "lib/tonic/dart_library_natives.h"
+#include "lib/tonic/dart_persistent_value.h"
+#include "lib/tonic/dart_wrappable.h"
+#include "lib/tonic/logging/dart_invoke.h"
 #include "third_party/skia/include/core/SkImageInfo.h"
 #include "third_party/skia/include/core/SkSurface.h"
-#include "third_party/tonic/converter/dart_converter.h"
-#include "third_party/tonic/dart_args.h"
-#include "third_party/tonic/dart_binding_macros.h"
-#include "third_party/tonic/dart_library_natives.h"
-#include "third_party/tonic/dart_persistent_value.h"
-#include "third_party/tonic/logging/dart_invoke.h"
 
 namespace blink {
 
@@ -151,7 +152,7 @@ Dart_Handle Scene::toImage(uint32_t width,
                                image_callback = std::move(image_callback),  //
                                unref_queue = std::move(unref_queue)         //
         ]() mutable {
-              auto dart_state = image_callback->dart_state().lock();
+              auto dart_state = image_callback->dart_state().get();
               if (!dart_state) {
                 // The root isolate could have died in the meantime.
                 return;

@@ -8,9 +8,9 @@
 #include <mutex>
 
 #include "flutter/fml/build_config.h"
-#include "flutter/fml/logging.h"
 #include "flutter/fml/mapping.h"
 #include "flutter/fml/paths.h"
+#include "lib/fxl/logging.h"
 #include "third_party/icu/source/common/unicode/udata.h"
 
 namespace fml {
@@ -36,6 +36,15 @@ class ICUContext {
     if (path_mapping->GetSize() != 0) {
       mapping_ = std::move(path_mapping);
       return true;
+    }
+
+    // Check to see if the mapping is in the resources bundle.
+    if (PlatformHasResourcesBundle()) {
+      auto resource = GetResourceMapping(icu_data_path);
+      if (resource != nullptr && resource->GetSize() != 0) {
+        mapping_ = std::move(resource);
+        return true;
+      }
     }
 
     // Check if the mapping can by directly accessed via a file path. In this
@@ -83,7 +92,7 @@ class ICUContext {
 
 void InitializeICUOnce(const std::string& icu_data_path) {
   static ICUContext* context = new ICUContext(icu_data_path);
-  FML_CHECK(context->IsValid())
+  FXL_CHECK(context->IsValid())
       << "Must be able to initialize the ICU context. Tried: " << icu_data_path;
 }
 

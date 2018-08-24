@@ -5,9 +5,10 @@
 #include "flutter/lib/ui/compositing/scene_host.h"
 
 #include "flutter/lib/ui/ui_dart_state.h"
-#include "third_party/tonic/dart_args.h"
-#include "third_party/tonic/dart_binding_macros.h"
-#include "third_party/tonic/dart_library_natives.h"
+#include "lib/tonic/dart_args.h"
+#include "lib/tonic/dart_binding_macros.h"
+#include "lib/tonic/dart_library_natives.h"
+#include "lib/tonic/dart_wrappable.h"
 
 #ifdef OS_FUCHSIA
 #include "dart-pkg/zircon/sdk_ext/handle.h"

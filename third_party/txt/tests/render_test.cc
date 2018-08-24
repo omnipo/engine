@@ -22,13 +22,17 @@
 #include "third_party/skia/include/core/SkImageEncoder.h"
 #include "third_party/skia/include/core/SkStream.h"
 #include "txt/asset_font_manager.h"
+#include "txt/directory_asset_data_provider.h"
 #include "txt/font_collection.h"
-#include "txt_test_utils.h"
+#include "utils.h"
 
 namespace txt {
 
 RenderTest::RenderTest()
-    : snapshots_(0), font_collection_(GetTestFontCollection()) {}
+    : snapshots_(0), font_collection_(std::make_shared<FontCollection>()) {
+  font_collection_->SetAssetFontManager(sk_make_sp<AssetFontManager>(
+      std::make_unique<txt::DirectoryAssetDataProvider>(GetFontDir())));
+}
 
 RenderTest::~RenderTest() = default;
 

@@ -47,6 +47,9 @@ class VulkanWindow {
  private:
   bool valid_;
   fxl::RefPtr<VulkanProcTable> vk;
+  // Note: The order of objects here is important because the
+  // GrVkBackendContext assumes ownership of the device and instance handles.
+  sk_sp<GrVkBackendContext> skia_vk_backend_context_;
   std::unique_ptr<VulkanApplication> application_;
   std::unique_ptr<VulkanDevice> logical_device_;
   std::unique_ptr<VulkanSurface> surface_;
@@ -55,7 +58,7 @@ class VulkanWindow {
 
   bool CreateSkiaGrContext();
 
-  bool CreateSkiaBackendContext(GrVkBackendContext* context);
+  sk_sp<GrVkBackendContext> CreateSkiaBackendContext();
 
   FXL_WARN_UNUSED_RESULT
   bool RecreateSwapchain();

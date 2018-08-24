@@ -44,12 +44,6 @@ const uint32_t TEXT_STYLE_VS = 0xFE0E;
 
 uint32_t FontCollection::sNextId = 0;
 
-// libtxt: return a locale string for a language list ID
-std::string GetFontLocale(uint32_t langListId) {
-  const FontLanguages& langs = FontLanguageListCache::getById(langListId);
-  return langs.size() ? langs[0].getString() : "";
-}
-
 FontCollection::FontCollection(std::shared_ptr<FontFamily>&& typeface)
     : mMaxChar(0) {
   std::vector<std::shared_ptr<FontFamily>> typefaces;
@@ -301,8 +295,7 @@ const std::shared_ptr<FontFamily>& FontCollection::getFamilyForChar(
     // libtxt: check if the fallback font provider can match this character
     if (mFallbackFontProvider) {
       const std::shared_ptr<FontFamily>& fallback =
-          mFallbackFontProvider->matchFallbackFont(ch,
-                                                   GetFontLocale(langListId));
+          mFallbackFontProvider->matchFallbackFont(ch);
       if (fallback) {
         return fallback;
       }
@@ -339,8 +332,7 @@ const std::shared_ptr<FontFamily>& FontCollection::getFamilyForChar(
     // libtxt: check if the fallback font provider can match this character
     if (mFallbackFontProvider) {
       const std::shared_ptr<FontFamily>& fallback =
-          mFallbackFontProvider->matchFallbackFont(ch,
-                                                   GetFontLocale(langListId));
+          mFallbackFontProvider->matchFallbackFont(ch);
       if (fallback) {
         return fallback;
       }

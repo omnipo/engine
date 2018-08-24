@@ -7,8 +7,9 @@
 
 #include <memory>
 
-#include "flutter/fml/compiler_specific.h"
-#include "flutter/fml/macros.h"
+#include "lib/fxl/compiler_specific.h"
+#include "lib/fxl/macros.h"
+#include "lib/fxl/time/time_delta.h"
 
 namespace flutter {
 
@@ -22,7 +23,7 @@ class Semaphore {
 
   bool IsValid() const;
 
-  FML_WARN_UNUSED_RESULT
+  FXL_WARN_UNUSED_RESULT
   bool TryWait();
 
   void Signal();
@@ -30,7 +31,7 @@ class Semaphore {
  private:
   std::unique_ptr<PlatformSemaphore> _impl;
 
-  FML_DISALLOW_COPY_AND_ASSIGN(Semaphore);
+  FXL_DISALLOW_COPY_AND_ASSIGN(Semaphore);
 };
 
 }  // namespace flutter

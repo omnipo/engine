@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import io.flutter.app.FlutterActivityDelegate.ViewFactory;
 import io.flutter.plugin.common.PluginRegistry;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterView;
 
@@ -61,11 +62,6 @@ public class FlutterFragmentActivity
     @Override
     public FlutterNativeView createFlutterNativeView() {
         return null;
-    }
-
-    @Override
-    public boolean retainFlutterNativeView() {
-        return false;
     }
 
     @Override

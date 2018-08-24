@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-#include "flutter/fml/synchronization/waitable_event.h"
+#include "lib/fxl/synchronization/waitable_event.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
@@ -63,7 +63,7 @@ void ServiceProtocol::RemoveHandler(Handler* handler) {
 
 void ServiceProtocol::ToggleHooks(bool set) {
   for (const auto& endpoint : endpoints_) {
-    Dart_RegisterIsolateServiceRequestCallback(
+    Dart_RegisterRootServiceRequestCallback(
         endpoint.data(),                  // method
         &ServiceProtocol::HandleMessage,  // callback
         set ? this : nullptr              // user data
@@ -138,7 +138,7 @@ static bool HandleMessageOnHandler(
     const ServiceProtocol::Handler::ServiceProtocolMap& params,
     rapidjson::Document& document) {
   FXL_DCHECK(handler);
-  fml::AutoResetWaitableEvent latch;
+  fxl::AutoResetWaitableEvent latch;
   bool result = false;
   fml::TaskRunner::RunNowOrPostTask(
       handler->GetServiceProtocolHandlerTaskRunner(method),
@@ -240,7 +240,7 @@ bool ServiceProtocol::HandleListViewsMethod(
   std::lock_guard<std::mutex> lock(handlers_mutex_);
   std::vector<std::pair<intptr_t, Handler::Description>> descriptions;
   for (const auto& handler : handlers_) {
-    fml::AutoResetWaitableEvent latch;
+    fxl::AutoResetWaitableEvent latch;
     Handler::Description description;
 
     fml::TaskRunner::RunNowOrPostTask(

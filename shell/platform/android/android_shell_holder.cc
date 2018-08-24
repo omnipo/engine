@@ -34,12 +34,11 @@ AndroidShellHolder::AndroidShellHolder(
   thread_host_ = {thread_label, ThreadHost::Type::UI | ThreadHost::Type::GPU |
                                     ThreadHost::Type::IO};
 
-  // Detach from JNI when the UI and GPU threads exit.
-  auto jni_exit_task([key = thread_destruct_key_]() {
-    FXL_CHECK(pthread_setspecific(key, reinterpret_cast<void*>(1)) == 0);
-  });
-  thread_host_.ui_thread->GetTaskRunner()->PostTask(jni_exit_task);
-  thread_host_.gpu_thread->GetTaskRunner()->PostTask(jni_exit_task);
+  // Detach from JNI when the UI thread exits.
+  thread_host_.ui_thread->GetTaskRunner()->PostTask(
+      [key = thread_destruct_key_]() {
+        FXL_CHECK(pthread_setspecific(key, reinterpret_cast<void*>(1)) == 0);
+      });
 
   fml::WeakPtr<PlatformViewAndroid> weak_platform_view;
   Shell::CreateCallback<PlatformView> on_create_platform_view =
@@ -84,23 +83,25 @@ AndroidShellHolder::AndroidShellHolder(
   is_valid_ = shell_ != nullptr;
 
   if (is_valid_) {
-    task_runners.GetGPUTaskRunner()->PostTask([]() {
-      // Android describes -8 as "most important display threads, for
-      // compositing the screen and retrieving input events". Conservatively
-      // set the GPU thread to slightly lower priority than it.
-      if (::setpriority(PRIO_PROCESS, gettid(), -5) != 0) {
-        // Defensive fallback. Depending on the OEM, it may not be possible
-        // to set priority to -5.
-        if (::setpriority(PRIO_PROCESS, gettid(), -2) != 0) {
-          FXL_LOG(ERROR) << "Failed to set GPU task runner priority";
-        }
-      }
-    });
-    task_runners.GetUITaskRunner()->PostTask([]() {
-      if (::setpriority(PRIO_PROCESS, gettid(), -1) != 0) {
-        FXL_LOG(ERROR) << "Failed to set UI task runner priority";
-      }
-    });
+    task_runners.GetGPUTaskRunner()->PostTask(
+        []() {
+          // Android describes -8 as "most important display threads, for
+          // compositing the screen and retrieving input events". Conservatively
+          // set the GPU thread to slightly lower priority than it.
+          if (::setpriority(PRIO_PROCESS, gettid(), -5) != 0) {
+            // Defensive fallback. Depending on the OEM, it may not be possible
+            // to set priority to -5.
+            if (::setpriority(PRIO_PROCESS, gettid(), -2) != 0) {
+              FXL_LOG(ERROR) << "Failed to set GPU task runner priority";
+            }
+          }
+        });
+    task_runners.GetUITaskRunner()->PostTask(
+        []() {
+          if (::setpriority(PRIO_PROCESS, gettid(), -1) != 0) {
+            FXL_LOG(ERROR) << "Failed to set UI task runner priority";
+          }
+        });
   }
 }
 
@@ -179,6 +180,23 @@ Rasterizer::Screenshot AndroidShellHolder::Screenshot(
 fml::WeakPtr<PlatformViewAndroid> AndroidShellHolder::GetPlatformView() {
   FXL_DCHECK(platform_view_);
   return platform_view_;
+}
+
+void AndroidShellHolder::UpdateAssetManager(
+    fxl::RefPtr<blink::AssetManager> asset_manager) {
+  if (!IsValid() || !asset_manager) {
+    return;
+  }
+
+  shell_->GetTaskRunners().GetUITaskRunner()->PostTask(
+      [engine = shell_->GetEngine(),
+       asset_manager = std::move(asset_manager)]() {
+        if (engine) {
+          if (!engine->UpdateAssetManager(std::move(asset_manager))) {
+            FXL_DLOG(ERROR) << "Could not update asset asset manager.";
+          }
+        }
+      });
 }
 
 }  // namespace shell

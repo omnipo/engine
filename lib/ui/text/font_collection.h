@@ -17,18 +17,20 @@ namespace blink {
 
 class FontCollection {
  public:
-  FontCollection();
-
-  ~FontCollection();
+  static FontCollection& ForProcess();
 
   std::shared_ptr<txt::FontCollection> GetFontCollection() const;
 
-  void RegisterFonts(fml::RefPtr<AssetManager> asset_manager);
+  void RegisterFonts(const AssetManager& asset_manager);
 
   void RegisterTestFonts();
 
  private:
   std::shared_ptr<txt::FontCollection> collection_;
+
+  FontCollection();
+
+  ~FontCollection();
 
   FXL_DISALLOW_COPY_AND_ASSIGN(FontCollection);
 };

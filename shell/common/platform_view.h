@@ -10,7 +10,6 @@
 #include "flutter/common/task_runners.h"
 #include "flutter/flow/texture.h"
 #include "flutter/fml/memory/weak_ptr.h"
-#include "flutter/lib/ui/semantics/custom_accessibility_action.h"
 #include "flutter/lib/ui/semantics/semantics_node.h"
 #include "flutter/lib/ui/window/platform_message.h"
 #include "flutter/lib/ui/window/pointer_data_packet.h"
@@ -58,10 +57,6 @@ class PlatformView {
     virtual void OnPlatformViewSetSemanticsEnabled(const PlatformView& view,
                                                    bool enabled) = 0;
 
-    virtual void OnPlatformViewSetAssistiveTechnologyEnabled(
-        const PlatformView& view,
-        bool enabled) = 0;
-
     virtual void OnPlatformViewRegisterTexture(
         const PlatformView& view,
         std::shared_ptr<flow::Texture> texture) = 0;
@@ -88,8 +83,6 @@ class PlatformView {
 
   virtual void SetSemanticsEnabled(bool enabled);
 
-  virtual void SetAssistiveTechnologyEnabled(bool enabled);
-
   void SetViewportMetrics(const blink::ViewportMetrics& metrics);
 
   void NotifyCreated();
@@ -102,8 +95,7 @@ class PlatformView {
 
   fml::WeakPtr<PlatformView> GetWeakPtr() const;
 
-  virtual void UpdateSemantics(blink::SemanticsNodeUpdates updates,
-                               blink::CustomAccessibilityActionUpdates actions);
+  virtual void UpdateSemantics(blink::SemanticsNodeUpdates update);
 
   virtual void HandlePlatformMessage(
       fxl::RefPtr<blink::PlatformMessage> message);
@@ -125,6 +117,7 @@ class PlatformView {
  protected:
   PlatformView::Delegate& delegate_;
   const blink::TaskRunners task_runners_;
+  std::unique_ptr<VsyncWaiter> vsync_waiter_;
 
   SkISize size_;
   fml::WeakPtrFactory<PlatformView> weak_factory_;

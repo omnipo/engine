@@ -84,7 +84,6 @@ public final class StandardMethodCodec implements MethodCodec {
                     return result;
                 }
             }
-            // Falls through intentionally.
             case 1: {
                 final Object code = messageCodec.readValue(envelope);
                 final Object message = messageCodec.readValue(envelope);

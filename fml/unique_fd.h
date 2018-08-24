@@ -12,10 +12,6 @@
 
 #include <windows.h>
 
-#else  // OS_WIN
-
-#include <unistd.h>
-
 #endif  // OS_WIN
 
 namespace fml {

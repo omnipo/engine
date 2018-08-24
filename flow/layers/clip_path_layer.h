@@ -11,7 +11,7 @@ namespace flow {
 
 class ClipPathLayer : public ContainerLayer {
  public:
-  ClipPathLayer(Clip clip_behavior = Clip::antiAlias);
+  ClipPathLayer();
   ~ClipPathLayer() override;
 
   void set_clip_path(const SkPath& clip_path) { clip_path_ = clip_path; }
@@ -26,7 +26,6 @@ class ClipPathLayer : public ContainerLayer {
 
  private:
   SkPath clip_path_;
-  Clip clip_behavior_;
 
   FXL_DISALLOW_COPY_AND_ASSIGN(ClipPathLayer);
 };

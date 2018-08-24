@@ -5,12 +5,12 @@
 #include "flutter/runtime/runtime_controller.h"
 
 #include "flutter/fml/message_loop.h"
-#include "flutter/fml/trace_event.h"
+#include "flutter/glue/trace_event.h"
 #include "flutter/lib/ui/compositing/scene.h"
 #include "flutter/lib/ui/ui_dart_state.h"
 #include "flutter/lib/ui/window/window.h"
 #include "flutter/runtime/runtime_delegate.h"
-#include "third_party/tonic/dart_message_handler.h"
+#include "lib/tonic/dart_message_handler.h"
 
 #ifdef ERROR
 #undef ERROR
@@ -20,62 +20,46 @@ namespace blink {
 
 RuntimeController::RuntimeController(
     RuntimeDelegate& p_client,
-    DartVM* p_vm,
+    const DartVM* p_vm,
     fxl::RefPtr<DartSnapshot> p_isolate_snapshot,
-    fxl::RefPtr<DartSnapshot> p_shared_snapshot,
     TaskRunners p_task_runners,
     fml::WeakPtr<GrContext> p_resource_context,
-    fxl::RefPtr<flow::SkiaUnrefQueue> p_unref_queue,
-    std::string p_advisory_script_uri,
-    std::string p_advisory_script_entrypoint)
+    fxl::RefPtr<flow::SkiaUnrefQueue> p_unref_queue)
     : RuntimeController(p_client,
                         p_vm,
                         std::move(p_isolate_snapshot),
-                        std::move(p_shared_snapshot),
                         std::move(p_task_runners),
                         std::move(p_resource_context),
                         std::move(p_unref_queue),
-                        std::move(p_advisory_script_uri),
-                        std::move(p_advisory_script_entrypoint),
                         WindowData{/* default window data */}) {}
 
 RuntimeController::RuntimeController(
     RuntimeDelegate& p_client,
-    DartVM* p_vm,
+    const DartVM* p_vm,
     fxl::RefPtr<DartSnapshot> p_isolate_snapshot,
-    fxl::RefPtr<DartSnapshot> p_shared_snapshot,
     TaskRunners p_task_runners,
     fml::WeakPtr<GrContext> p_resource_context,
     fxl::RefPtr<flow::SkiaUnrefQueue> p_unref_queue,
-    std::string p_advisory_script_uri,
-    std::string p_advisory_script_entrypoint,
     WindowData p_window_data)
     : client_(p_client),
       vm_(p_vm),
       isolate_snapshot_(std::move(p_isolate_snapshot)),
-      shared_snapshot_(std::move(p_shared_snapshot)),
       task_runners_(p_task_runners),
       resource_context_(p_resource_context),
       unref_queue_(p_unref_queue),
-      advisory_script_uri_(p_advisory_script_uri),
-      advisory_script_entrypoint_(p_advisory_script_entrypoint),
       window_data_(std::move(p_window_data)),
       root_isolate_(
           DartIsolate::CreateRootIsolate(vm_,
                                          isolate_snapshot_,
-                                         shared_snapshot_,
                                          task_runners_,
                                          std::make_unique<Window>(this),
                                          resource_context_,
-                                         unref_queue_,
-                                         p_advisory_script_uri,
-                                         p_advisory_script_entrypoint)) {
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  root_isolate->SetReturnCodeCallback([this](uint32_t code) {
+                                         unref_queue_)) {
+  root_isolate_->SetReturnCodeCallback([this](uint32_t code) {
     root_isolate_return_code_ = {true, code};
   });
   if (auto window = GetWindowIfAvailable()) {
-    tonic::DartState::Scope scope(root_isolate);
+    tonic::DartState::Scope scope(root_isolate_.get());
     window->DidCreateIsolate();
     if (!FlushRuntimeStateToIsolate()) {
       FXL_DLOG(ERROR) << "Could not setup intial isolate state.";
@@ -88,10 +72,9 @@ RuntimeController::RuntimeController(
 
 RuntimeController::~RuntimeController() {
   FXL_DCHECK(Dart_CurrentIsolate() == nullptr);
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  if (root_isolate) {
-    root_isolate->SetReturnCodeCallback(nullptr);
-    auto result = root_isolate->Shutdown();
+  if (root_isolate_) {
+    root_isolate_->SetReturnCodeCallback(nullptr);
+    auto result = root_isolate_->Shutdown();
     if (!result) {
       FXL_DLOG(ERROR) << "Could not shutdown the root isolate.";
     }
@@ -100,34 +83,28 @@ RuntimeController::~RuntimeController() {
 }
 
 bool RuntimeController::IsRootIsolateRunning() const {
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  if (root_isolate) {
-    return root_isolate->GetPhase() == DartIsolate::Phase::Running;
+  if (root_isolate_) {
+    return root_isolate_->GetPhase() == DartIsolate::Phase::Running;
   }
   return false;
 }
 
 std::unique_ptr<RuntimeController> RuntimeController::Clone() const {
   return std::unique_ptr<RuntimeController>(new RuntimeController(
-      client_,                      //
-      vm_,                          //
-      isolate_snapshot_,            //
-      shared_snapshot_,             //
-      task_runners_,                //
-      resource_context_,            //
-      unref_queue_,                 //
-      advisory_script_uri_,         //
-      advisory_script_entrypoint_,  //
-      window_data_                  //
+      client_,            //
+      vm_,                //
+      isolate_snapshot_,  //
+      task_runners_,      //
+      resource_context_,  //
+      unref_queue_,       //
+      window_data_        //
       ));
 }
 
 bool RuntimeController::FlushRuntimeStateToIsolate() {
   return SetViewportMetrics(window_data_.viewport_metrics) &&
          SetLocale(window_data_.language_code, window_data_.country_code) &&
-         SetSemanticsEnabled(window_data_.semantics_enabled) &&
-         SetAssistiveTechnologyEnabled(
-             window_data_.assistive_technology_enabled);
+         SetSemanticsEnabled(window_data_.semantics_enabled);
 }
 
 bool RuntimeController::SetViewportMetrics(const ViewportMetrics& metrics) {
@@ -175,17 +152,6 @@ bool RuntimeController::SetSemanticsEnabled(bool enabled) {
   return false;
 }
 
-bool RuntimeController::SetAssistiveTechnologyEnabled(bool enabled) {
-  window_data_.assistive_technology_enabled = enabled;
-  if (auto window = GetWindowIfAvailable()) {
-    window->UpdateAssistiveTechnologyEnabled(
-        window_data_.assistive_technology_enabled);
-    return true;
-  }
-
-  return false;
-}
-
 bool RuntimeController::BeginFrame(fxl::TimePoint frame_time) {
   if (auto window = GetWindowIfAvailable()) {
     window->BeginFrame(frame_time);
@@ -195,12 +161,11 @@ bool RuntimeController::BeginFrame(fxl::TimePoint frame_time) {
 }
 
 bool RuntimeController::NotifyIdle(int64_t deadline) {
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  if (!root_isolate) {
+  if (!root_isolate_) {
     return false;
   }
 
-  tonic::DartState::Scope scope(root_isolate);
+  tonic::DartState::Scope scope(root_isolate_.get());
   Dart_NotifyIdle(deadline);
   return true;
 }
@@ -240,8 +205,7 @@ bool RuntimeController::DispatchSemanticsAction(int32_t id,
 }
 
 Window* RuntimeController::GetWindowIfAvailable() {
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  return root_isolate ? root_isolate->window() : nullptr;
+  return root_isolate_ ? root_isolate_->window() : nullptr;
 }
 
 std::string RuntimeController::DefaultRouteName() {
@@ -258,7 +222,7 @@ void RuntimeController::Render(Scene* scene) {
 
 void RuntimeController::UpdateSemantics(SemanticsUpdate* update) {
   if (window_data_.semantics_enabled) {
-    client_.UpdateSemantics(update->takeNodes(), update->takeActions());
+    client_.UpdateSemantics(update->takeNodes());
   }
 }
 
@@ -267,35 +231,28 @@ void RuntimeController::HandlePlatformMessage(
   client_.HandlePlatformMessage(std::move(message));
 }
 
-FontCollection& RuntimeController::GetFontCollection() {
-  return client_.GetFontCollection();
-}
-
 Dart_Port RuntimeController::GetMainPort() {
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  return root_isolate ? root_isolate->main_port() : ILLEGAL_PORT;
+  return root_isolate_ ? root_isolate_->main_port() : ILLEGAL_PORT;
 }
 
 std::string RuntimeController::GetIsolateName() {
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  return root_isolate ? root_isolate->debug_name() : "";
+  return root_isolate_ ? root_isolate_->debug_name() : "";
 }
 
 bool RuntimeController::HasLivePorts() {
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  if (!root_isolate) {
+  if (!root_isolate_) {
     return false;
   }
-  tonic::DartState::Scope scope(root_isolate);
+  tonic::DartState::Scope scope(root_isolate_.get());
   return Dart_HasLivePorts();
 }
 
 tonic::DartErrorHandleType RuntimeController::GetLastError() {
-  std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
-  return root_isolate ? root_isolate->GetLastError() : tonic::kNoError;
+  return root_isolate_ ? root_isolate_->message_handler().isolate_last_error()
+                       : tonic::kNoError;
 }
 
-std::weak_ptr<DartIsolate> RuntimeController::GetRootIsolate() {
+fml::WeakPtr<DartIsolate> RuntimeController::GetRootIsolate() {
   return root_isolate_;
 }
 

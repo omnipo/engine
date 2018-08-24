@@ -26,8 +26,6 @@ class SemanticsAction {
   static const int _kPasteIndex = 1 << 14;
   static const int _kDidGainAccessibilityFocusIndex = 1 << 15;
   static const int _kDidLoseAccessibilityFocusIndex = 1 << 16;
-  static const int _kCustomAction = 1 << 17;
-  static const int _kDismissIndex = 1 << 18;
 
   /// The numerical value for this action.
   ///
@@ -148,26 +146,11 @@ class SemanticsAction {
   /// Accessibility focus and input focus can be held by two different nodes!
   static const SemanticsAction didLoseAccessibilityFocus = const SemanticsAction._(_kDidLoseAccessibilityFocusIndex);
 
-  /// Indicates that the user has invoked a custom accessibility action.
-  ///
-  /// This handler is added automatically whenever a custom accessibility
-  /// action is added to a semantics node.
-  static const SemanticsAction customAction = const SemanticsAction._(_kCustomAction);
-
-  /// A request that the node should be dismissed.
-  ///
-  /// A [Snackbar], for example, may have a dismiss action to indicate to the
-  /// user that it can be removed after it is no longer relevant. On Android,
-  /// (with TalkBack) special hint text is spoken when focusing the node and
-  /// a custom action is availible in the local context menu. On iOS,
-  /// (with VoiceOver) users can perform a standard gesture to dismiss it.
-  static const SemanticsAction dismiss = const SemanticsAction._(_kDismissIndex);
-
   /// The possible semantics actions.
   ///
   /// The map's key is the [index] of the action and the value is the action
   /// itself.
-  static const Map<int, SemanticsAction> values = const <int, SemanticsAction>{
+  static final Map<int, SemanticsAction> values = const <int, SemanticsAction>{
     _kTapIndex: tap,
     _kLongPressIndex: longPress,
     _kScrollLeftIndex: scrollLeft,
@@ -185,8 +168,6 @@ class SemanticsAction {
     _kPasteIndex: paste,
     _kDidGainAccessibilityFocusIndex: didGainAccessibilityFocus,
     _kDidLoseAccessibilityFocusIndex: didLoseAccessibilityFocus,
-    _kCustomAction: customAction,
-    _kDismissIndex: dismiss,
   };
 
   @override
@@ -226,10 +207,6 @@ class SemanticsAction {
         return 'SemanticsAction.didGainAccessibilityFocus';
       case _kDidLoseAccessibilityFocusIndex:
         return 'SemanticsAction.didLoseAccessibilityFocus';
-      case _kCustomAction:
-        return 'SemanticsAction.customAction';
-      case _kDismissIndex:
-        return 'SemanticsAction.dismiss';
     }
     return null;
   }
@@ -251,10 +228,6 @@ class SemanticsFlag {
   static const int _kScopesRouteIndex= 1 << 11;
   static const int _kNamesRouteIndex = 1 << 12;
   static const int _kIsHiddenIndex = 1 << 13;
-  static const int _kIsImageIndex = 1 << 14;
-  static const int _kIsLiveRegionIndex = 1 << 15;
-  static const int _kHasToggledStateIndex = 1 << 16;
-  static const int _kIsToggledIndex = 1 << 17;
 
   const SemanticsFlag._(this.index);
 
@@ -265,13 +238,7 @@ class SemanticsFlag {
 
   /// The semantics node has the quality of either being "checked" or "unchecked".
   ///
-  /// This flag is mutually exclusive with [hasToggledState].
-  ///
   /// For example, a checkbox or a radio button widget has checked state.
-  ///
-  /// See also:
-  ///
-  ///   * [SemanticsFlag.isChecked], which controls whether the node is "checked" or "unchecked".
   static const SemanticsFlag hasCheckedState = const SemanticsFlag._(_kHasCheckedStateIndex);
 
   /// Whether a semantics node that [hasCheckedState] is checked.
@@ -280,10 +247,6 @@ class SemanticsFlag {
   /// "unchecked".
   ///
   /// For example, if a checkbox has a visible checkmark, [isChecked] is true.
-  ///
-  /// See also:
-  ///
-  ///   * [SemanticsFlag.hasCheckedState], which enables a checked state.
   static const SemanticsFlag isChecked = const SemanticsFlag._(_kIsCheckedIndex);
 
 
@@ -403,48 +366,10 @@ class SemanticsFlag {
   /// used to implement accessibility scrolling on iOS.
   static const SemanticsFlag isHidden = const SemanticsFlag._(_kIsHiddenIndex);
 
-  /// Whether the semantics node represents an image.
-  ///
-  /// Both TalkBack and VoiceOver will inform the user the the semantics node
-  /// represents an image.
-  static const SemanticsFlag isImage = const SemanticsFlag._(_kIsImageIndex);
-
-  /// Whether the semantics node is a live region.
-  ///
-  /// A live region indicates that updates to semantics node are important.
-  /// Platforms may use this information to make polite announcements to the
-  /// user to inform them of updates to this node.
-  ///
-  /// An example of a live region is a [SnackBar] widget. On Android, A live
-  /// region causes a polite announcement to be generated automatically, even
-  /// if the user does not have focus of the widget.
-  static const SemanticsFlag isLiveRegion = const SemanticsFlag._(_kIsLiveRegionIndex);
-
-  /// The semantics node has the quality of either being "on" or "off".
-  ///
-  /// This flag is mutually exclusive with [hasCheckedState].
-  ///
-  /// For example, a switch has toggled state.
-  ///
-  /// See also:
-  ///
-  ///    * [SemanticsFlag.isToggled], which controls whether the node is "on" or "off".
-  static const SemanticsFlag hasToggledState = const SemanticsFlag._(_kHasToggledStateIndex);
-
-  /// If true, the semantics node is "on". If false, the semantics node is
-  /// "off".
-  ///
-  /// For example, if a switch is in the on position, [isToggled] is true.
-  ///
-  /// See also:
-  ///
-  ///   * [SemanticsFlag.hasToggledState], which enables a toggled state.
-  static const SemanticsFlag isToggled = const SemanticsFlag._(_kIsToggledIndex);
-
   /// The possible semantics flags.
   ///
   /// The map's key is the [index] of the flag and the value is the flag itself.
-  static const Map<int, SemanticsFlag> values = const <int, SemanticsFlag>{
+  static final Map<int, SemanticsFlag> values = const <int, SemanticsFlag>{
     _kHasCheckedStateIndex: hasCheckedState,
     _kIsCheckedIndex: isChecked,
     _kIsSelectedIndex: isSelected,
@@ -459,10 +384,6 @@ class SemanticsFlag {
     _kScopesRouteIndex: scopesRoute,
     _kNamesRouteIndex: namesRoute,
     _kIsHiddenIndex: isHidden,
-    _kIsImageIndex: isImage,
-    _kIsLiveRegionIndex: isLiveRegion,
-    _kHasToggledStateIndex: hasToggledState,
-    _kIsToggledIndex: isToggled,
   };
 
   @override
@@ -496,14 +417,6 @@ class SemanticsFlag {
         return 'SemanticsFlag.namesRoute';
       case _kIsHiddenIndex:
         return 'SemanticsFlag.isHidden';
-      case _kIsImageIndex:
-        return 'SemanticsFlag.isImage';
-      case _kIsLiveRegionIndex:
-        return 'SemanticsFlag.isLiveRegion';
-      case _kHasToggledStateIndex:
-        return 'SemanticsFlag.hasToggledState';
-      case _kIsToggledIndex:
-        return 'SemanticsFlag.isToggled';
     }
     return null;
   }
@@ -521,18 +434,11 @@ class SemanticsUpdateBuilder extends NativeFieldWrapperClass2 {
   /// Update the information associated with the node with the given `id`.
   ///
   /// The semantics nodes form a tree, with the root of the tree always having
-  /// an id of zero. The `childrenInTraversalOrder` and `childrenInHitTestOrder`
-  /// are the ids of the nodes that are immediate children of this node. The
-  /// former enumerates children in traversal order, and the latter enumerates
-  /// the same children in the hit test order. The two lists must have the same
-  /// length and contain the same ids. They may only differ in the order the
-  /// ids are listed in. For more information about different child orders, see
-  /// [DebugSemanticsDumpOrder].
-  ///
-  /// The system retains the nodes that are currently reachable from the root.
-  /// A given update need not contain information for nodes that do not change
-  /// in the update. If a node is not reachable from the root after an update,
-  /// the node will be discarded from the tree.
+  /// an id of zero. The `children` are the ids of the nodes that are immediate
+  /// children of this node. The system retains the nodes that are currently
+  /// reachable from the root. A given update need not contain information for
+  /// nodes that do not change in the update. If a node is not reachable from
+  /// the root after an update, the node will be discarded from the tree.
   ///
   /// The `flags` are a bit field of [SemanticsFlag]s that apply to this node.
   ///
@@ -582,39 +488,33 @@ class SemanticsUpdateBuilder extends NativeFieldWrapperClass2 {
     String increasedValue,
     String decreasedValue,
     TextDirection textDirection,
+    int hitTestPosition,
     Float64List transform,
-    Int32List childrenInTraversalOrder,
-    Int32List childrenInHitTestOrder,
-    @Deprecated('use additionalActions instead')
-    Int32List customAcccessibilityActions,
-    Int32List additionalActions,
+    Int32List children,
   }) {
     if (transform.length != 16)
       throw new ArgumentError('transform argument must have 16 entries.');
-    _updateNode(
-      id,
-      flags,
-      actions,
-      textSelectionBase,
-      textSelectionExtent,
-      scrollPosition,
-      scrollExtentMax,
-      scrollExtentMin,
-      rect.left,
-      rect.top,
-      rect.right,
-      rect.bottom,
-      label,
-      hint,
-      value,
-      increasedValue,
-      decreasedValue,
-      textDirection != null ? textDirection.index + 1 : 0,
-      transform,
-      childrenInTraversalOrder,
-      childrenInHitTestOrder,
-      additionalActions ?? customAcccessibilityActions,
-    );
+    _updateNode(id,
+                flags,
+                actions,
+                textSelectionBase,
+                textSelectionExtent,
+                scrollPosition,
+                scrollExtentMax,
+                scrollExtentMin,
+                rect.left,
+                rect.top,
+                rect.right,
+                rect.bottom,
+                label,
+                hint,
+                value,
+                increasedValue,
+                decreasedValue,
+                textDirection != null ? textDirection.index + 1 : 0,
+                hitTestPosition,
+                transform,
+                children,);
   }
   void _updateNode(
     int id,
@@ -635,33 +535,10 @@ class SemanticsUpdateBuilder extends NativeFieldWrapperClass2 {
     String increasedValue,
     String decreasedValue,
     int textDirection,
+    int hitTestPosition,
     Float64List transform,
-    Int32List childrenInTraversalOrder,
-    Int32List childrenInHitTestOrder,
-    Int32List additionalActions,
+    Int32List children,
   ) native 'SemanticsUpdateBuilder_updateNode';
-
-  /// Update the custom semantics action associated with the given `id`.
-  ///
-  /// The name of the action exposed to the user is the `label`. For overriden
-  /// standard actions this value is ignored.
-  ///
-  /// The `hint` should describe what happens when an action occurs, not the
-  /// manner in which a tap is accomplished. For example, use "delete" instead
-  /// of "double tap to delete".
-  ///
-  /// The text direction of the `hint` and `label` is the same as the global
-  /// window.
-  ///
-  /// For overriden standard actions, `overrideId` corresponds with a
-  /// [SemanticsAction.index] value. For custom actions this argument should not be
-  /// provided.
-  void updateCustomAction({int id, String label, String hint, int overrideId = -1}) {
-    assert(id != null);
-    assert(overrideId != null);
-    _updateCustomAction(id, label, hint, overrideId);
-  }
-  void _updateCustomAction(int id, String label, String hint, int overrideId) native 'SemanticsUpdateBuilder_updateCustomAction';
 
   /// Creates a [SemanticsUpdate] object that encapsulates the updates recorded
   /// by this object.

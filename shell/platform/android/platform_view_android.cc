@@ -7,13 +7,13 @@
 #include <memory>
 #include <utility>
 
-#include "flutter/fml/synchronization/waitable_event.h"
 #include "flutter/shell/common/io_manager.h"
 #include "flutter/shell/platform/android/android_external_texture_gl.h"
 #include "flutter/shell/platform/android/android_surface_gl.h"
 #include "flutter/shell/platform/android/platform_message_response_android.h"
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
 #include "flutter/shell/platform/android/vsync_waiter_android.h"
+#include "lib/fxl/synchronization/waitable_event.h"
 
 namespace shell {
 
@@ -45,7 +45,7 @@ void PlatformViewAndroid::NotifyDestroyed() {
 }
 
 void PlatformViewAndroid::NotifyChanged(const SkISize& size) {
-  fml::AutoResetWaitableEvent latch;
+  fxl::AutoResetWaitableEvent latch;
   fml::TaskRunner::RunNowOrPostTask(
       task_runners_.GetGPUTaskRunner(),  //
       [&latch, surface = android_surface_.get(), size]() {
@@ -106,8 +106,7 @@ void PlatformViewAndroid::InvokePlatformMessageResponseCallback(
       response_data, response_data + java_response_position);
   auto message_response = std::move(it->second);
   pending_responses_.erase(it);
-  message_response->Complete(
-      std::make_unique<fml::DataMapping>(std::move(response)));
+  message_response->Complete(std::move(response));
 }
 
 void PlatformViewAndroid::InvokePlatformMessageEmptyResponseCallback(
@@ -178,12 +177,9 @@ void PlatformViewAndroid::DispatchSemanticsAction(JNIEnv* env,
 }
 
 // |shell::PlatformView|
-void PlatformViewAndroid::UpdateSemantics(
-    blink::SemanticsNodeUpdates update,
-    blink::CustomAccessibilityActionUpdates actions) {
+void PlatformViewAndroid::UpdateSemantics(blink::SemanticsNodeUpdates update) {
   constexpr size_t kBytesPerNode = 36 * sizeof(int32_t);
   constexpr size_t kBytesPerChild = sizeof(int32_t);
-  constexpr size_t kBytesPerAction = 4 * sizeof(int32_t);
 
   JNIEnv* env = fml::jni::AttachCurrentThread();
   {
@@ -194,11 +190,7 @@ void PlatformViewAndroid::UpdateSemantics(
     size_t num_bytes = 0;
     for (const auto& value : update) {
       num_bytes += kBytesPerNode;
-      num_bytes +=
-          value.second.childrenInTraversalOrder.size() * kBytesPerChild;
-      num_bytes += value.second.childrenInHitTestOrder.size() * kBytesPerChild;
-      num_bytes +=
-          value.second.customAccessibilityActions.size() * kBytesPerChild;
+      num_bytes += value.second.children.size() * kBytesPerChild;
     }
 
     std::vector<uint8_t> buffer(num_bytes);
@@ -251,72 +243,24 @@ void PlatformViewAndroid::UpdateSemantics(
         strings.push_back(node.hint);
       }
       buffer_int32[position++] = node.textDirection;
+      buffer_int32[position++] = node.hitTestPosition;
       buffer_float32[position++] = node.rect.left();
       buffer_float32[position++] = node.rect.top();
       buffer_float32[position++] = node.rect.right();
       buffer_float32[position++] = node.rect.bottom();
       node.transform.asColMajorf(&buffer_float32[position]);
       position += 16;
-
-      buffer_int32[position++] = node.childrenInTraversalOrder.size();
-      for (int32_t child : node.childrenInTraversalOrder)
-        buffer_int32[position++] = child;
-
-      for (int32_t child : node.childrenInHitTestOrder)
-        buffer_int32[position++] = child;
-
-      buffer_int32[position++] = node.customAccessibilityActions.size();
-      for (int32_t child : node.customAccessibilityActions)
+      buffer_int32[position++] = node.children.size();
+      for (int32_t child : node.children)
         buffer_int32[position++] = child;
     }
 
-    // custom accessibility actions.
-    size_t num_action_bytes = actions.size() * kBytesPerAction;
-    std::vector<uint8_t> actions_buffer(num_action_bytes);
-    int32_t* actions_buffer_int32 =
-        reinterpret_cast<int32_t*>(&actions_buffer[0]);
+    fml::jni::ScopedJavaLocalRef<jobject> direct_buffer(
+        env, env->NewDirectByteBuffer(buffer.data(), buffer.size()));
 
-    std::vector<std::string> action_strings;
-    size_t actions_position = 0;
-    for (const auto& value : actions) {
-      // If you edit this code, make sure you update kBytesPerAction
-      // to match the number of values you are
-      // sending.
-      const blink::CustomAccessibilityAction& action = value.second;
-      actions_buffer_int32[actions_position++] = action.id;
-      actions_buffer_int32[actions_position++] = action.overrideId;
-      if (action.label.empty()) {
-        actions_buffer_int32[actions_position++] = -1;
-      } else {
-        actions_buffer_int32[actions_position++] = action_strings.size();
-        action_strings.push_back(action.label);
-      }
-      if (action.hint.empty()) {
-        actions_buffer_int32[actions_position++] = -1;
-      } else {
-        actions_buffer_int32[actions_position++] = action_strings.size();
-        action_strings.push_back(action.hint);
-      }
-    }
-
-    // Calling NewDirectByteBuffer in API level 22 and below with a size of zero
-    // will cause a JNI crash.
-    if (actions_buffer.size() > 0) {
-      fml::jni::ScopedJavaLocalRef<jobject> direct_actions_buffer(
-          env, env->NewDirectByteBuffer(actions_buffer.data(),
-                                        actions_buffer.size()));
-      FlutterViewUpdateCustomAccessibilityActions(
-          env, view.obj(), direct_actions_buffer.obj(),
-          fml::jni::VectorToStringArray(env, action_strings).obj());
-    }
-
-    if (buffer.size() > 0) {
-      fml::jni::ScopedJavaLocalRef<jobject> direct_buffer(
-          env, env->NewDirectByteBuffer(buffer.data(), buffer.size()));
-      FlutterViewUpdateSemantics(
-          env, view.obj(), direct_buffer.obj(),
-          fml::jni::VectorToStringArray(env, strings).obj());
-    }
+    FlutterViewUpdateSemantics(
+        env, view.obj(), direct_buffer.obj(),
+        fml::jni::VectorToStringArray(env, strings).obj());
   }
 }
 

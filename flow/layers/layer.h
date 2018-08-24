@@ -11,7 +11,7 @@
 #include "flutter/flow/instrumentation.h"
 #include "flutter/flow/raster_cache.h"
 #include "flutter/flow/texture.h"
-#include "flutter/fml/trace_event.h"
+#include "flutter/glue/trace_event.h"
 #include "lib/fxl/build_config.h"
 #include "lib/fxl/logging.h"
 #include "lib/fxl/macros.h"
@@ -27,15 +27,12 @@
 #if defined(OS_FUCHSIA)
 
 #include "flutter/flow/scene_update_context.h"  //nogncheck
-#include "lib/ui/scenic/cpp/resources.h"        //nogncheck
-#include "lib/ui/scenic/cpp/session.h"          //nogncheck
+#include "lib/ui/scenic/client/resources.h"     //nogncheck
+#include "lib/ui/scenic/client/session.h"       //nogncheck
 
 #endif  // defined(OS_FUCHSIA)
 
 namespace flow {
-
-// This should be an exact copy of the Clip enum in painting.dart.
-enum Clip { none, hardEdge, antiAlias, antiAliasWithSaveLayer };
 
 class ContainerLayer;
 

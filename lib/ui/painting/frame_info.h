@@ -5,8 +5,8 @@
 #ifndef FLUTTER_LIB_UI_PAINTING_FRAME_INFO_H_
 #define FLUTTER_LIB_UI_PAINTING_FRAME_INFO_H_
 
-#include "flutter/lib/ui/dart_wrapper.h"
 #include "flutter/lib/ui/painting/image.h"
+#include "lib/tonic/dart_wrappable.h"
 
 namespace tonic {
 class DartLibraryNatives;
@@ -15,7 +15,8 @@ class DartLibraryNatives;
 namespace blink {
 
 // A single animation frame.
-class FrameInfo final : public RefCountedDartWrappable<FrameInfo> {
+class FrameInfo final : public fxl::RefCountedThreadSafe<FrameInfo>,
+                        public tonic::DartWrappable {
   DEFINE_WRAPPERTYPEINFO();
 
  public:

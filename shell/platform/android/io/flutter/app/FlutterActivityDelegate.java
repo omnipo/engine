@@ -24,15 +24,23 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
+import android.widget.FrameLayout;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.PluginRegistry;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.plugin.platform.PlatformPlugin;
 import io.flutter.util.Preconditions;
 import io.flutter.view.FlutterMain;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterView;
+import io.flutter.view.TextureRegistry;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Class that performs the actual work of tying Android {@link Activity}
@@ -77,13 +85,6 @@ public final class FlutterActivityDelegate
     public interface ViewFactory {
         FlutterView createFlutterView(Context context);
         FlutterNativeView createFlutterNativeView();
-
-        /**
-         * Hook for subclasses to indicate that the {@code FlutterNativeView}
-         * returned by {@link #createFlutterNativeView()} should not be destroyed
-         * when this activity is destroyed.
-         */
-        boolean retainFlutterNativeView();
     }
 
     private final Activity activity;
@@ -171,11 +172,9 @@ public final class FlutterActivityDelegate
         if (loadIntent(activity.getIntent(), reuseIsolate)) {
             return;
         }
-        if (!flutterView.getFlutterNativeView().isApplicationRunning()) {
-          String appBundlePath = FlutterMain.findAppBundlePath(activity.getApplicationContext());
-          if (appBundlePath != null) {
+        String appBundlePath = FlutterMain.findAppBundlePath(activity.getApplicationContext());
+        if (appBundlePath != null) {
             flutterView.runFromBundle(appBundlePath, null, "main", reuseIsolate);
-          }
         }
     }
 
@@ -197,7 +196,8 @@ public final class FlutterActivityDelegate
         Application app = (Application) activity.getApplicationContext();
         if (app instanceof FlutterApplication) {
             FlutterApplication flutterApp = (FlutterApplication) app;
-            if (activity.equals(flutterApp.getCurrentActivity())) {
+            if (this.equals(flutterApp.getCurrentActivity())) {
+                Log.i(TAG, "onPause setting current activity to null");
                 flutterApp.setCurrentActivity(null);
             }
         }
@@ -218,7 +218,10 @@ public final class FlutterActivityDelegate
         Application app = (Application) activity.getApplicationContext();
         if (app instanceof FlutterApplication) {
             FlutterApplication flutterApp = (FlutterApplication) app;
+            Log.i(TAG, "onResume setting current activity to this");
             flutterApp.setCurrentActivity(activity);
+        } else {
+            Log.i(TAG, "onResume app wasn't a FlutterApplication!!");
         }
     }
 
@@ -239,14 +242,15 @@ public final class FlutterActivityDelegate
         Application app = (Application) activity.getApplicationContext();
         if (app instanceof FlutterApplication) {
             FlutterApplication flutterApp = (FlutterApplication) app;
-            if (activity.equals(flutterApp.getCurrentActivity())) {
+            if (this.equals(flutterApp.getCurrentActivity())) {
+                Log.i(TAG, "onDestroy setting current activity to null");
                 flutterApp.setCurrentActivity(null);
             }
         }
         if (flutterView != null) {
             final boolean detach =
                 flutterView.getPluginRegistry().onViewDestroy(flutterView.getFlutterNativeView());
-            if (detach || viewFactory.retainFlutterNativeView()) {
+            if (detach) {
                 // Detach, but do not destroy the FlutterView if a plugin
                 // expressed interest in its FlutterNativeView.
                 flutterView.detach();
@@ -314,9 +318,6 @@ public final class FlutterActivityDelegate
         if (intent.getBooleanExtra("trace-skia", false)) {
             args.add("--trace-skia");
         }
-        if (intent.getBooleanExtra("verbose-logging", false)) {
-            args.add("--verbose-logging");
-        }
         if (!args.isEmpty()) {
             String[] argsArray = new String[args.size()];
             return args.toArray(argsArray);
@@ -342,9 +343,7 @@ public final class FlutterActivityDelegate
             if (route != null) {
                 flutterView.setInitialRoute(route);
             }
-            if (!flutterView.getFlutterNativeView().isApplicationRunning()) {
-                flutterView.runFromBundle(appBundlePath, null, "main", reuseIsolate);
-            }
+            flutterView.runFromBundle(appBundlePath, intent.getStringExtra("snapshot"), "main", reuseIsolate);
             return true;
         }
 

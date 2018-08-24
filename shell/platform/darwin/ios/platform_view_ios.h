@@ -14,14 +14,14 @@
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterViewController.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterView.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/accessibility_bridge.h"
-#include "flutter/shell/platform/darwin/ios/headless_platform_view_ios.h"
+#include "flutter/shell/platform/darwin/ios/framework/Source/platform_message_router.h"
 #include "flutter/shell/platform/darwin/ios/ios_surface.h"
 #include "lib/fxl/functional/closure.h"
 #include "lib/fxl/macros.h"
 
 namespace shell {
 
-class PlatformViewIOS final : public HeadlessPlatformViewIOS {
+class PlatformViewIOS final : public PlatformView {
  public:
   explicit PlatformViewIOS(PlatformView::Delegate& delegate,
                            blink::TaskRunners task_runners,
@@ -29,6 +29,8 @@ class PlatformViewIOS final : public HeadlessPlatformViewIOS {
                            FlutterView* owner_view_);
 
   ~PlatformViewIOS() override;
+
+  PlatformMessageRouter& GetPlatformMessageRouter();
 
   FlutterViewController* GetOwnerViewController() const;
 
@@ -58,12 +60,11 @@ class PlatformViewIOS final : public HeadlessPlatformViewIOS {
   void SetSemanticsEnabled(bool enabled) override;
 
   // |shell::PlatformView|
-  void SetAssistiveTechnologyEnabled(bool enabled) override;
+  void HandlePlatformMessage(
+      fxl::RefPtr<blink::PlatformMessage> message) override;
 
   // |shell::PlatformView|
-  void UpdateSemantics(
-      blink::SemanticsNodeUpdates update,
-      blink::CustomAccessibilityActionUpdates actions) override;
+  void UpdateSemantics(blink::SemanticsNodeUpdates update) override;
 
   // |shell::PlatformView|
   std::unique_ptr<VsyncWaiter> CreateVSyncWaiter() override;

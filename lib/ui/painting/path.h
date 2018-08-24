@@ -5,12 +5,12 @@
 #ifndef FLUTTER_LIB_UI_PAINTING_PATH_H_
 #define FLUTTER_LIB_UI_PAINTING_PATH_H_
 
-#include "flutter/lib/ui/dart_wrapper.h"
 #include "flutter/lib/ui/painting/rrect.h"
+#include "lib/tonic/dart_wrappable.h"
+#include "lib/tonic/typed_data/float32_list.h"
+#include "lib/tonic/typed_data/float64_list.h"
 #include "third_party/skia/include/core/SkPath.h"
 #include "third_party/skia/include/pathops/SkPathOps.h"
-#include "third_party/tonic/typed_data/float32_list.h"
-#include "third_party/tonic/typed_data/float64_list.h"
 
 namespace tonic {
 class DartLibraryNatives;
@@ -18,7 +18,8 @@ class DartLibraryNatives;
 
 namespace blink {
 
-class CanvasPath : public RefCountedDartWrappable<CanvasPath> {
+class CanvasPath : public fxl::RefCountedThreadSafe<CanvasPath>,
+                   public tonic::DartWrappable {
   DEFINE_WRAPPERTYPEINFO();
   FRIEND_MAKE_REF_COUNTED(CanvasPath);
 
@@ -84,14 +85,14 @@ class CanvasPath : public RefCountedDartWrappable<CanvasPath> {
   void addPolygon(const tonic::Float32List& points, bool close);
   void addRRect(const RRect& rrect);
   void addPath(CanvasPath* path, double dx, double dy);
-  void addPathWithMatrix(CanvasPath* path,
-                         double dx,
-                         double dy,
+  void addPathWithMatrix(CanvasPath* path, 
+                         double dx, 
+                         double dy, 
                          tonic::Float64List& matrix4);
   void extendWithPath(CanvasPath* path, double dx, double dy);
-  void extendWithPathAndMatrix(CanvasPath* path,
-                               double dx,
-                               double dy,
+  void extendWithPathAndMatrix(CanvasPath* path, 
+                               double dx, 
+                               double dy, 
                                tonic::Float64List& matrix4);
   void close();
   void reset();

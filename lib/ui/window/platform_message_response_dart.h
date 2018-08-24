@@ -7,7 +7,7 @@
 
 #include "flutter/fml/message_loop.h"
 #include "flutter/lib/ui/window/platform_message_response.h"
-#include "third_party/tonic/dart_persistent_value.h"
+#include "lib/tonic/dart_persistent_value.h"
 
 namespace blink {
 
@@ -16,7 +16,7 @@ class PlatformMessageResponseDart : public PlatformMessageResponse {
 
  public:
   // Callable on any thread.
-  void Complete(std::unique_ptr<fml::Mapping> data) override;
+  void Complete(std::vector<uint8_t> data) override;
   void CompleteEmpty() override;
 
  protected:

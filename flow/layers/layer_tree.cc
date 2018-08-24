@@ -5,7 +5,7 @@
 #include "flutter/flow/layers/layer_tree.h"
 
 #include "flutter/flow/layers/layer.h"
-#include "flutter/fml/trace_event.h"
+#include "flutter/glue/trace_event.h"
 #include "third_party/skia/include/core/SkPictureRecorder.h"
 
 namespace flow {
@@ -37,7 +37,7 @@ void LayerTree::Preroll(CompositorContext::ScopedFrame& frame,
 
 #if defined(OS_FUCHSIA)
 void LayerTree::UpdateScene(SceneUpdateContext& context,
-                            scenic::ContainerNode& container) {
+                            scenic_lib::ContainerNode& container) {
   TRACE_EVENT0("flutter", "LayerTree::UpdateScene");
   const auto& metrics = context.metrics();
   SceneUpdateContext::Transform transform(context,                  // context

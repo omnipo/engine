@@ -8,18 +8,12 @@
 #include <map>
 
 #include "flutter/assets/asset_resolver.h"
-#include "flutter/fml/macros.h"
+#include "lib/fxl/macros.h"
+#include "lib/fxl/memory/ref_counted.h"
+#include "lib/zip/unique_unzipper.h"
 #include "third_party/zlib/contrib/minizip/unzip.h"
 
 namespace blink {
-
-struct UniqueUnzipperTraits {
-  static inline void* InvalidValue() { return nullptr; }
-  static inline bool IsValid(void* value) { return value != InvalidValue(); }
-  static void Free(void* file);
-};
-
-using UniqueUnzipper = fml::UniqueObject<void*, UniqueUnzipperTraits>;
 
 class ZipAssetStore final : public AssetResolver {
  public:
@@ -42,14 +36,14 @@ class ZipAssetStore final : public AssetResolver {
   bool IsValid() const override;
 
   // |blink::AssetResolver|
-  std::unique_ptr<fml::Mapping> GetAsMapping(
-      const std::string& asset_name) const override;
+  bool GetAsBuffer(const std::string& asset_name,
+                   std::vector<uint8_t>* data) const override;
 
   void BuildStatCache();
 
-  UniqueUnzipper CreateUnzipper() const;
+  zip::UniqueUnzipper CreateUnzipper() const;
 
-  FML_DISALLOW_COPY_AND_ASSIGN(ZipAssetStore);
+  FXL_DISALLOW_COPY_AND_ASSIGN(ZipAssetStore);
 };
 
 }  // namespace blink

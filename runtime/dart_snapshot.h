@@ -28,8 +28,6 @@ class DartSnapshot : public fxl::RefCountedThreadSafe<DartSnapshot> {
   static fxl::RefPtr<DartSnapshot> IsolateSnapshotFromSettings(
       const Settings& settings);
 
-  static fxl::RefPtr<DartSnapshot> Empty();
-
   bool IsValid() const;
 
   bool IsValidForAOT() const;
@@ -37,8 +35,6 @@ class DartSnapshot : public fxl::RefCountedThreadSafe<DartSnapshot> {
   const DartSnapshotBuffer* GetData() const;
 
   const DartSnapshotBuffer* GetInstructions() const;
-
-  const uint8_t* GetDataIfPresent() const;
 
   const uint8_t* GetInstructionsIfPresent() const;
 

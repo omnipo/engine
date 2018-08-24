@@ -4,7 +4,6 @@
 
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterTextInputPlugin.h"
 
-#include <Foundation/Foundation.h>
 #include <UIKit/UIKit.h>
 
 static const char _kTextAffinityDownstream[] = "TextAffinity.downstream";
@@ -30,59 +29,18 @@ static UIKeyboardType ToUIKeyboardType(NSDictionary* type) {
   return UIKeyboardTypeDefault;
 }
 
-static UITextAutocapitalizationType ToUITextAutoCapitalizationType(NSDictionary* type) {
-  NSString* textCapitalization = type[@"textCapitalization"];
-  if ([textCapitalization isEqualToString:@"TextCapitalization.characters"]) {
-    return UITextAutocapitalizationTypeAllCharacters;
-  } else if ([textCapitalization isEqualToString:@"TextCapitalization.sentences"]) {
-    return UITextAutocapitalizationTypeSentences;
-  } else if ([textCapitalization isEqualToString:@"TextCapitalization.words"]) {
-    return UITextAutocapitalizationTypeWords;
-  }
-  return UITextAutocapitalizationTypeNone;
+static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
+  if ([inputType isEqualToString:@"TextInputType.multiline"])
+    return UIReturnKeyDefault;
+  return UIReturnKeyDone;
 }
 
-static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
-  // Where did the term "unspecified" come from? iOS has a "default" and Android
-  // has "unspecified." These 2 terms seem to mean the same thing but we need
-  // to pick just one. "unspecified" was chosen because "default" is often a
-  // reserved word in languages with switch statements (dart, java, etc).
-  if ([inputType isEqualToString:@"TextInputAction.unspecified"])
-    return UIReturnKeyDefault;
-
-  if ([inputType isEqualToString:@"TextInputAction.done"])
-    return UIReturnKeyDone;
-
-  if ([inputType isEqualToString:@"TextInputAction.go"])
-    return UIReturnKeyGo;
-
-  if ([inputType isEqualToString:@"TextInputAction.send"])
-    return UIReturnKeySend;
-
-  if ([inputType isEqualToString:@"TextInputAction.search"])
-    return UIReturnKeySearch;
-
-  if ([inputType isEqualToString:@"TextInputAction.next"])
-    return UIReturnKeyNext;
-
-  if (@available(iOS 9.0, *))
-    if ([inputType isEqualToString:@"TextInputAction.continueAction"])
-      return UIReturnKeyContinue;
-
-  if ([inputType isEqualToString:@"TextInputAction.join"])
-    return UIReturnKeyJoin;
-
-  if ([inputType isEqualToString:@"TextInputAction.route"])
-    return UIReturnKeyRoute;
-
-  if ([inputType isEqualToString:@"TextInputAction.emergencyCall"])
-    return UIReturnKeyEmergencyCall;
-
-  if ([inputType isEqualToString:@"TextInputAction.newline"])
-    return UIReturnKeyDefault;
-
-  // Present default key if bad input type is given.
-  return UIReturnKeyDefault;
+static UITextAutocapitalizationType ToUITextAutocapitalizationType(NSString* inputType) {
+  if ([inputType isEqualToString:@"TextInputType.text"])
+    return UITextAutocapitalizationTypeSentences;
+  if ([inputType isEqualToString:@"TextInputType.multiline"])
+    return UITextAutocapitalizationTypeSentences;
+  return UITextAutocapitalizationTypeNone;
 }
 
 #pragma mark - FlutterTextPosition
@@ -137,7 +95,7 @@ static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
 
 @end
 
-@interface FlutterTextInputView : UIView <UITextInput>
+@interface FlutterTextInputView : UIView<UITextInput>
 
 // UITextInput
 @property(nonatomic, readonly) NSMutableString* text;
@@ -319,52 +277,14 @@ static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
 }
 
 - (BOOL)shouldChangeTextInRange:(UITextRange*)range replacementText:(NSString*)text {
-  if (self.returnKeyType == UIReturnKeyDefault && [text isEqualToString:@"\n"]) {
-    [_textInputDelegate performAction:FlutterTextInputActionNewline withClient:_textInputClient];
-    return YES;
-  }
-
-  if ([text isEqualToString:@"\n"]) {
-    FlutterTextInputAction action;
-    switch (self.returnKeyType) {
-      case UIReturnKeyDefault:
-        action = FlutterTextInputActionUnspecified;
-        break;
-      case UIReturnKeyDone:
-        action = FlutterTextInputActionDone;
-        break;
-      case UIReturnKeyGo:
-        action = FlutterTextInputActionGo;
-        break;
-      case UIReturnKeySend:
-        action = FlutterTextInputActionSend;
-        break;
-      case UIReturnKeySearch:
-      case UIReturnKeyGoogle:
-      case UIReturnKeyYahoo:
-        action = FlutterTextInputActionSearch;
-        break;
-      case UIReturnKeyNext:
-        action = FlutterTextInputActionNext;
-        break;
-      case UIReturnKeyContinue:
-        action = FlutterTextInputActionContinue;
-        break;
-      case UIReturnKeyJoin:
-        action = FlutterTextInputActionJoin;
-        break;
-      case UIReturnKeyRoute:
-        action = FlutterTextInputActionRoute;
-        break;
-      case UIReturnKeyEmergencyCall:
-        action = FlutterTextInputActionEmergencyCall;
-        break;
-    }
-
-    [_textInputDelegate performAction:action withClient:_textInputClient];
+  if (self.returnKeyType == UIReturnKeyDone && [text isEqualToString:@"\n"]) {
+    [self resignFirstResponder];
+    [self removeFromSuperview];
+    [_textInputDelegate performAction:FlutterTextInputActionDone withClient:_textInputClient];
     return NO;
   }
-
+  if (self.returnKeyType == UIReturnKeyDefault && [text isEqualToString:@"\n"])
+    [_textInputDelegate performAction:FlutterTextInputActionNewline withClient:_textInputClient];
   return YES;
 }
 
@@ -691,17 +611,9 @@ static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
 
 - (void)setTextInputClient:(int)client withConfiguration:(NSDictionary*)configuration {
   NSDictionary* inputType = configuration[@"inputType"];
-  NSString* keyboardAppearance = configuration[@"keyboardAppearance"];
   _view.keyboardType = ToUIKeyboardType(inputType);
-  _view.returnKeyType = ToUIReturnKeyType(configuration[@"inputAction"]);
-  _view.autocapitalizationType = ToUITextAutoCapitalizationType(configuration);
-  if ([keyboardAppearance isEqualToString:@"Brightness.dark"]) {
-    _view.keyboardAppearance = UIKeyboardAppearanceDark;
-  } else if ([keyboardAppearance isEqualToString:@"Brightness.light"]) {
-    _view.keyboardAppearance = UIKeyboardAppearanceLight;
-  } else {
-    _view.keyboardAppearance = UIKeyboardAppearanceDefault;
-  }
+  _view.returnKeyType = ToUIReturnKeyType(inputType[@"name"]);
+  _view.autocapitalizationType = ToUITextAutocapitalizationType(inputType[@"name"]);
   _view.secureTextEntry = [configuration[@"obscureText"] boolValue];
   NSString* autocorrect = configuration[@"autocorrect"];
   _view.autocorrectionType = autocorrect && ![autocorrect boolValue]

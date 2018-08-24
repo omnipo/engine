@@ -5,7 +5,9 @@
 #include "flutter/assets/asset_manager.h"
 
 #include "flutter/assets/directory_asset_bundle.h"
-#include "flutter/fml/trace_event.h"
+#include "flutter/assets/zip_asset_store.h"
+#include "flutter/glue/trace_event.h"
+#include "lib/fxl/files/path.h"
 
 #ifdef ERROR
 #undef ERROR
@@ -34,20 +36,19 @@ void AssetManager::PushBack(std::unique_ptr<AssetResolver> resolver) {
 }
 
 // |blink::AssetResolver|
-std::unique_ptr<fml::Mapping> AssetManager::GetAsMapping(
-    const std::string& asset_name) const {
+bool AssetManager::GetAsBuffer(const std::string& asset_name,
+                               std::vector<uint8_t>* data) const {
   if (asset_name.size() == 0) {
-    return nullptr;
+    return false;
   }
-  TRACE_EVENT0("flutter", "AssetManager::GetAsMapping");
+  TRACE_EVENT0("flutter", "AssetManager::GetAsBuffer");
   for (const auto& resolver : resolvers_) {
-    auto mapping = resolver->GetAsMapping(asset_name);
-    if (mapping != nullptr) {
-      return mapping;
+    if (resolver->GetAsBuffer(asset_name, data)) {
+      return true;
     }
   }
-  FML_DLOG(WARNING) << "Could not find asset: " << asset_name;
-  return nullptr;
+  FXL_DLOG(WARNING) << "Could not find asset: " << asset_name;
+  return false;
 }
 
 // |blink::AssetResolver|

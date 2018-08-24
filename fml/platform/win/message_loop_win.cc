@@ -4,13 +4,11 @@
 
 #include "flutter/fml/platform/win/message_loop_win.h"
 
-#include "flutter/fml/logging.h"
-
 namespace fml {
 
 MessageLoopWin::MessageLoopWin()
     : timer_(CreateWaitableTimer(NULL, FALSE, NULL)) {
-  FML_CHECK(timer_.is_valid());
+  FXL_CHECK(timer_.is_valid());
 }
 
 MessageLoopWin::~MessageLoopWin() = default;
@@ -19,7 +17,7 @@ void MessageLoopWin::Run() {
   running_ = true;
 
   while (running_) {
-    FML_CHECK(WaitForSingleObject(timer_.get(), INFINITE) == 0);
+    FXL_CHECK(WaitForSingleObject(timer_.get(), INFINITE) == 0);
     RunExpiredTasksNow();
   }
 }
@@ -35,7 +33,7 @@ void MessageLoopWin::WakeUp(fxl::TimePoint time_point) {
   if (time_point > now) {
     due_time.QuadPart = (time_point - now).ToNanoseconds() / -100;
   }
-  FML_CHECK(SetWaitableTimer(timer_.get(), &due_time, 0, NULL, NULL, FALSE));
+  FXL_CHECK(SetWaitableTimer(timer_.get(), &due_time, 0, NULL, NULL, FALSE));
 }
 
 }  // namespace fml

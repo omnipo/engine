@@ -3,18 +3,8 @@ Contributing to the Flutter engine
 
 [![Build Status](https://travis-ci.org/flutter/engine.svg)](https://travis-ci.org/flutter/engine)
 
-_See also: [Flutter's code of conduct](https://flutter.io/design-principles/#code-of-conduct)_
-
-Welcome
--------
-
-This guide introduces you to building and contributing to the Flutter engine.
-For an introduction to contributing to the Flutter framework, see [the equivalent
-document in the framework's repository](https://github.com/flutter/flutter/blob/master/CONTRIBUTING.md).
-
-
 I built it before. Remind me, how do I do it again?
----------------------------------------------------
+--------------------
 
 If you have previously built the engine (i.e. your environment is already setup) and just want a refresher, then feel free to skip to one of the following sections:
 
@@ -45,7 +35,7 @@ Getting the code and configuring your environment
 -------------------------------------------------
 
  * Ensure all the dependencies described in the previous section, in particular git, ssh, depot_tools, python, and curl, are installed.
- * Fork `https://github.com/flutter/engine` into your own GitHub account. If you already have a fork, and are now installing a development environment on a new machine, make sure you've updated your fork so that you don't use stale configuration options from long ago. Do not use `git clone` to check out this repository; `gclient` will do it for you.
+ * Fork `https://github.com/flutter/engine` into your own GitHub account. If you already have a fork, and are now installing a development environment on a new machine, make sure you've updated your fork so that you don't use stale configuration options from long ago.
  * If you haven't configured your machine with an SSH key that's known to github then
    follow the directions here: https://help.github.com/articles/generating-ssh-keys/.
  * Create an empty directory for your copy of the repository. For best results, call it `engine`: some of the tools assume this name when working across repositories. (They can be configured to use other names too, so this isn't a strict requirement.)
@@ -66,7 +56,7 @@ solutions = [
 ```
 
  * `cd engine` (Change to the directory in which you put the `.gclient` file.)
- * `gclient sync` This will fetch all the source code that Flutter depends on. Avoid interrupting this script, it can leave your repository in an inconsistent state that is tedious to clean up. (This step automatically runs `git clone`, among other things.)
+ * `gclient sync` This will fetch all the source code that Flutter depends on. Avoid interrupting this script, it can leave your repository in an inconsistent state that is tedious to clean up.
  * `cd src/flutter` (Change to the `flutter` directory of the `src` directory that `gclient sync` created in your `engine` directory.)
  * `git remote add upstream git@github.com:flutter/engine.git` (So that you fetch from the master `flutter/engine` repository, not your clone, when running `git fetch` et al.)
  * `cd ..` (Return to the `src` directory that `gclient sync` created in your `engine` directory.)
@@ -103,21 +93,11 @@ Depending on the platform you choose below, you will need to replace `host_debug
 
 Run the following steps, from the `src` directory created in the steps above:
 
-* Update the Flutter Engine repo.
-    * `git pull upstream master` in `src/flutter`
-* Update your dependencies
-    * `gclient sync`
-* Prepare your build files
-    * `./flutter/tools/gn --android --unoptimized` for device-side executables
-    * `./flutter/tools/gn --android --android-cpu x86 --unoptimized` for x86 emulators
-    * `./flutter/tools/gn --android --android-cpu x64 --unoptimized` for x64 emulators
-    * `./flutter/tools/gn --unoptimized` for host-side executables
-* Build your executables
-    * `ninja -C out/android_debug_unopt` for device-side executables
-    * `ninja -C out/android_debug_unopt_x86` for x86 emulators
-    * `ninja -C out/android_debug_unopt_x64` for x64 emulators
-    * `ninja -C out/host_debug_unopt` for host-side executables
-    * These commands can be combined. Ex: `ninja -C out/android_debug_unopt && ninja -C out/host_debug_unopt`
+* `git pull upstream master` in `src/flutter` to update the Flutter Engine repo.
+* `gclient sync` to update your dependencies.
+* `./flutter/tools/gn --android --unoptimized` to prepare your build files for device-side executables (or `--android --android-cpu [x86|x64] --unoptimized` for x86/x64 emulators) .
+* `./flutter/tools/gn --unoptimized` to prepare the build files for host-side executables.
+* `ninja -C out/android_debug_unopt && ninja -C out/host_debug_unopt` to build all executables (use `out/android_debug_unopt_x64` for x86/x64 emulators).
     * For Googlers, consider also using the option `-j 1000` to parallelize the build using Goma.
 
 This builds a debug-enabled ("unoptimized") binary configured to run Dart in

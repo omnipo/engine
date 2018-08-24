@@ -9,7 +9,6 @@
 #include <utility>
 
 #include "flutter/assets/directory_asset_bundle.h"
-#include "flutter/assets/zip_asset_store.h"
 #include "flutter/common/settings.h"
 #include "flutter/fml/file.h"
 #include "flutter/fml/platform/android/jni_util.h"
@@ -77,16 +76,6 @@ void FlutterViewUpdateSemantics(JNIEnv* env,
                                 jobject buffer,
                                 jobjectArray strings) {
   env->CallVoidMethod(obj, g_update_semantics_method, buffer, strings);
-  FXL_CHECK(CheckException(env));
-}
-
-static jmethodID g_update_custom_accessibility_actions_method = nullptr;
-void FlutterViewUpdateCustomAccessibilityActions(JNIEnv* env,
-                                                 jobject obj,
-                                                 jobject buffer,
-                                                 jobjectArray strings) {
-  env->CallVoidMethod(obj, g_update_custom_accessibility_actions_method, buffer,
-                      strings);
   FXL_CHECK(CheckException(env));
 }
 
@@ -178,16 +167,16 @@ static void SurfaceDestroyed(JNIEnv* env, jobject jcaller, jlong shell_holder) {
 std::unique_ptr<IsolateConfiguration> CreateIsolateConfiguration(
     const blink::AssetManager& asset_manager) {
   if (blink::DartVM::IsRunningPrecompiledCode()) {
-    return IsolateConfiguration::CreateForAppSnapshot();
+    return IsolateConfiguration::CreateForPrecompiledCode();
   }
 
   const auto configuration_from_blob =
       [&asset_manager](const std::string& snapshot_name)
       -> std::unique_ptr<IsolateConfiguration> {
-    std::unique_ptr<fml::Mapping> blob =
-        asset_manager.GetAsMapping(snapshot_name);
-    if (blob) {
-      return IsolateConfiguration::CreateForSnapshot(std::move(blob));
+    std::vector<uint8_t> blob;
+    if (asset_manager.GetAsBuffer(snapshot_name, &blob)) {
+      return IsolateConfiguration::CreateForSnapshot(
+          std::make_unique<fml::DataMapping>(std::move(blob)));
     }
     return nullptr;
   };
@@ -200,8 +189,7 @@ std::unique_ptr<IsolateConfiguration> CreateIsolateConfiguration(
     return script;
   }
 
-  // This happens when starting isolate directly from CoreJIT snapshot.
-  return IsolateConfiguration::CreateForAppSnapshot();
+  return nullptr;
 }
 
 static void RunBundleAndSnapshot(
@@ -213,21 +201,15 @@ static void RunBundleAndSnapshot(
     jstring jEntrypoint,
     jboolean /* reuse runtime controller (unused) */,
     jobject jAssetManager) {
-  auto asset_manager = fml::MakeRefCounted<blink::AssetManager>();
+  auto asset_manager = fxl::MakeRefCounted<blink::AssetManager>();
 
   const auto bundlepath = fml::jni::JavaStringToString(env, jbundlepath);
 
   if (bundlepath.size() > 0) {
     // If we got a bundle path, attempt to use that as a directory asset
-    // bundle or a zip asset bundle.
-    const auto file_ext_index = bundlepath.rfind(".");
-    if (bundlepath.substr(file_ext_index) == ".zip") {
-      asset_manager->PushBack(
-          std::make_unique<blink::ZipAssetStore>(bundlepath));
-    } else {
-      asset_manager->PushBack(std::make_unique<blink::DirectoryAssetBundle>(
-          fml::OpenFile(bundlepath.c_str(), fml::OpenPermission::kRead, true)));
-    }
+    // bundle.
+    asset_manager->PushBack(std::make_unique<blink::DirectoryAssetBundle>(
+        fml::OpenFile(bundlepath.c_str(), fml::OpenPermission::kRead, true)));
 
     // Use the last path component of the bundle path to determine the
     // directory in the APK assets.
@@ -265,6 +247,69 @@ static void RunBundleAndSnapshot(
   ANDROID_SHELL_HOLDER->Launch(std::move(config));
 }
 
+static void RunBundleAndSource(JNIEnv* env,
+                               jobject jcaller,
+                               jlong shell_holder,
+                               jstring jBundlePath,
+                               jstring main,
+                               jstring packages) {
+  auto asset_manager = fxl::MakeRefCounted<blink::AssetManager>();
+
+  const auto bundlepath = fml::jni::JavaStringToString(env, jBundlePath);
+
+  if (bundlepath.size() > 0) {
+    auto directory =
+        fml::OpenFile(bundlepath.c_str(), fml::OpenPermission::kRead, true);
+    asset_manager->PushBack(
+        std::make_unique<blink::DirectoryAssetBundle>(std::move(directory)));
+  }
+
+  auto main_file_path = fml::jni::JavaStringToString(env, main);
+  auto packages_file_path = fml::jni::JavaStringToString(env, packages);
+
+  auto config =
+      IsolateConfiguration::CreateForSource(main_file_path, packages_file_path);
+
+  if (!config) {
+    return;
+  }
+
+  RunConfiguration run_configuration(std::move(config),
+                                     std::move(asset_manager));
+
+  ANDROID_SHELL_HOLDER->Launch(std::move(run_configuration));
+}
+
+void SetAssetBundlePathOnUI(JNIEnv* env,
+                            jobject jcaller,
+                            jlong shell_holder,
+                            jstring jBundlePath) {
+  const auto bundlepath = fml::jni::JavaStringToString(env, jBundlePath);
+
+  if (bundlepath.size() == 0) {
+    return;
+  }
+
+  auto directory =
+      fml::OpenFile(bundlepath.c_str(), fml::OpenPermission::kRead, true);
+
+  if (!directory.is_valid()) {
+    return;
+  }
+
+  std::unique_ptr<blink::AssetResolver> directory_asset_bundle =
+      std::make_unique<blink::DirectoryAssetBundle>(std::move(directory));
+
+  if (!directory_asset_bundle->IsValid()) {
+    return;
+  }
+
+  auto asset_manager = fxl::MakeRefCounted<blink::AssetManager>();
+  asset_manager->PushBack(std::move(directory_asset_bundle));
+
+  ANDROID_SHELL_HOLDER->UpdateAssetManager(std::move(asset_manager));
+}
+
 static void SetViewportMetrics(JNIEnv* env,
                                jobject jcaller,
                                jlong shell_holder,
@@ -280,18 +325,17 @@ static void SetViewportMetrics(JNIEnv* env,
                                jint physicalViewInsetBottom,
                                jint physicalViewInsetLeft) {
   const blink::ViewportMetrics metrics = {
-      .device_pixel_ratio = static_cast<double>(devicePixelRatio),
-      .physical_width = static_cast<double>(physicalWidth),
-      .physical_height = static_cast<double>(physicalHeight),
-      .physical_padding_top = static_cast<double>(physicalPaddingTop),
-      .physical_padding_right = static_cast<double>(physicalPaddingRight),
-      .physical_padding_bottom = static_cast<double>(physicalPaddingBottom),
-      .physical_padding_left = static_cast<double>(physicalPaddingLeft),
-      .physical_view_inset_top = static_cast<double>(physicalViewInsetTop),
-      .physical_view_inset_right = static_cast<double>(physicalViewInsetRight),
-      .physical_view_inset_bottom =
-          static_cast<double>(physicalViewInsetBottom),
-      .physical_view_inset_left = static_cast<double>(physicalViewInsetLeft),
+      .device_pixel_ratio = devicePixelRatio,
+      .physical_width = physicalWidth,
+      .physical_height = physicalHeight,
+      .physical_padding_top = physicalPaddingTop,
+      .physical_padding_right = physicalPaddingRight,
+      .physical_padding_bottom = physicalPaddingBottom,
+      .physical_padding_left = physicalPaddingLeft,
+      .physical_view_inset_top = physicalViewInsetTop,
+      .physical_view_inset_right = physicalViewInsetRight,
+      .physical_view_inset_bottom = physicalViewInsetBottom,
+      .physical_view_inset_left = physicalViewInsetLeft,
   };
 
   ANDROID_SHELL_HOLDER->SetViewportMetrics(metrics);
@@ -431,14 +475,6 @@ static void SetSemanticsEnabled(JNIEnv* env,
   ANDROID_SHELL_HOLDER->GetPlatformView()->SetSemanticsEnabled(enabled);
 }
 
-static void SetAssistiveTechnologyEnabled(JNIEnv* env,
-                                          jobject jcaller,
-                                          jlong shell_holder,
-                                          jboolean enabled) {
-  ANDROID_SHELL_HOLDER->GetPlatformView()->SetAssistiveTechnologyEnabled(
-      enabled);
-}
-
 static jboolean GetIsSoftwareRendering(JNIEnv* env, jobject jcaller) {
   return FlutterMain::Get().GetSettings().enable_software_rendering;
 }
@@ -535,6 +571,17 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .fnPtr = reinterpret_cast<void*>(&shell::RunBundleAndSnapshot),
       },
       {
+          .name = "nativeRunBundleAndSource",
+          .signature =
+              "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
+          .fnPtr = reinterpret_cast<void*>(&shell::RunBundleAndSource),
+      },
+      {
+          .name = "nativeSetAssetBundlePathOnUI",
+          .signature = "(JLjava/lang/String;)V",
+          .fnPtr = reinterpret_cast<void*>(&shell::SetAssetBundlePathOnUI),
+      },
+      {
           .name = "nativeDetach",
           .signature = "(J)V",
           .fnPtr = reinterpret_cast<void*>(&shell::Detach),
@@ -611,12 +658,6 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
           .fnPtr = reinterpret_cast<void*>(&shell::SetSemanticsEnabled),
       },
       {
-          .name = "nativeSetAssistiveTechnologyEnabled",
-          .signature = "(JZ)V",
-          .fnPtr =
-              reinterpret_cast<void*>(&shell::SetAssistiveTechnologyEnabled),
-      },
-      {
           .name = "nativeGetIsSoftwareRenderingEnabled",
           .signature = "()Z",
           .fnPtr = reinterpret_cast<void*>(&shell::GetIsSoftwareRendering),
@@ -670,14 +711,6 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
                        "(Ljava/nio/ByteBuffer;[Ljava/lang/String;)V");
 
   if (g_update_semantics_method == nullptr) {
-    return false;
-  }
-
-  g_update_custom_accessibility_actions_method = env->GetMethodID(
-      g_flutter_native_view_class->obj(), "updateCustomAccessibilityActions",
-      "(Ljava/nio/ByteBuffer;[Ljava/lang/String;)V");
-
-  if (g_update_custom_accessibility_actions_method == nullptr) {
     return false;
   }
 

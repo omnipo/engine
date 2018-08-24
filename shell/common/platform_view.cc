@@ -6,11 +6,11 @@
 
 #include <utility>
 
-#include "flutter/fml/synchronization/waitable_event.h"
 #include "flutter/shell/common/rasterizer.h"
 #include "flutter/shell/common/shell.h"
 #include "flutter/shell/common/vsync_waiter_fallback.h"
 #include "lib/fxl/functional/make_copyable.h"
+#include "lib/fxl/synchronization/waitable_event.h"
 #include "third_party/skia/include/gpu/GrContextOptions.h"
 #include "third_party/skia/include/gpu/gl/GrGLInterface.h"
 
@@ -52,10 +52,6 @@ void PlatformView::SetSemanticsEnabled(bool enabled) {
   delegate_.OnPlatformViewSetSemanticsEnabled(*this, enabled);
 }
 
-void PlatformView::SetAssistiveTechnologyEnabled(bool enabled) {
-  delegate_.OnPlatformViewSetAssistiveTechnologyEnabled(*this, enabled);
-}
-
 void PlatformView::SetViewportMetrics(const blink::ViewportMetrics& metrics) {
   delegate_.OnPlatformViewSetViewportMetrics(*this, metrics);
 }
@@ -78,9 +74,7 @@ fml::WeakPtr<PlatformView> PlatformView::GetWeakPtr() const {
   return weak_factory_.GetWeakPtr();
 }
 
-void PlatformView::UpdateSemantics(
-    blink::SemanticsNodeUpdates update,
-    blink::CustomAccessibilityActionUpdates actions) {}
+void PlatformView::UpdateSemantics(blink::SemanticsNodeUpdates update) {}
 
 void PlatformView::HandlePlatformMessage(
     fxl::RefPtr<blink::PlatformMessage> message) {

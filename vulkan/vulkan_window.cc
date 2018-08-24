@@ -13,6 +13,7 @@
 #include "flutter/vulkan/vulkan_surface.h"
 #include "flutter/vulkan/vulkan_swapchain.h"
 #include "third_party/skia/include/gpu/GrContext.h"
+#include "third_party/skia/include/gpu/vk/GrVkInterface.h"
 
 namespace vulkan {
 
@@ -96,9 +97,9 @@ GrContext* VulkanWindow::GetSkiaGrContext() {
 }
 
 bool VulkanWindow::CreateSkiaGrContext() {
-  GrVkBackendContext backend_context;
+  auto backend_context = CreateSkiaBackendContext();
 
-  if (!CreateSkiaBackendContext(&backend_context)) {
+  if (backend_context == nullptr) {
     return false;
   }
 
@@ -110,23 +111,30 @@ bool VulkanWindow::CreateSkiaGrContext() {
 
   context->setResourceCacheLimits(kGrCacheMaxCount, kGrCacheMaxByteSize);
 
+  skia_vk_backend_context_ = backend_context;
   skia_gr_context_ = context;
 
   return true;
 }
 
-bool VulkanWindow::CreateSkiaBackendContext(GrVkBackendContext* context) {
-  auto getProc = vk->CreateSkiaGetProc();
+sk_sp<GrVkBackendContext> VulkanWindow::CreateSkiaBackendContext() {
+  auto interface = vk->CreateSkiaInterface();
 
-  if (getProc == nullptr) {
-    return false;
+  if (interface == nullptr || !interface->validate(0)) {
+    return nullptr;
   }
 
   uint32_t skia_features = 0;
   if (!logical_device_->GetPhysicalDeviceFeaturesSkia(&skia_features)) {
-    return false;
+    return nullptr;
   }
 
+  // The Skia backend context takes ownership of the device and the instance.
+  // Make sure we release our ownership now.
+  logical_device_->ReleaseDeviceOwnership();
+  application_->ReleaseInstanceOwnership();
+
+  auto context = sk_make_sp<GrVkBackendContext>();
   context->fInstance = application_->GetInstance();
   context->fPhysicalDevice = logical_device_->GetPhysicalDeviceHandle();
   context->fDevice = logical_device_->GetHandle();
@@ -137,9 +145,8 @@ bool VulkanWindow::CreateSkiaBackendContext(GrVkBackendContext* context) {
                          kKHR_swapchain_GrVkExtensionFlag |
                          surface_->GetNativeSurface().GetSkiaExtensionName();
   context->fFeatures = skia_features;
-  context->fGetProc = std::move(getProc);
-  context->fOwnsInstanceAndDevice = false;
-  return true;
+  context->fInterface.reset(interface.release());
+  return context;
 }
 
 sk_sp<SkSurface> VulkanWindow::AcquireSurface() {

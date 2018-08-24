@@ -28,7 +28,7 @@ class Animator final {
 
     virtual void OnAnimatorDraw(
         const Animator& animator,
-        fml::RefPtr<flutter::Pipeline<flow::LayerTree>> pipeline) = 0;
+        fxl::RefPtr<flutter::Pipeline<flow::LayerTree>> pipeline) = 0;
 
     virtual void OnAnimatorDrawLastLayerTree(const Animator& animator) = 0;
   };
@@ -64,11 +64,11 @@ class Animator final {
 
   Delegate& delegate_;
   blink::TaskRunners task_runners_;
-  std::shared_ptr<VsyncWaiter> waiter_;
+  std::unique_ptr<VsyncWaiter> waiter_;
 
   fxl::TimePoint last_begin_frame_time_;
   int64_t dart_frame_deadline_;
-  fml::RefPtr<LayerTreePipeline> layer_tree_pipeline_;
+  fxl::RefPtr<LayerTreePipeline> layer_tree_pipeline_;
   flutter::Semaphore pending_frame_semaphore_;
   LayerTreePipeline::ProducerContinuation producer_continuation_;
   int64_t frame_number_;

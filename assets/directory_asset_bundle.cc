@@ -6,9 +6,9 @@
 
 #include <utility>
 
-#include "flutter/fml/eintr_wrapper.h"
 #include "flutter/fml/file.h"
 #include "flutter/fml/mapping.h"
+#include "lib/fxl/files/eintr_wrapper.h"
 
 namespace blink {
 
@@ -28,23 +28,29 @@ bool DirectoryAssetBundle::IsValid() const {
 }
 
 // |blink::AssetResolver|
-std::unique_ptr<fml::Mapping> DirectoryAssetBundle::GetAsMapping(
-    const std::string& asset_name) const {
-  if (!is_valid_) {
-    FML_DLOG(WARNING) << "Asset bundle was not valid.";
-    return nullptr;
+bool DirectoryAssetBundle::GetAsBuffer(const std::string& asset_name,
+                                       std::vector<uint8_t>* data) const {
+  if (data == nullptr) {
+    return false;
   }
 
-  auto mapping = std::make_unique<fml::FileMapping>(
+  if (!is_valid_) {
+    FXL_DLOG(WARNING) << "Asset bundle was not valid.";
+    return false;
+  }
+
+  fml::FileMapping mapping(
       fml::OpenFile(descriptor_, asset_name.c_str(), fml::OpenPermission::kRead,
                     false /* directory */),
       false /* executable */);
 
-  if (mapping->GetMapping() == nullptr) {
-    return nullptr;
+  if (mapping.GetMapping() == nullptr) {
+    return false;
   }
 
-  return mapping;
+  data->resize(mapping.GetSize());
+  memmove(data->data(), mapping.GetMapping(), mapping.GetSize());
+  return true;
 }
 
 }  // namespace blink

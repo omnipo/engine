@@ -7,7 +7,9 @@ import 'dart:io' as system;
 
 import 'cache.dart';
 import 'patterns.dart';
-import 'limits.dart';
+
+// TODO(ianh): vastly increase this before checkin
+const int kMaxSize = 5 * 1024; // only look for copyrights and licenses at the top of the file
 
 class FetchedContentsOf extends Key { FetchedContentsOf(dynamic value) : super(value); }
 
@@ -17,17 +19,13 @@ LicenseType convertLicenseNameToType(String name) {
   switch (name) {
     case 'Apache':
     case 'apache-license-2.0':
-    case 'LICENSE-APACHE-2.0.txt':
       return LicenseType.apache;
     case 'BSD':
     case 'BSD.txt':
       return LicenseType.bsd;
     case 'LICENSE-LGPL-2':
     case 'LICENSE-LGPL-2.1':
-    case 'COPYING-LGPL-2.1':
       return LicenseType.lgpl;
-    case 'COPYING-GPL-3':
-      return LicenseType.gpl;
     case 'FTL.TXT':
       return LicenseType.freetype;
     case 'zlib.h':
@@ -40,9 +38,6 @@ LicenseType convertLicenseNameToType(String name) {
       return LicenseType.apsl;
     case 'OpenSSL':
       return LicenseType.openssl;
-    case 'LICENSE.MPLv2':
-    case 'COPYING-MPL-1.1':
-      return LicenseType.mpl;
     // common file names that don't say what the type is
     case 'COPYING':
     case 'COPYING.txt':
@@ -53,12 +48,10 @@ LicenseType convertLicenseNameToType(String name) {
     case 'license.html':
     case 'LICENSE.txt':
     case 'LICENSE.TXT':
-    case 'LICENSE.cssmin':
     case 'NOTICE':
     case 'NOTICE.txt':
     case 'Copyright':
     case 'copyright':
-    case 'license.txt':
       return LicenseType.unknown;
     // particularly weird file names
     case 'LICENSE-APPLE':
@@ -68,8 +61,6 @@ LicenseType convertLicenseNameToType(String name) {
     case 'javolution.license.txt':
     case 'libyaml-license.txt':
     case 'license.patch':
-    case 'license.rst':
-    case 'LICENSE.rst':
     case 'mh-bsd-gcc':
     case 'pivotal.labs.license.txt':
       return LicenseType.unknown;
@@ -114,7 +105,7 @@ abstract class License implements Comparable<License> {
       if (result is! UniqueLicense || result.type != type)
         throw 'tried to add a UniqueLicense $type, but it was a duplicate of a ${result.runtimeType} ${result.type}';
       return true;
-    }());
+    });
     return result;
   }
 
@@ -126,7 +117,7 @@ abstract class License implements Comparable<License> {
       if (result is! TemplateLicense || result.type != type)
         throw 'tried to add a TemplateLicense $type, but it was a duplicate of a ${result.runtimeType} ${result.type}';
       return true;
-    }());
+    });
     return result;
   }
 
@@ -138,7 +129,7 @@ abstract class License implements Comparable<License> {
       if (result is! MessageLicense || result.type != type)
         throw 'tried to add a MessageLicense $type, but it was a duplicate of a ${result.runtimeType} ${result.type}';
       return true;
-    }());
+    });
     return result;
   }
 
@@ -148,7 +139,7 @@ abstract class License implements Comparable<License> {
       if (result is! BlankLicense || result.type != type)
         throw 'tried to add a BlankLicense $type, but it was a duplicate of a ${result.runtimeType} ${result.type}';
       return true;
-    }());
+    });
     return result;
   }
 
@@ -310,7 +301,7 @@ abstract class License implements Comparable<License> {
         throw 'incorrectly created a $runtimeType for a $type';
       }
       return true;
-    }());
+    });
     final LicenseType detectedType = convertBodyToType(body);
     if (detectedType != LicenseType.unknown && detectedType != type && !yesWeKnowWhatItLooksLikeButItIsNot)
       throw 'Created a license of type $type but it looks like $detectedType\.';
@@ -789,7 +780,7 @@ Iterable<_LicenseMatch> _tryReferenceByType(String body, RegExp pattern, License
       String copyrights = _reformat(match.getCopyrights());
       assert(needsCopyright && copyrights.isNotEmpty || !needsCopyright && copyrights.isEmpty);
       return true;
-    }());
+    });
     if (needsCopyright)
       yield* _expand(template, match.getCopyrights(), match.getEntireLicense(), match.start, match.end, debug: '_tryReferenceByType', origin: origin);
     else

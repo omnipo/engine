@@ -5,9 +5,9 @@
 #include "flutter/lib/ui/text/text_box.h"
 
 #include "lib/fxl/logging.h"
-#include "third_party/tonic/dart_class_library.h"
-#include "third_party/tonic/dart_state.h"
-#include "third_party/tonic/logging/dart_error.h"
+#include "lib/tonic/dart_class_library.h"
+#include "lib/tonic/dart_state.h"
+#include "lib/tonic/logging/dart_error.h"
 
 using namespace blink;
 
@@ -26,12 +26,14 @@ Dart_Handle GetTextBoxType() {
 }  // anonymous namespace
 
 Dart_Handle DartConverter<TextBox>::ToDart(const TextBox& val) {
+  if (val.is_null)
+    return Dart_Null();
   constexpr int argc = 5;
   Dart_Handle argv[argc] = {
-      tonic::ToDart(val.rect.fLeft),
-      tonic::ToDart(val.rect.fTop),
-      tonic::ToDart(val.rect.fRight),
-      tonic::ToDart(val.rect.fBottom),
+      tonic::ToDart(val.sk_rect.fLeft),
+      tonic::ToDart(val.sk_rect.fTop),
+      tonic::ToDart(val.sk_rect.fRight),
+      tonic::ToDart(val.sk_rect.fBottom),
       tonic::ToDart(static_cast<int>(val.direction)),
   };
   return Dart_New(GetTextBoxType(), tonic::ToDart("_"), argc, argv);

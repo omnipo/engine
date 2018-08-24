@@ -7,15 +7,13 @@
 #include <CoreFoundation/CFRunLoop.h>
 #include <Foundation/Foundation.h>
 
-#include "flutter/fml/logging.h"
-
 namespace fml {
 
 static constexpr CFTimeInterval kDistantFuture = 1.0e10;
 
 MessageLoopDarwin::MessageLoopDarwin()
     : running_(false), loop_((CFRunLoopRef)CFRetain(CFRunLoopGetCurrent())) {
-  FML_DCHECK(loop_ != nullptr);
+  FXL_DCHECK(loop_ != nullptr);
 
   // Setup the delayed wake source.
   CFRunLoopTimerContext timer_context = {
@@ -27,7 +25,7 @@ MessageLoopDarwin::MessageLoopDarwin()
                            reinterpret_cast<CFRunLoopTimerCallBack>(&MessageLoopDarwin::OnTimerFire)
                            /* callout */,
                            &timer_context /* context */));
-  FML_DCHECK(delayed_wake_timer_ != nullptr);
+  FXL_DCHECK(delayed_wake_timer_ != nullptr);
   CFRunLoopAddTimer(loop_, delayed_wake_timer_, kCFRunLoopCommonModes);
 }
 
@@ -37,7 +35,7 @@ MessageLoopDarwin::~MessageLoopDarwin() {
 }
 
 void MessageLoopDarwin::Run() {
-  FML_DCHECK(loop_ == CFRunLoopGetCurrent());
+  FXL_DCHECK(loop_ == CFRunLoopGetCurrent());
 
   running_ = true;
 

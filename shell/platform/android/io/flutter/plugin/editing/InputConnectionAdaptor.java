@@ -7,15 +7,17 @@ package io.flutter.plugin.editing;
 import android.content.Context;
 import android.text.Editable;
 import android.text.Selection;
-import android.view.KeyEvent;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.KeyEvent;
+
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.view.FlutterView;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 class InputConnectionAdaptor extends BaseInputConnection {
     private final FlutterView mFlutterView;
@@ -89,7 +91,8 @@ class InputConnectionAdaptor extends BaseInputConnection {
 
     @Override
     public boolean deleteSurroundingText(int beforeLength, int afterLength) {
-        if (Selection.getSelectionStart(mEditable) == -1)
+        if (Selection.getSelectionStart(mEditable) == -1 ||
+            Selection.getSelectionStart(mEditable) == -1)
             return true;
 
         boolean result = super.deleteSurroundingText(beforeLength, afterLength);
@@ -125,80 +128,45 @@ class InputConnectionAdaptor extends BaseInputConnection {
 
     @Override
     public boolean sendKeyEvent(KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+        final boolean result = super.sendKeyEvent(event);
+        if (event.getAction() == KeyEvent.ACTION_UP) {
             if (event.getKeyCode() == KeyEvent.KEYCODE_DEL) {
                 int selStart = Selection.getSelectionStart(mEditable);
                 int selEnd = Selection.getSelectionEnd(mEditable);
                 if (selEnd > selStart) {
                     // Delete the selection.
                     Selection.setSelection(mEditable, selStart);
-                    mEditable.delete(selStart, selEnd);
-                    updateEditingState();
-                    return true;
+                    deleteSurroundingText(0, selEnd - selStart);
                 } else if (selStart > 0) {
                     // Delete to the left of the cursor.
-                    int newSel = Math.max(selStart - 1, 0);
-                    Selection.setSelection(mEditable, newSel);
-                    mEditable.delete(newSel, selStart);
-                    updateEditingState();
-                    return true;
+                    Selection.setSelection(mEditable, selStart - 1);
+                    deleteSurroundingText(0, 1);
                 }
             } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT) {
                 int selStart = Selection.getSelectionStart(mEditable);
                 int newSel = Math.max(selStart - 1, 0);
                 setSelection(newSel, newSel);
-                return true;
             } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT) {
                 int selStart = Selection.getSelectionStart(mEditable);
                 int newSel = Math.min(selStart + 1, mEditable.length());
                 setSelection(newSel, newSel);
-                return true;
             } else {
                 // Enter a character.
                 int character = event.getUnicodeChar();
-                if (character != 0) {
-                    int selStart = Math.max(0, Selection.getSelectionStart(mEditable));
-                    mEditable.insert(selStart, String.valueOf((char) character));
-                    setSelection(selStart + 1, selStart + 1);
-                    updateEditingState();
-                }
-                return true;
+                if (character != 0)
+                    commitText(String.valueOf((char) character), 1);
             }
         }
-        return false;
+        return result;
     }
 
     @Override
     public boolean performEditorAction(int actionCode) {
+        // TODO(abarth): Support more actions.
         switch (actionCode) {
-            // TODO(mattcarroll): is newline an appropriate action for "none"?
             case EditorInfo.IME_ACTION_NONE:
                 mFlutterChannel.invokeMethod("TextInputClient.performAction",
                     Arrays.asList(mClient, "TextInputAction.newline"));
-                break;
-            case EditorInfo.IME_ACTION_UNSPECIFIED:
-                mFlutterChannel.invokeMethod("TextInputClient.performAction",
-                        Arrays.asList(mClient, "TextInputAction.unspecified"));
-                break;
-            case EditorInfo.IME_ACTION_GO:
-                mFlutterChannel.invokeMethod("TextInputClient.performAction",
-                        Arrays.asList(mClient, "TextInputAction.go"));
-                break;
-            case EditorInfo.IME_ACTION_SEARCH:
-                mFlutterChannel.invokeMethod("TextInputClient.performAction",
-                        Arrays.asList(mClient, "TextInputAction.search"));
-                break;
-            case EditorInfo.IME_ACTION_SEND:
-                mFlutterChannel.invokeMethod("TextInputClient.performAction",
-                        Arrays.asList(mClient, "TextInputAction.send"));
-                break;
-            case EditorInfo.IME_ACTION_NEXT:
-                mFlutterChannel.invokeMethod("TextInputClient.performAction",
-                        Arrays.asList(mClient, "TextInputAction.next"));
-                break;
-            case EditorInfo.IME_ACTION_PREVIOUS:
-                mFlutterChannel.invokeMethod("TextInputClient.performAction",
-                        Arrays.asList(mClient, "TextInputAction.previous"));
                 break;
             default:
             case EditorInfo.IME_ACTION_DONE:

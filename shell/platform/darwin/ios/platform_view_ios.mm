@@ -9,11 +9,11 @@
 #include <utility>
 
 #include "flutter/common/task_runners.h"
-#include "flutter/fml/synchronization/waitable_event.h"
 #include "flutter/fml/trace_event.h"
 #include "flutter/shell/common/io_manager.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
 #include "flutter/shell/platform/darwin/ios/ios_external_texture_gl.h"
+#include "lib/fxl/synchronization/waitable_event.h"
 
 namespace shell {
 
@@ -21,7 +21,7 @@ PlatformViewIOS::PlatformViewIOS(PlatformView::Delegate& delegate,
                                  blink::TaskRunners task_runners,
                                  FlutterViewController* owner_controller,
                                  FlutterView* owner_view)
-    : HeadlessPlatformViewIOS(delegate, std::move(task_runners)),
+    : PlatformView(delegate, std::move(task_runners)),
       owner_controller_(owner_controller),
       owner_view_(owner_view),
       ios_surface_(owner_view_.createSurface) {
@@ -34,6 +34,10 @@ PlatformViewIOS::~PlatformViewIOS() = default;
 
 FlutterViewController* PlatformViewIOS::GetOwnerViewController() const {
   return owner_controller_;
+}
+
+PlatformMessageRouter& PlatformViewIOS::GetPlatformMessageRouter() {
+  return platform_message_router_;
 }
 
 void PlatformViewIOS::RegisterExternalTexture(int64_t texture_id,
@@ -61,29 +65,22 @@ sk_sp<GrContext> PlatformViewIOS::CreateResourceContext() const {
 void PlatformViewIOS::SetSemanticsEnabled(bool enabled) {
   if (enabled && !accessibility_bridge_) {
     accessibility_bridge_ = std::make_unique<AccessibilityBridge>(owner_view_, this);
-  } else if (!enabled && accessibility_bridge_) {
+  } else {
     accessibility_bridge_.reset();
   }
   PlatformView::SetSemanticsEnabled(enabled);
 }
 
-// |shell:PlatformView|
-void PlatformViewIOS::SetAssistiveTechnologyEnabled(bool enabled) {
-  if (enabled && !accessibility_bridge_) {
-    accessibility_bridge_ = std::make_unique<AccessibilityBridge>(owner_view_, this);
+// |shell::PlatformView|
+void PlatformViewIOS::UpdateSemantics(blink::SemanticsNodeUpdates update) {
+  if (accessibility_bridge_) {
+    accessibility_bridge_->UpdateSemantics(std::move(update));
   }
-  // Note: since the accessibility bridge is needed for both semantics and
-  // assistive technologies, but you cannot have the latter without the
-  // former, we only destroy the bridge in SetSemanticsEnabled and not here.
-  PlatformView::SetAssistiveTechnologyEnabled(enabled);
 }
 
 // |shell::PlatformView|
-void PlatformViewIOS::UpdateSemantics(blink::SemanticsNodeUpdates update,
-                                      blink::CustomAccessibilityActionUpdates actions) {
-  if (accessibility_bridge_) {
-    accessibility_bridge_->UpdateSemantics(std::move(update), std::move(actions));
-  }
+void PlatformViewIOS::HandlePlatformMessage(fxl::RefPtr<blink::PlatformMessage> message) {
+  platform_message_router_.HandlePlatformMessage(std::move(message));
 }
 
 // |shell::PlatformView|

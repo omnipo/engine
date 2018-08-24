@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "flutter/flow/paint_utils.h"
-#include "flutter/fml/trace_event.h"
+#include "flutter/glue/trace_event.h"
 #include "lib/fxl/logging.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkColorSpaceXformCanvas.h"
@@ -16,15 +16,6 @@
 #include "third_party/skia/include/core/SkSurface.h"
 
 namespace flow {
-
-void RasterCacheResult::draw(SkCanvas& canvas) const {
-  SkAutoCanvasRestore auto_restore(&canvas, true);
-  SkIRect bounds =
-      RasterCache::GetDeviceBounds(logical_rect_, canvas.getTotalMatrix());
-  FXL_DCHECK(bounds.size() == image_->dimensions());
-  canvas.resetMatrix();
-  canvas.drawImage(image_, bounds.fLeft, bounds.fTop);
-}
 
 RasterCache::RasterCache(size_t threshold)
     : threshold_(threshold), checkerboard_images_(false), weak_factory_(this) {}
@@ -79,16 +70,23 @@ static bool IsPictureWorthRasterizing(SkPicture* picture,
 
 RasterCacheResult RasterizePicture(SkPicture* picture,
                                    GrContext* context,
-                                   const SkMatrix& ctm,
+                                   const MatrixDecomposition& matrix,
                                    SkColorSpace* dst_color_space,
                                    bool checkerboard) {
   TRACE_EVENT0("flutter", "RasterCachePopulate");
 
-  const SkRect logical_rect = picture->cullRect();
-  SkIRect cache_rect = RasterCache::GetDeviceBounds(logical_rect, ctm);
+  const SkVector3& scale = matrix.scale();
 
-  const SkImageInfo image_info =
-      SkImageInfo::MakeN32Premul(cache_rect.width(), cache_rect.height());
+  const SkRect logical_rect = picture->cullRect();
+
+  const SkRect physical_rect =
+      SkRect::MakeWH(std::fabs(logical_rect.width() * scale.x()),
+                     std::fabs(logical_rect.height() * scale.y()));
+
+  const SkImageInfo image_info = SkImageInfo::MakeN32Premul(
+      std::ceil(physical_rect.width()),  // physical width
+      std::ceil(physical_rect.height())  // physical height
+  );
 
   sk_sp<SkSurface> surface =
       context
@@ -110,15 +108,19 @@ RasterCacheResult RasterizePicture(SkPicture* picture,
   }
 
   canvas->clear(SK_ColorTRANSPARENT);
-  canvas->translate(-cache_rect.left(), -cache_rect.top());
-  canvas->concat(ctm);
+  canvas->scale(std::abs(scale.x()), std::abs(scale.y()));
+  canvas->translate(-logical_rect.left(), -logical_rect.top());
   canvas->drawPicture(picture);
 
   if (checkerboard) {
     DrawCheckerboard(canvas, logical_rect);
   }
 
-  return {surface->makeImageSnapshot(), logical_rect};
+  return {
+      surface->makeImageSnapshot(),  // image
+      physical_rect,                 // source rect
+      logical_rect                   // destination rect
+  };
 }
 
 static inline size_t ClampSize(size_t value, size_t min, size_t max) {
@@ -154,7 +156,7 @@ RasterCacheResult RasterCache::GetPrerolledImage(
     return {};
   }
 
-  RasterCacheKey cache_key(*picture, transformation_matrix);
+  RasterCacheKey cache_key(*picture, matrix);
 
   Entry& entry = cache_[cache_key];
   entry.access_count = ClampSize(entry.access_count + 1, 0, threshold_);
@@ -166,8 +168,8 @@ RasterCacheResult RasterCache::GetPrerolledImage(
   }
 
   if (!entry.image.is_valid()) {
-    entry.image = RasterizePicture(picture, context, transformation_matrix,
-                                   dst_color_space, checkerboard_images_);
+    entry.image = RasterizePicture(picture, context, matrix, dst_color_space,
+                                   checkerboard_images_);
   }
 
   return entry.image;

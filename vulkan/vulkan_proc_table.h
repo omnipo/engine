@@ -11,7 +11,7 @@
 #include "lib/fxl/memory/ref_counted.h"
 #include "lib/fxl/memory/ref_ptr.h"
 #include "third_party/skia/include/core/SkRefCnt.h"
-#include "third_party/skia/include/gpu/vk/GrVkBackendContext.h"
+#include "third_party/skia/include/gpu/vk/GrVkInterface.h"
 
 namespace vulkan {
 
@@ -59,7 +59,7 @@ class VulkanProcTable : public fxl::RefCountedThreadSafe<VulkanProcTable> {
 
   bool SetupDeviceProcAddresses(const VulkanHandle<VkDevice>& device);
 
-  GrVkGetProc CreateSkiaGetProc() const;
+  sk_sp<GrVkInterface> CreateSkiaInterface() const;
 
 #define DEFINE_PROC(name) Proc<PFN_vk##name> name;
 

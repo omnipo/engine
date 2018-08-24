@@ -22,9 +22,9 @@ class IsolateConfiguration {
  public:
   static std::unique_ptr<IsolateConfiguration> InferFromSettings(
       const blink::Settings& settings,
-      fml::RefPtr<blink::AssetManager> asset_manager);
+      fxl::RefPtr<blink::AssetManager> asset_manager);
 
-  static std::unique_ptr<IsolateConfiguration> CreateForAppSnapshot();
+  static std::unique_ptr<IsolateConfiguration> CreateForPrecompiledCode();
 
   static std::unique_ptr<IsolateConfiguration> CreateForSnapshot(
       std::unique_ptr<fml::Mapping> snapshot);
@@ -33,14 +33,11 @@ class IsolateConfiguration {
       std::string main_path,
       std::string packages_path);
 
-  static std::unique_ptr<IsolateConfiguration> CreateForKernelList(
-      std::vector<std::unique_ptr<fml::Mapping>> kernel_pieces);
-
   IsolateConfiguration();
 
   virtual ~IsolateConfiguration();
 
-  bool PrepareIsolate(blink::DartIsolate& isolate);
+  bool PrepareIsolate(fml::WeakPtr<blink::DartIsolate> isolate);
 
  protected:
   virtual bool DoPrepareIsolate(blink::DartIsolate& isolate) = 0;

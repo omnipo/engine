@@ -8,7 +8,6 @@
 
 #include <utility>
 
-#include "flutter/fml/logging.h"
 #include "flutter/fml/message_loop.h"
 #include "flutter/fml/message_loop_impl.h"
 
@@ -16,7 +15,7 @@ namespace fml {
 
 TaskRunner::TaskRunner(fxl::RefPtr<MessageLoopImpl> loop)
     : loop_(std::move(loop)) {
-  FML_CHECK(loop_);
+  FXL_CHECK(loop_);
 }
 
 TaskRunner::~TaskRunner() = default;
@@ -43,7 +42,7 @@ bool TaskRunner::RunsTasksOnCurrentThread() {
 
 void TaskRunner::RunNowOrPostTask(fxl::RefPtr<fxl::TaskRunner> runner,
                                   fxl::Closure task) {
-  FML_DCHECK(runner);
+  FXL_DCHECK(runner);
   if (runner->RunsTasksOnCurrentThread()) {
     task();
   } else {

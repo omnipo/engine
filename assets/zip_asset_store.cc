@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include "flutter/assets/zip_asset_store.h"
-#include "flutter/fml/build_config.h"
+#include "lib/fxl/build_config.h"
 
 #include <fcntl.h>
 
@@ -14,13 +14,9 @@
 #include <string>
 #include <utility>
 
-#include "flutter/fml/trace_event.h"
+#include "flutter/glue/trace_event.h"
 
 namespace blink {
-
-void UniqueUnzipperTraits::Free(void* file) {
-  unzClose(file);
-}
 
 ZipAssetStore::ZipAssetStore(std::string file_path)
     : file_path_(std::move(file_path)) {
@@ -29,8 +25,8 @@ ZipAssetStore::ZipAssetStore(std::string file_path)
 
 ZipAssetStore::~ZipAssetStore() = default;
 
-UniqueUnzipper ZipAssetStore::CreateUnzipper() const {
-  return UniqueUnzipper{::unzOpen2(file_path_.c_str(), nullptr)};
+zip::UniqueUnzipper ZipAssetStore::CreateUnzipper() const {
+  return zip::UniqueUnzipper{::unzOpen2(file_path_.c_str(), nullptr)};
 }
 
 // |blink::AssetResolver|
@@ -39,47 +35,47 @@ bool ZipAssetStore::IsValid() const {
 }
 
 // |blink::AssetResolver|
-std::unique_ptr<fml::Mapping> ZipAssetStore::GetAsMapping(
-    const std::string& asset_name) const {
-  TRACE_EVENT0("flutter", "ZipAssetStore::GetAsMapping");
+bool ZipAssetStore::GetAsBuffer(const std::string& asset_name,
+                                std::vector<uint8_t>* data) const {
+  TRACE_EVENT0("flutter", "ZipAssetStore::GetAsBuffer");
   auto found = stat_cache_.find(asset_name);
 
   if (found == stat_cache_.end()) {
-    return nullptr;
+    return false;
   }
 
   auto unzipper = CreateUnzipper();
 
   if (!unzipper.is_valid()) {
-    return nullptr;
+    return false;
   }
 
   int result = UNZ_OK;
 
   result = unzGoToFilePos(unzipper.get(), &(found->second.file_pos));
   if (result != UNZ_OK) {
-    FML_LOG(WARNING) << "unzGetCurrentFileInfo failed, error=" << result;
-    return nullptr;
+    FXL_LOG(WARNING) << "unzGetCurrentFileInfo failed, error=" << result;
+    return false;
   }
 
   result = unzOpenCurrentFile(unzipper.get());
   if (result != UNZ_OK) {
-    FML_LOG(WARNING) << "unzOpenCurrentFile failed, error=" << result;
-    return nullptr;
+    FXL_LOG(WARNING) << "unzOpenCurrentFile failed, error=" << result;
+    return false;
   }
 
-  std::vector<uint8_t> data(found->second.uncompressed_size);
+  data->resize(found->second.uncompressed_size);
   int total_read = 0;
-  while (total_read < static_cast<int>(data.size())) {
+  while (total_read < static_cast<int>(data->size())) {
     int bytes_read = unzReadCurrentFile(
-        unzipper.get(), data.data() + total_read, data.size() - total_read);
+        unzipper.get(), data->data() + total_read, data->size() - total_read);
     if (bytes_read <= 0) {
-      return nullptr;
+      return false;
     }
     total_read += bytes_read;
   }
 
-  return std::make_unique<fml::DataMapping>(std::move(data));
+  return true;
 }
 
 void ZipAssetStore::BuildStatCache() {

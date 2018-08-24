@@ -5,25 +5,25 @@
 part of dart.ui;
 
 /// Signature of callbacks that have no arguments and return no data.
-typedef VoidCallback = void Function();
+typedef void VoidCallback();
 
 /// Signature for [Window.onBeginFrame].
-typedef FrameCallback = void Function(Duration duration);
+typedef void FrameCallback(Duration duration);
 
 /// Signature for [Window.onPointerDataPacket].
-typedef PointerDataPacketCallback = void Function(PointerDataPacket packet);
+typedef void PointerDataPacketCallback(PointerDataPacket packet);
 
 /// Signature for [Window.onSemanticsAction].
-typedef SemanticsActionCallback = void Function(int id, SemanticsAction action, ByteData args);
+typedef void SemanticsActionCallback(int id, SemanticsAction action, ByteData args);
 
 /// Signature for responses to platform messages.
 ///
 /// Used as a parameter to [Window.sendPlatformMessage] and
 /// [Window.onPlatformMessage].
-typedef PlatformMessageResponseCallback = void Function(ByteData data);
+typedef void PlatformMessageResponseCallback(ByteData data);
 
 /// Signature for [Window.onPlatformMessage].
-typedef PlatformMessageCallback = void Function(String name, ByteData data, PlatformMessageResponseCallback callback);
+typedef void PlatformMessageCallback(String name, ByteData data, PlatformMessageResponseCallback callback);
 
 /// States that an application can be in.
 ///
@@ -53,7 +53,7 @@ enum AppLifecycleState {
   /// in the foreground inactive state.  Apps transition to this state when
   /// another activity is focused, such as a split-screen app, a phone call,
   /// a picture-in-picture app, a system dialog, or another window.
-  ///
+  /// 
   /// Apps in this state should assume that they may be [paused] at any time.
   inactive,
 
@@ -79,7 +79,7 @@ enum AppLifecycleState {
 /// A representation of distances for each of the four edges of a rectangle,
 /// used to encode the view insets and padding that applications should place
 /// around their user interface, as exposed by [Window.viewInsets] and
-/// [Window.padding]. View insets and padding are preferably read via
+/// [Window.padding]. View insets and padding are preferrably read via
 /// [MediaQuery.of].
 ///
 /// For a generic class that represents distances around a rectangle, see the
@@ -109,11 +109,6 @@ class WindowPadding {
 
   /// A window padding that has zeros for each edge.
   static const WindowPadding zero = const WindowPadding._(left: 0.0, top: 0.0, right: 0.0, bottom: 0.0);
-
-  @override
-  String toString() {
-    return '$runtimeType(left: $left, top: $top, right: $right, bottom: $bottom)';
-  }
 }
 
 /// An identifier used to select a user's language and formatting preferences,
@@ -648,31 +643,6 @@ class Window {
     _onSemanticsEnabledChanged = callback;
     _onSemanticsEnabledChangedZone = Zone.current;
   }
-
-  /// Whether the user is using assitive technologies to interact with the
-  /// application.
-  ///
-  /// This includes screen readers such as TalkBack on Android and VoiceOVer
-  /// on iOS, as well as hardware switches, and more.
-  ///
-  /// The [onAssistiveTechnologyEnabled] callback is called whenever this value
-  /// changes.
-  bool get assistiveTechnologyEnabled => _assistiveTechnologyEnabled;
-  bool _assistiveTechnologyEnabled = false;
-
-  /// A callback that is invoked when the value of [assistiveTechnologyEnabled]
-  /// changes.
-  ///
-  /// The framework invokes this callback in the same zone in which the callback
-  /// was set.
-  VoidCallback get onAssistiveTechnologyEnabled => _onAssistiveTechnologyEnabled;
-  VoidCallback _onAssistiveTechnologyEnabled;
-  Zone _onAssistiveTechnologyEnabledZone;
-  set onAssistiveTechnologyEnabled(VoidCallback callback) {
-     _onAssistiveTechnologyEnabled = callback;
-    _onAssistiveTechnologyEnabledZone = Zone.current;
-  }
-
 
   /// A callback that is invoked whenever the user requests an action to be
   /// performed.

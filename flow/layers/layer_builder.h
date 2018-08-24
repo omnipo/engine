@@ -32,14 +32,11 @@ class LayerBuilder {
 
   virtual void PushTransform(const SkMatrix& matrix) = 0;
 
-  virtual void PushClipRect(const SkRect& rect,
-                            Clip clip_behavior = Clip::antiAlias) = 0;
+  virtual void PushClipRect(const SkRect& rect) = 0;
 
-  virtual void PushClipRoundedRect(const SkRRect& rect,
-                                   Clip clip_behavior = Clip::antiAlias) = 0;
+  virtual void PushClipRoundedRect(const SkRRect& rect) = 0;
 
-  virtual void PushClipPath(const SkPath& path,
-                            Clip clip_behavior = Clip::antiAlias) = 0;
+  virtual void PushClipPath(const SkPath& path) = 0;
 
   virtual void PushOpacity(int alpha) = 0;
 
@@ -55,8 +52,7 @@ class LayerBuilder {
                                  double elevation,
                                  SkColor color,
                                  SkColor shadow_color,
-                                 SkScalar device_pixel_ratio,
-                                 Clip clip_behavior) = 0;
+                                 SkScalar device_pixel_ratio) = 0;
 
   virtual void PushPerformanceOverlay(uint64_t enabled_options,
                                       const SkRect& rect) = 0;

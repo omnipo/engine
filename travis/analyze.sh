@@ -20,6 +20,7 @@ if [ -n "$RESULTS" ]; then
 fi
 
 echo "Analyzing frontend_server..."
+pushd flutter/frontend_server/; pub get; popd
 RESULTS=`dartanalyzer                                                          \
   --packages=flutter/frontend_server/.packages                                 \
   --options flutter/analysis_options.yaml                                      \
@@ -34,6 +35,7 @@ if [ -n "$RESULTS" ]; then
 fi
 
 echo "Analyzing flutter_kernel_transformers..."
+pushd flutter/flutter_kernel_transformers/; pub get; popd
 RESULTS=`dartanalyzer                                                          \
   --packages=flutter/flutter_kernel_transformers/.packages                     \
   --options flutter/analysis_options.yaml                                      \

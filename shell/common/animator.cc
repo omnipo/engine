@@ -4,7 +4,7 @@
 
 #include "flutter/shell/common/animator.h"
 
-#include "flutter/fml/trace_event.h"
+#include "flutter/glue/trace_event.h"
 #include "lib/fxl/time/stopwatch.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
 
@@ -18,7 +18,7 @@ Animator::Animator(Delegate& delegate,
       waiter_(std::move(waiter)),
       last_begin_frame_time_(),
       dart_frame_deadline_(0),
-      layer_tree_pipeline_(fml::MakeRefCounted<LayerTreePipeline>(2)),
+      layer_tree_pipeline_(fxl::MakeRefCounted<LayerTreePipeline>(2)),
       pending_frame_semaphore_(1),
       frame_number_(1),
       paused_(false),

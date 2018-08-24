@@ -9,8 +9,8 @@
 #include "flutter/common/task_runners.h"
 #include "flutter/lib/ui/window/window.h"
 #include "lib/fxl/functional/make_copyable.h"
-#include "third_party/tonic/dart_state.h"
-#include "third_party/tonic/logging/dart_invoke.h"
+#include "lib/tonic/dart_state.h"
+#include "lib/tonic/logging/dart_invoke.h"
 
 namespace blink {
 
@@ -39,12 +39,6 @@ Dart_Handle WrapByteData(std::vector<uint8_t> data) {
   }
 }
 
-Dart_Handle WrapByteData(std::unique_ptr<fml::Mapping> mapping) {
-  std::vector<uint8_t> data(mapping->GetSize());
-  memcpy(data.data(), mapping->GetMapping(), mapping->GetSize());
-  return WrapByteData(std::move(data));
-}
-
 }  // anonymous namespace
 
 PlatformMessageResponseDart::PlatformMessageResponseDart(
@@ -55,20 +49,21 @@ PlatformMessageResponseDart::PlatformMessageResponseDart(
 
 PlatformMessageResponseDart::~PlatformMessageResponseDart() {
   if (!callback_.is_empty()) {
-    ui_task_runner_->PostTask(fxl::MakeCopyable(
-        [callback = std::move(callback_)]() mutable { callback.Clear(); }));
+    ui_task_runner_->PostTask(
+        fxl::MakeCopyable([callback = std::move(callback_)]() mutable {
+          callback.Clear();
+        }));
   }
 }
 
-void PlatformMessageResponseDart::Complete(std::unique_ptr<fml::Mapping> data) {
+void PlatformMessageResponseDart::Complete(std::vector<uint8_t> data) {
   if (callback_.is_empty())
     return;
   FXL_DCHECK(!is_complete_);
   is_complete_ = true;
   ui_task_runner_->PostTask(fxl::MakeCopyable(
-      [callback = std::move(callback_), data = std::move(data)]() mutable {
-        std::shared_ptr<tonic::DartState> dart_state =
-            callback.dart_state().lock();
+      [ callback = std::move(callback_), data = std::move(data) ]() mutable {
+        tonic::DartState* dart_state = callback.dart_state().get();
         if (!dart_state)
           return;
         tonic::DartState::Scope scope(dart_state);
@@ -85,8 +80,7 @@ void PlatformMessageResponseDart::CompleteEmpty() {
   is_complete_ = true;
   ui_task_runner_->PostTask(
       fxl::MakeCopyable([callback = std::move(callback_)]() mutable {
-        std::shared_ptr<tonic::DartState> dart_state =
-            callback.dart_state().lock();
+        tonic::DartState* dart_state = callback.dart_state().get();
         if (!dart_state)
           return;
         tonic::DartState::Scope scope(dart_state);

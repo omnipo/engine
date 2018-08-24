@@ -3,13 +3,6 @@
 # found in the LICENSE file.
 
 import("$flutter_root/testing/testing.gni")
-import("$flutter_root/shell/gpu/gpu.gni")
-
-shell_gpu_configuration("embedder_gpu_configuration") {
-  enable_software = false
-  enable_vulkan = false
-  enable_gl = true
-}
 
 source_set("embedder") {
   sources = [
@@ -23,18 +16,17 @@ source_set("embedder") {
   ]
 
   deps = [
-    ":embedder_gpu_configuration",
     "$flutter_root/assets",
     "$flutter_root/common",
     "$flutter_root/fml",
-    "$flutter_root/lib/snapshot",
     "$flutter_root/shell/common",
+    "$flutter_root/shell/gpu",
     "//garnet/public/lib/fxl",
     "//third_party/dart/runtime:libdart_jit",
     "//third_party/dart/runtime/bin:embedded_dart_io",
     "//third_party/skia",
     "//third_party/skia:gpu",
-    "//third_party/tonic",
+    "//topaz/lib/tonic",
   ]
 
   public_configs = [ "$flutter_root:config" ]
@@ -64,26 +56,12 @@ executable("embedder_unittests") {
   }
 }
 
-shared_library("flutter_engine_library") {
-  visibility = [ ":*" ]
-
-  output_name = "flutter_engine"
-
+shared_library("flutter_engine") {
   deps = [
     ":embedder",
   ]
 
   public_configs = [ "$flutter_root:config" ]
-}
-
-copy("copy_headers") {
-  visibility = [ ":*" ]
-  sources = [
-    "embedder.h",
-  ]
-  outputs = [
-    "$root_out_dir/flutter_embedder.h",
-  ]
 }
 
 if (is_mac) {
@@ -98,11 +76,11 @@ if (is_mac) {
       "$_flutter_embedder_framework_dir/Versions/A/FlutterEmbedder",
     ]
     deps = [
-      ":flutter_engine_library",
+      ":flutter_engine",
     ]
   }
 
-  copy("copy_framework_headers") {
+  copy("copy_headers") {
     visibility = [ ":*" ]
     sources = [
       "embedder.h",
@@ -170,7 +148,6 @@ if (is_mac) {
   }
 
   action("generate_symlinks") {
-    visibility = [ ":*" ]
     script = "//build/config/mac/package_framework.py"
     outputs = [
       "$root_build_dir/FlutterEmbedder.stamp",
@@ -189,7 +166,7 @@ if (is_mac) {
       "FlutterEmbedder.stamp",
     ]
     deps = [
-      ":copy_framework_headers",
+      ":copy_headers",
       ":copy_icu",
       ":copy_info_plist",
       ":copy_module_map",
@@ -198,22 +175,8 @@ if (is_mac) {
   }
 
   group("flutter_embedder_framework") {
-    visibility = [ ":*" ]
     deps = [
       ":generate_symlinks",
     ]
-  }
-}
-
-group("flutter_engine") {
-  # All platforms require the embedder dylib and headers.
-  deps = [
-    ":copy_headers",
-    ":flutter_engine_library",
-  ]
-
-  # For the Mac, the dylib is packaged in a framework with the appropriate headers.
-  if (is_mac) {
-    deps += [ ":flutter_embedder_framework" ]
   }
 }

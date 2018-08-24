@@ -5,9 +5,8 @@
 #ifndef FLUTTER_LIB_UI_SEMANTICS_SEMANTICS_UPDATE_H_
 #define FLUTTER_LIB_UI_SEMANTICS_SEMANTICS_UPDATE_H_
 
-#include "flutter/lib/ui/dart_wrapper.h"
-#include "flutter/lib/ui/semantics/custom_accessibility_action.h"
 #include "flutter/lib/ui/semantics/semantics_node.h"
+#include "lib/tonic/dart_wrappable.h"
 
 namespace tonic {
 class DartLibraryNatives;
@@ -15,30 +14,25 @@ class DartLibraryNatives;
 
 namespace blink {
 
-class SemanticsUpdate : public RefCountedDartWrappable<SemanticsUpdate> {
+class SemanticsUpdate : public fxl::RefCountedThreadSafe<SemanticsUpdate>,
+                        public tonic::DartWrappable {
   DEFINE_WRAPPERTYPEINFO();
   FRIEND_MAKE_REF_COUNTED(SemanticsUpdate);
 
  public:
   ~SemanticsUpdate() override;
-  static fxl::RefPtr<SemanticsUpdate> create(
-      SemanticsNodeUpdates nodes,
-      CustomAccessibilityActionUpdates actions);
+  static fxl::RefPtr<SemanticsUpdate> create(SemanticsNodeUpdates nodes);
 
   SemanticsNodeUpdates takeNodes();
-
-  CustomAccessibilityActionUpdates takeActions();
 
   void dispose();
 
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
 
  private:
-  explicit SemanticsUpdate(SemanticsNodeUpdates nodes,
-                           CustomAccessibilityActionUpdates updates);
+  explicit SemanticsUpdate(SemanticsNodeUpdates nodes);
 
   SemanticsNodeUpdates nodes_;
-  CustomAccessibilityActionUpdates actions_;
 };
 
 }  // namespace blink

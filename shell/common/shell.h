@@ -13,9 +13,7 @@
 #include "flutter/flow/texture.h"
 #include "flutter/fml/memory/thread_checker.h"
 #include "flutter/fml/memory/weak_ptr.h"
-#include "flutter/fml/synchronization/waitable_event.h"
 #include "flutter/fml/thread.h"
-#include "flutter/lib/ui/semantics/custom_accessibility_action.h"
 #include "flutter/lib/ui/semantics/semantics_node.h"
 #include "flutter/lib/ui/window/platform_message.h"
 #include "flutter/runtime/service_protocol.h"
@@ -32,6 +30,7 @@
 #include "lib/fxl/strings/string_view.h"
 #include "lib/fxl/synchronization/thread_annotations.h"
 #include "lib/fxl/synchronization/thread_checker.h"
+#include "lib/fxl/synchronization/waitable_event.h"
 
 namespace shell {
 
@@ -57,7 +56,6 @@ class Shell final : public PlatformView::Delegate,
       blink::TaskRunners task_runners,
       blink::Settings settings,
       fxl::RefPtr<blink::DartSnapshot> isolate_snapshot,
-      fxl::RefPtr<blink::DartSnapshot> shared_snapshot,
       CreateCallback<PlatformView> on_create_platform_view,
       CreateCallback<Rasterizer> on_create_rasterizer);
 
@@ -73,7 +71,7 @@ class Shell final : public PlatformView::Delegate,
 
   fml::WeakPtr<PlatformView> GetPlatformView();
 
-  blink::DartVM& GetDartVM() const;
+  const blink::DartVM& GetDartVM() const;
 
   bool IsSetup() const;
 
@@ -107,7 +105,6 @@ class Shell final : public PlatformView::Delegate,
       blink::TaskRunners task_runners,
       blink::Settings settings,
       fxl::RefPtr<blink::DartSnapshot> isolate_snapshot,
-      fxl::RefPtr<blink::DartSnapshot> shared_snapshot,
       Shell::CreateCallback<PlatformView> on_create_platform_view,
       Shell::CreateCallback<Rasterizer> on_create_rasterizer);
 
@@ -150,10 +147,6 @@ class Shell final : public PlatformView::Delegate,
                                          bool enabled) override;
 
   // |shell::PlatformView::Delegate|
-  void OnPlatformViewSetAssistiveTechnologyEnabled(const PlatformView& view,
-                                                   bool enabled) override;
-
-  // |shell::PlatformView::Delegate|
   void OnPlatformViewRegisterTexture(
       const PlatformView& view,
       std::shared_ptr<flow::Texture> texture) override;
@@ -181,16 +174,14 @@ class Shell final : public PlatformView::Delegate,
   // |shell::Animator::Delegate|
   void OnAnimatorDraw(
       const Animator& animator,
-      fml::RefPtr<flutter::Pipeline<flow::LayerTree>> pipeline) override;
+      fxl::RefPtr<flutter::Pipeline<flow::LayerTree>> pipeline) override;
 
   // |shell::Animator::Delegate|
   void OnAnimatorDrawLastLayerTree(const Animator& animator) override;
 
   // |shell::Engine::Delegate|
-  void OnEngineUpdateSemantics(
-      const Engine& engine,
-      blink::SemanticsNodeUpdates update,
-      blink::CustomAccessibilityActionUpdates actions) override;
+  void OnEngineUpdateSemantics(const Engine& engine,
+                               blink::SemanticsNodeUpdates update) override;
 
   // |shell::Engine::Delegate|
   void OnEngineHandlePlatformMessage(

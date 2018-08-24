@@ -357,68 +357,37 @@ class RepositoryBlankLicenseFile extends RepositorySingleLicenseFile {
   License licenseOfType(LicenseType type) => null;
 }
 
-class RepositoryCatapultApiClientLicenseFile extends RepositorySingleLicenseFile {
-  RepositoryCatapultApiClientLicenseFile(RepositoryDirectory parent, fs.TextFile io)
+class RepositoryOkHttpLicenseFile extends RepositorySingleLicenseFile {
+  RepositoryOkHttpLicenseFile(RepositoryDirectory parent, fs.TextFile io)
     : super(parent, io, _parseLicense(io));
 
   static final RegExp _pattern = new RegExp(
-    r' *Licensed under the Apache License, Version 2\.0 \(the "License"\);\n'
-    r' *you may not use this file except in compliance with the License\.\n'
-    r' *You may obtain a copy of the License at\n'
-    r' *\n'
-    r' *(http://www\.apache\.org/licenses/LICENSE-2\.0)\n'
-    r' *\n'
-    r' *Unless required by applicable law or agreed to in writing, software\n'
-    r' *distributed under the License is distributed on an "AS IS" BASIS,\n'
-    r' *WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied\.\n'
-    r' *See the License for the specific language governing permissions and\n'
-    r' *limitations under the License\.\n',
-    multiLine: true,
-    caseSensitive: false,
+    r'^((?:.|\n)*)\n'
+    r'Licensed under the Apache License, Version 2\.0 \(the "License"\);\n'
+    r'you may not use this file except in compliance with the License\.\n'
+    r'You may obtain a copy of the License at\n'
+    r'\n'
+    r'   (http://www\.apache\.org/licenses/LICENSE-2\.0)\n'
+    r'\n'
+    r'Unless required by applicable law or agreed to in writing, software\n'
+    r'distributed under the License is distributed on an "AS IS" BASIS,\n'
+    r'WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied\.\n'
+    r'See the License for the specific language governing permissions and\n'
+    r'limitations under the License\.\n*$',
+    caseSensitive: false
   );
 
   static License _parseLicense(fs.TextFile io) {
     final Match match = _pattern.firstMatch(io.readString());
-    if (match == null || match.groupCount != 1)
-      throw 'unexpected apiclient license file contents';
-    return new License.fromUrl(match.group(1), origin: io.fullName);
+    if (match == null || match.groupCount != 2)
+      throw 'unexpected okhttp license file contents';
+    return new License.fromUrl(match.group(2), origin: io.fullName);
   }
 
   @override
   License licenseOfType(LicenseType type) {
-    return null;
-  }
-}
-
-class RepositoryCatapultCoverageLicenseFile extends RepositorySingleLicenseFile {
-  RepositoryCatapultCoverageLicenseFile(RepositoryDirectory parent, fs.TextFile io)
-    : super(parent, io, _parseLicense(io));
-
-  static final RegExp _pattern = new RegExp(
-    r' *Except where noted otherwise, this software is licensed under the Apache\n'
-    r' *License, Version 2.0 \(the "License"\); you may not use this work except in\n'
-    r' *compliance with the License\.  You may obtain a copy of the License at\n'
-    r' *\n'
-    r' *(http://www\.apache\.org/licenses/LICENSE-2\.0)\n'
-    r' *\n'
-    r' *Unless required by applicable law or agreed to in writing, software\n'
-    r' *distributed under the License is distributed on an "AS IS" BASIS,\n'
-    r' *WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied\.\n'
-    r' *See the License for the specific language governing permissions and\n'
-    r' *limitations under the License\.\n',
-    multiLine: true,
-    caseSensitive: false,
-  );
-
-  static License _parseLicense(fs.TextFile io) {
-    final Match match = _pattern.firstMatch(io.readString());
-    if (match == null || match.groupCount != 1)
-      throw 'unexpected coverage license file contents';
-    return new License.fromUrl(match.group(1), origin: io.fullName);
-  }
-
-  @override
-  License licenseOfType(LicenseType type) {
+    if (type == LicenseType.libpng)
+      return defaultLicense;
     return null;
   }
 }
@@ -910,20 +879,10 @@ class RepositoryDirectory extends RepositoryEntry implements LicenseSource {
         }
       }
     }
-
-    for (RepositoryDirectory child in virtualSubdirectories) {
-      _subdirectories.add(child);
-      _childrenByName[child.name] = child;
-    }
   }
 
-  // Override this to add additional child directories that do not represent a
-  // direct child of this directory's filesystem node.
-  List<RepositoryDirectory> get virtualSubdirectories => <RepositoryDirectory>[];
-
   bool shouldRecurse(fs.IoNode entry) {
-    return entry.name != '.cipd' &&
-           entry.name != '.git' &&
+    return entry.name != '.git' &&
            entry.name != '.github' &&
            entry.name != '.gitignore' &&
            entry.name != 'test' &&
@@ -965,7 +924,7 @@ class RepositoryDirectory extends RepositoryEntry implements LicenseSource {
     }
   }
 
-  int get count => _files.length + _subdirectories.fold<int>(0, (int count, RepositoryDirectory child) => count + child.count);
+  int get count => _files.length + _subdirectories.fold(0, (int count, RepositoryDirectory child) => count + child.count);
 
   @override
   List<License> nearestLicensesFor(String name) {
@@ -1814,6 +1773,17 @@ class RepositoryPkgWhenDirectory extends RepositoryDirectory {
   }
 }
 
+class RepositoryOkHttpDirectory extends RepositoryDirectory {
+  RepositoryOkHttpDirectory(RepositoryDirectory parent, fs.Directory io) : super(parent, io);
+
+  @override
+  RepositoryFile createFile(fs.IoNode entry) {
+    if (entry.name == 'LICENSE')
+      return new RepositoryOkHttpLicenseFile(this, entry);
+    return super.createFile(entry);
+  }
+}
+
 class RepositorySkiaLibWebPDirectory extends RepositoryDirectory {
   RepositorySkiaLibWebPDirectory(RepositoryDirectory parent, fs.Directory io) : super(parent, io);
 
@@ -1922,7 +1892,6 @@ class RepositoryRootThirdPartyDirectory extends RepositoryGenericThirdPartyDirec
         && entry.name != 'instrumented_libraries' // unused according to chinmay
         && entry.name != 'android_tools' // excluded on advice
         && entry.name != 'googletest' // only used by tests
-        && entry.name != 'skia' // treated as a separate component
         && super.shouldRecurse(entry);
   }
 
@@ -1932,8 +1901,6 @@ class RepositoryRootThirdPartyDirectory extends RepositoryGenericThirdPartyDirec
       return new RepositoryAndroidPlatformDirectory(this, entry);
     if (entry.name == 'boringssl')
       return new RepositoryBoringSSLDirectory(this, entry);
-    if (entry.name == 'catapult')
-      return new RepositoryCatapultDirectory(this, entry);
     if (entry.name == 'dart')
       return new RepositoryDartDirectory(this, entry);
     if (entry.name == 'expat')
@@ -1954,8 +1921,12 @@ class RepositoryRootThirdPartyDirectory extends RepositoryGenericThirdPartyDirec
       return new RepositoryLibPngDirectory(this, entry);
     if (entry.name == 'libwebp')
       return new RepositoryLibWebpDirectory(this, entry);
+    if (entry.name == 'okhttp')
+      return new RepositoryOkHttpDirectory(this, entry);
     if (entry.name == 'pkg')
       return new RepositoryPkgDirectory(this, entry);
+    if (entry.name == 'skia')
+      return new RepositorySkiaDirectory(this, entry);
     if (entry.name == 'vulkan')
       return new RepositoryVulkanDirectory(this, entry);
     return super.createSubdirectory(entry);
@@ -2006,19 +1977,9 @@ class RepositoryBoringSSLSourceDirectory extends RepositoryDirectory {
 ///
 /// This license includes 23 lines of informational header text that are not
 /// part of the copyright notices and can be skipped.
-/// It also has a trailer that mentions licenses that are used during build
-/// time of BoringSSL - those can be ignored as well since they don't apply
-/// to code that is distributed.
 class RepositoryOpenSSLLicenseFile extends RepositorySingleLicenseFile {
   RepositoryOpenSSLLicenseFile(RepositoryDirectory parent, fs.TextFile io)
-    : super(parent, io,
-        new License.fromBodyAndType(
-            LineSplitter.split(io.readString())
-                .skip(23)
-                .takeWhile((String s) => !s.startsWith('BoringSSL uses the Chromium test infrastructure to run a continuous build,'))
-                .join('\n'),
-            LicenseType.openssl,
-            origin: io.fullName)) {
+    : super(parent, io, new License.fromBodyAndType(LineSplitter.split(io.readString()).skip(23).join('\n'), LicenseType.openssl, origin: io.fullName)) {
     _verifyLicense(io);
   }
 
@@ -2050,52 +2011,6 @@ class RepositoryBoringSSLDirectory extends RepositoryDirectory {
   RepositoryDirectory createSubdirectory(fs.Directory entry) {
     if (entry.name == 'src')
       return new RepositoryBoringSSLSourceDirectory(this, entry);
-    return super.createSubdirectory(entry);
-  }
-}
-
-class RepositoryCatapultThirdPartyApiClientDirectory extends RepositoryDirectory {
-  RepositoryCatapultThirdPartyApiClientDirectory(RepositoryDirectory parent, fs.Directory io) : super(parent, io);
-
-  @override
-  RepositoryFile createFile(fs.IoNode entry) {
-    if (entry.name == 'LICENSE')
-      return new RepositoryCatapultApiClientLicenseFile(this, entry);
-    return super.createFile(entry);
-  }
-}
-
-class RepositoryCatapultThirdPartyCoverageDirectory extends RepositoryDirectory {
-  RepositoryCatapultThirdPartyCoverageDirectory(RepositoryDirectory parent, fs.Directory io) : super(parent, io);
-
-  @override
-  RepositoryFile createFile(fs.IoNode entry) {
-    if (entry.name == 'NOTICE.txt')
-      return new RepositoryCatapultCoverageLicenseFile(this, entry);
-    return super.createFile(entry);
-  }
-}
-
-class RepositoryCatapultThirdPartyDirectory extends RepositoryDirectory {
-  RepositoryCatapultThirdPartyDirectory(RepositoryDirectory parent, fs.Directory io) : super(parent, io);
-
-  @override
-  RepositoryDirectory createSubdirectory(fs.Directory entry) {
-    if (entry.name == 'apiclient')
-      return new RepositoryCatapultThirdPartyApiClientDirectory(this, entry);
-    if (entry.name == 'coverage')
-      return new RepositoryCatapultThirdPartyCoverageDirectory(this, entry);
-    return super.createSubdirectory(entry);
-  }
-}
-
-class RepositoryCatapultDirectory extends RepositoryDirectory {
-  RepositoryCatapultDirectory(RepositoryDirectory parent, fs.Directory io) : super(parent, io);
-
-  @override
-  RepositoryDirectory createSubdirectory(fs.Directory entry) {
-    if (entry.name == 'third_party')
-      return new RepositoryCatapultThirdPartyDirectory(this, entry);
     return super.createSubdirectory(entry);
   }
 }
@@ -2399,15 +2314,6 @@ class RepositoryRoot extends RepositoryDirectory {
     if (entry.name == 'topaz')
       return new RepositoryTopazDirectory(this, entry);
     return super.createSubdirectory(entry);
-  }
-
-  @override
-  List<RepositoryDirectory> get virtualSubdirectories {
-    // Skia is updated more frequently than other third party libraries and
-    // is therefore represented as a separate top-level component.
-    fs.Directory thirdPartyNode = io.walk.firstWhere((fs.IoNode node) => node.name == 'third_party');
-    fs.IoNode skiaNode = thirdPartyNode.walk.firstWhere((fs.IoNode node) => node.name == 'skia');
-    return <RepositoryDirectory>[new RepositorySkiaDirectory(this, skiaNode)];
   }
 }
 

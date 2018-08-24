@@ -17,7 +17,7 @@ ExportNodeHolder::ExportNodeHolder(
 }
 
 void ExportNodeHolder::Bind(SceneUpdateContext& context,
-                            scenic::ContainerNode& container,
+                            scenic_lib::ContainerNode& container,
                             const SkPoint& offset,
                             bool hit_testable) {
   export_node_->Bind(context, container, offset, hit_testable);
@@ -40,12 +40,12 @@ ExportNode::~ExportNode() {
 }
 
 void ExportNode::Bind(SceneUpdateContext& context,
-                      scenic::ContainerNode& container,
+                      scenic_lib::ContainerNode& container,
                       const SkPoint& offset,
                       bool hit_testable) {
   if (export_token_) {
     // Happens first time we bind.
-    node_.reset(new scenic::EntityNode(container.session()));
+    node_.reset(new scenic_lib::EntityNode(container.session()));
     node_->Export(std::move(export_token_));
 
     // Add ourselves to the context so it can call Dispose() on us if the Scenic
@@ -58,8 +58,8 @@ void ExportNode::Bind(SceneUpdateContext& context,
     container.AddChild(*node_);
     node_->SetTranslation(offset.x(), offset.y(), 0.f);
     node_->SetHitTestBehavior(hit_testable
-                                  ? fuchsia::ui::gfx::HitTestBehavior::kDefault
-                                  : fuchsia::ui::gfx::HitTestBehavior::kSuppress);
+                                  ? gfx::HitTestBehavior::kDefault
+                                  : gfx::HitTestBehavior::kSuppress);
   }
 }
 

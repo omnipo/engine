@@ -13,10 +13,8 @@
 #include "flutter/assets/directory_asset_bundle.h"
 #include "flutter/fml/file.h"
 #include "flutter/fml/icu_util.h"
-#include "flutter/fml/log_settings.h"
-#include "flutter/fml/logging.h"
 #include "flutter/fml/message_loop.h"
-#include "flutter/fml/trace_event.h"
+#include "flutter/glue/trace_event.h"
 #include "flutter/runtime/dart_vm.h"
 #include "flutter/runtime/start_up.h"
 #include "flutter/shell/common/engine.h"
@@ -41,7 +39,6 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
     blink::TaskRunners task_runners,
     blink::Settings settings,
     fxl::RefPtr<blink::DartSnapshot> isolate_snapshot,
-    fxl::RefPtr<blink::DartSnapshot> shared_snapshot,
     Shell::CreateCallback<PlatformView> on_create_platform_view,
     Shell::CreateCallback<Rasterizer> on_create_rasterizer) {
   if (!task_runners.IsValid()) {
@@ -67,7 +64,7 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
   // first because it has state that the other subsystems depend on. It must
   // first be booted and the necessary references obtained to initialize the
   // other subsystems.
-  fml::AutoResetWaitableEvent io_latch;
+  fxl::AutoResetWaitableEvent io_latch;
   std::unique_ptr<IOManager> io_manager;
   fml::WeakPtr<GrContext> resource_context;
   fxl::RefPtr<flow::SkiaUnrefQueue> unref_queue;
@@ -90,7 +87,7 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
   io_latch.Wait();
 
   // Create the rasterizer on the GPU thread.
-  fml::AutoResetWaitableEvent gpu_latch;
+  fxl::AutoResetWaitableEvent gpu_latch;
   std::unique_ptr<Rasterizer> rasterizer;
   fml::TaskRunner::RunNowOrPostTask(
       task_runners.GetGPUTaskRunner(), [&gpu_latch,            //
@@ -105,7 +102,7 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
       });
 
   // Create the engine on the UI thread.
-  fml::AutoResetWaitableEvent ui_latch;
+  fxl::AutoResetWaitableEvent ui_latch;
   std::unique_ptr<Engine> engine;
   fml::TaskRunner::RunNowOrPostTask(
       shell->GetTaskRunners().GetUITaskRunner(),
@@ -113,7 +110,6 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
                          &engine,                                         //
                          shell = shell.get(),                             //
                          isolate_snapshot = std::move(isolate_snapshot),  //
-                         shared_snapshot = std::move(shared_snapshot),    //
                          vsync_waiter = std::move(vsync_waiter),          //
                          resource_context = std::move(resource_context),  //
                          unref_queue = std::move(unref_queue)             //
@@ -128,7 +124,6 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
         engine = std::make_unique<Engine>(*shell,                       //
                                           shell->GetDartVM(),           //
                                           std::move(isolate_snapshot),  //
-                                          std::move(shared_snapshot),   //
                                           task_runners,                 //
                                           shell->GetSettings(),         //
                                           std::move(animator),          //
@@ -171,21 +166,10 @@ static void PerformInitializationTasks(const blink::Settings& settings) {
   std::call_once(gShellSettingsInitialization, [&settings] {
     RecordStartupTimestamp();
 
-    //  TODO(chinmaygarde): There are currently two loggers till the transition
-    //  away from FXL is ongoing. Remove FXL when done.
-    {
-      fxl::LogSettings log_settings;
-      log_settings.min_log_level =
-          settings.verbose_logging ? fxl::LOG_INFO : fxl::LOG_ERROR;
-      fxl::SetLogSettings(log_settings);
-    }
-
-    {
-      fml::LogSettings log_settings;
-      log_settings.min_log_level =
-          settings.verbose_logging ? fml::LOG_INFO : fml::LOG_ERROR;
-      fml::SetLogSettings(log_settings);
-    }
+    fxl::LogSettings log_settings;
+    log_settings.min_log_level =
+        settings.verbose_logging ? fxl::LOG_INFO : fxl::LOG_ERROR;
+    fxl::SetLogSettings(log_settings);
 
     if (settings.trace_skia) {
       InitSkiaEventTracer(settings.trace_skia);
@@ -217,7 +201,6 @@ std::unique_ptr<Shell> Shell::Create(
   return Shell::Create(std::move(task_runners),             //
                        std::move(settings),                 //
                        vm->GetIsolateSnapshot(),            //
-                       blink::DartSnapshot::Empty(),        //
                        std::move(on_create_platform_view),  //
                        std::move(on_create_rasterizer)      //
   );
@@ -227,7 +210,6 @@ std::unique_ptr<Shell> Shell::Create(
     blink::TaskRunners task_runners,
     blink::Settings settings,
     fxl::RefPtr<blink::DartSnapshot> isolate_snapshot,
-    fxl::RefPtr<blink::DartSnapshot> shared_snapshot,
     Shell::CreateCallback<PlatformView> on_create_platform_view,
     Shell::CreateCallback<Rasterizer> on_create_rasterizer) {
   PerformInitializationTasks(settings);
@@ -237,7 +219,7 @@ std::unique_ptr<Shell> Shell::Create(
     return nullptr;
   }
 
-  fml::AutoResetWaitableEvent latch;
+  fxl::AutoResetWaitableEvent latch;
   std::unique_ptr<Shell> shell;
   fml::TaskRunner::RunNowOrPostTask(
       task_runners.GetPlatformTaskRunner(),
@@ -246,14 +228,12 @@ std::unique_ptr<Shell> Shell::Create(
        task_runners = std::move(task_runners),          //
        settings,                                        //
        isolate_snapshot = std::move(isolate_snapshot),  //
-       shared_snapshot = std::move(shared_snapshot),    //
        on_create_platform_view,                         //
        on_create_rasterizer                             //
   ]() {
         shell = CreateShellOnPlatformThread(std::move(task_runners),      //
                                             settings,                     //
                                             std::move(isolate_snapshot),  //
-                                            std::move(shared_snapshot),   //
                                             on_create_platform_view,      //
                                             on_create_rasterizer          //
         );
@@ -304,7 +284,7 @@ Shell::~Shell() {
     vm->GetServiceProtocol().RemoveHandler(this);
   }
 
-  fml::AutoResetWaitableEvent ui_latch, gpu_latch, platform_latch, io_latch;
+  fxl::AutoResetWaitableEvent ui_latch, gpu_latch, platform_latch, io_latch;
 
   fml::TaskRunner::RunNowOrPostTask(
       task_runners_.GetUITaskRunner(),
@@ -399,7 +379,7 @@ fml::WeakPtr<PlatformView> Shell::GetPlatformView() {
   return platform_view_->GetWeakPtr();
 }
 
-blink::DartVM& Shell::GetDartVM() const {
+const blink::DartVM& Shell::GetDartVM() const {
   return *vm_;
 }
 
@@ -415,7 +395,7 @@ void Shell::OnPlatformViewCreated(const PlatformView& view,
   // setup/suspension of all activities that may be interacting with the GPU in
   // a synchronous fashion.
 
-  fml::AutoResetWaitableEvent latch;
+  fxl::AutoResetWaitableEvent latch;
   auto gpu_task = fxl::MakeCopyable([rasterizer = rasterizer_->GetWeakPtr(),  //
                                      surface = std::move(surface),            //
                                      &latch]() mutable {
@@ -456,25 +436,15 @@ void Shell::OnPlatformViewDestroyed(const PlatformView& view) {
   // setup/suspension of all activities that may be interacting with the GPU in
   // a synchronous fashion.
 
-  fml::AutoResetWaitableEvent latch;
+  fxl::AutoResetWaitableEvent latch;
 
-  auto io_task = [io_manager = io_manager_.get(), &latch]() {
-    // Execute any pending Skia object deletions while GPU access is still
-    // allowed.
-    io_manager->GetSkiaUnrefQueue()->Drain();
-    // Step 3: All done. Signal the latch that the platform thread is waiting
-    // on.
-    latch.Signal();
-  };
-
-  auto gpu_task = [rasterizer = rasterizer_->GetWeakPtr(),
-                   io_task_runner = task_runners_.GetIOTaskRunner(),
-                   io_task]() {
+  auto gpu_task = [rasterizer = rasterizer_->GetWeakPtr(), &latch]() {
     if (rasterizer) {
       rasterizer->Teardown();
     }
-    // Step 2: Next, tell the IO thread to complete its remaining work.
-    fml::TaskRunner::RunNowOrPostTask(io_task_runner, io_task);
+    // Step 2: All done. Signal the latch that the platform thread is waiting
+    // on.
+    latch.Signal();
   };
 
   auto ui_task = [engine = engine_->GetWeakPtr(),
@@ -569,21 +539,6 @@ void Shell::OnPlatformViewSetSemanticsEnabled(const PlatformView& view,
       [engine = engine_->GetWeakPtr(), enabled] {
         if (engine) {
           engine->SetSemanticsEnabled(enabled);
-        }
-      });
-}
-
-void Shell::OnPlatformViewSetAssistiveTechnologyEnabled(
-    const PlatformView& view,
-    bool enabled) {
-  FXL_DCHECK(is_setup_);
-  FXL_DCHECK(&view == platform_view_.get());
-  FXL_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
-
-  task_runners_.GetUITaskRunner()->PostTask(
-      [engine = engine_->GetWeakPtr(), enabled] {
-        if (engine) {
-          engine->SetAssistiveTechnologyEnabled(enabled);
         }
       });
 }
@@ -695,7 +650,7 @@ void Shell::OnAnimatorNotifyIdle(const Animator& animator, int64_t deadline) {
 // |shell::Animator::Delegate|
 void Shell::OnAnimatorDraw(
     const Animator& animator,
-    fml::RefPtr<flutter::Pipeline<flow::LayerTree>> pipeline) {
+    fxl::RefPtr<flutter::Pipeline<flow::LayerTree>> pipeline) {
   FXL_DCHECK(is_setup_);
 
   task_runners_.GetGPUTaskRunner()->PostTask(
@@ -720,18 +675,15 @@ void Shell::OnAnimatorDrawLastLayerTree(const Animator& animator) {
 }
 
 // |shell::Engine::Delegate|
-void Shell::OnEngineUpdateSemantics(
-    const Engine& engine,
-    blink::SemanticsNodeUpdates update,
-    blink::CustomAccessibilityActionUpdates actions) {
+void Shell::OnEngineUpdateSemantics(const Engine& engine,
+                                    blink::SemanticsNodeUpdates update) {
   FXL_DCHECK(is_setup_);
   FXL_DCHECK(task_runners_.GetUITaskRunner()->RunsTasksOnCurrentThread());
 
   task_runners_.GetPlatformTaskRunner()->PostTask(
-      [view = platform_view_->GetWeakPtr(), update = std::move(update),
-       actions = std::move(actions)] {
+      [view = platform_view_->GetWeakPtr(), update = std::move(update)] {
         if (view) {
-          view->UpdateSemantics(std::move(update), std::move(actions));
+          view->UpdateSemantics(std::move(update));
         }
       });
 }
@@ -947,7 +899,7 @@ bool Shell::OnServiceProtocolSetAssetBundlePath(
   auto& allocator = response.GetAllocator();
   response.SetObject();
 
-  auto asset_manager = fml::MakeRefCounted<blink::AssetManager>();
+  auto asset_manager = fxl::MakeRefCounted<blink::AssetManager>();
 
   asset_manager->PushFront(std::make_unique<blink::DirectoryAssetBundle>(
       fml::OpenFile(params.at("assetDirectory").ToString().c_str(),
@@ -974,7 +926,7 @@ Rasterizer::Screenshot Shell::Screenshot(
     Rasterizer::ScreenshotType screenshot_type,
     bool base64_encode) {
   TRACE_EVENT0("flutter", "Shell::Screenshot");
-  fml::AutoResetWaitableEvent latch;
+  fxl::AutoResetWaitableEvent latch;
   Rasterizer::Screenshot screenshot;
   fml::TaskRunner::RunNowOrPostTask(
       task_runners_.GetGPUTaskRunner(), [&latch,                        //

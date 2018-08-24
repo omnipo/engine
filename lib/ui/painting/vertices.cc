@@ -4,8 +4,8 @@
 
 #include "flutter/lib/ui/painting/vertices.h"
 
-#include "third_party/tonic/dart_binding_macros.h"
-#include "third_party/tonic/dart_library_natives.h"
+#include "lib/tonic/dart_binding_macros.h"
+#include "lib/tonic/dart_library_natives.h"
 
 namespace blink {
 
@@ -60,23 +60,12 @@ void Vertices::init(SkVertices::VertexMode vertex_mode,
 
   SkVertices::Builder builder(vertex_mode, positions.num_elements() / 2,
                               indices.num_elements(), builderFlags);
-
-  // positions are required for SkVertices::Builder
-  FXL_DCHECK(positions.data());
   if (positions.data())
     DecodePoints(positions, builder.positions());
-
-  if (texture_coordinates.data()) {
-    // SkVertices::Builder assumes equal numbers of elements
-    FXL_DCHECK(positions.num_elements() == texture_coordinates.num_elements());
+  if (texture_coordinates.data())
     DecodePoints(texture_coordinates, builder.texCoords());
-  }
-  if (colors.data()) {
-    // SkVertices::Builder assumes equal numbers of elements
-    FXL_DCHECK(positions.num_elements() == colors.num_elements());
+  if (colors.data())
     DecodeInts<SkColor>(colors, builder.colors());
-  }
-
   if (indices.data())
     DecodeInts<uint16_t>(indices, builder.indices());
 

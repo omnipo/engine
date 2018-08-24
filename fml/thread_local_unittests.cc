@@ -4,7 +4,6 @@
 
 #include <thread>
 
-#include "flutter/fml/logging.h"
 #include "flutter/fml/thread_local.h"
 #include "gtest/gtest.h"
 

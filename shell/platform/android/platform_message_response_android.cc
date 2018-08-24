@@ -18,8 +18,7 @@ PlatformMessageResponseAndroid::PlatformMessageResponseAndroid(
       platform_task_runner_(std::move(platform_task_runner)) {}
 
 // |blink::PlatformMessageResponse|
-void PlatformMessageResponseAndroid::Complete(
-    std::unique_ptr<fml::Mapping> data) {
+void PlatformMessageResponseAndroid::Complete(std::vector<uint8_t> data) {
   platform_task_runner_->PostTask(
       fxl::MakeCopyable([response = response_id_,               //
                          weak_java_object = weak_java_object_,  //
@@ -38,10 +37,9 @@ void PlatformMessageResponseAndroid::Complete(
 
         // Convert the vector to a Java byte array.
         fml::jni::ScopedJavaLocalRef<jbyteArray> data_array(
-            env, env->NewByteArray(data->GetSize()));
-        env->SetByteArrayRegion(
-            data_array.obj(), 0, data->GetSize(),
-            reinterpret_cast<const jbyte*>(data->GetMapping()));
+            env, env->NewByteArray(data.size()));
+        env->SetByteArrayRegion(data_array.obj(), 0, data.size(),
+                                reinterpret_cast<const jbyte*>(data.data()));
 
         // Make the response call into Java.
         FlutterViewHandlePlatformMessageResponse(env, java_object.obj(),
@@ -52,8 +50,8 @@ void PlatformMessageResponseAndroid::Complete(
 // |blink::PlatformMessageResponse|
 void PlatformMessageResponseAndroid::CompleteEmpty() {
   platform_task_runner_->PostTask(
-      fxl::MakeCopyable([response = response_id_,              //
-                         weak_java_object = weak_java_object_  //
+      fxl::MakeCopyable([response = response_id_,               //
+                         weak_java_object = weak_java_object_   //
   ]() {
         // We are on the platform thread. Attempt to get the strong reference to
         // the Java object.

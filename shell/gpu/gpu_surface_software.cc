@@ -59,7 +59,7 @@ std::unique_ptr<SurfaceFrame> GPUSurfaceSoftware::AcquireFrame(
 }
 
 GrContext* GPUSurfaceSoftware::GetContext() {
-  // There is no GrContext associated with a software surface.
+  // The is no GrContext associated with a software surface.
   return nullptr;
 }
 

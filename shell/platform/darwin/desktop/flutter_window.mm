@@ -52,11 +52,11 @@ static inline blink::PointerData::Change PointerChangeFromNSEventPhase(NSEventPh
 }
 
 - (instancetype)init {
-  self = [super initWithContentRect:NSMakeRect(10.0, 10.0, 800.0, 600.0)
-                          styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
-                                    NSWindowStyleMaskResizable
-                            backing:NSBackingStoreBuffered
-                              defer:YES];
+  self =
+      [super initWithContentRect:NSMakeRect(10.0, 10.0, 800.0, 600.0)
+                       styleMask:NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask
+                         backing:NSBackingStoreBuffered
+                           defer:YES];
   if (self) {
     self.delegate = self;
     [self setupRenderSurface];
@@ -114,6 +114,8 @@ static std::string CreateThreadLabel() {
     settings.icu_data_path =
         [[NSBundle mainBundle] pathForResource:@"icudtl.dat" ofType:@""].UTF8String;
   }
+
+  settings.using_blink = false;
 
   settings.task_observer_add = [](intptr_t key, fxl::Closure callback) {
     fml::MessageLoop::GetCurrent().AddTaskObserver(key, std::move(callback));

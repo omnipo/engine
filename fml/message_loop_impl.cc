@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "flutter/fml/build_config.h"
-#include "flutter/fml/logging.h"
 #include "flutter/fml/trace_event.h"
 
 #if OS_MACOSX
@@ -44,7 +43,7 @@ MessageLoopImpl::MessageLoopImpl() : order_(0), terminated_(false) {}
 MessageLoopImpl::~MessageLoopImpl() = default;
 
 void MessageLoopImpl::PostTask(fxl::Closure task, fxl::TimePoint target_time) {
-  FML_DCHECK(task != nullptr);
+  FXL_DCHECK(task != nullptr);
   RegisterTask(task, target_time);
 }
 
@@ -53,15 +52,15 @@ void MessageLoopImpl::RunExpiredTasksNow() {
 }
 
 void MessageLoopImpl::AddTaskObserver(intptr_t key, fxl::Closure callback) {
-  FML_DCHECK(callback != nullptr);
-  FML_DCHECK(MessageLoop::GetCurrent().GetLoopImpl().get() == this)
+  FXL_DCHECK(callback != nullptr);
+  FXL_DCHECK(MessageLoop::GetCurrent().GetLoopImpl().get() == this)
       << "Message loop task observer must be added on the same thread as the "
          "loop.";
   task_observers_[key] = std::move(callback);
 }
 
 void MessageLoopImpl::RemoveTaskObserver(intptr_t key) {
-  FML_DCHECK(MessageLoop::GetCurrent().GetLoopImpl().get() == this)
+  FXL_DCHECK(MessageLoop::GetCurrent().GetLoopImpl().get() == this)
       << "Message loop task observer must be removed from the same thread as "
          "the loop.";
   task_observers_.erase(key);
@@ -101,7 +100,7 @@ void MessageLoopImpl::DoTerminate() {
 
 void MessageLoopImpl::RegisterTask(fxl::Closure task,
                                    fxl::TimePoint target_time) {
-  FML_DCHECK(task != nullptr);
+  FXL_DCHECK(task != nullptr);
   if (terminated_) {
     // If the message loop has already been terminated, PostTask should destruct
     // |task| synchronously within this function.

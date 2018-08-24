@@ -1,4 +1,5 @@
 #!/bin/bash
 
 cd frontend_server
-dart test/server_test.dart
+pub get
+pub run test/server_test.dart

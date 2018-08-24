@@ -26,7 +26,6 @@ public class FlutterNativeView implements BinaryMessenger {
     private long mNativePlatformView;
     private FlutterView mFlutterView;
     private final Context mContext;
-    private boolean applicationIsRunning;
 
     public FlutterNativeView(Context context) {
         mContext = context;
@@ -43,11 +42,9 @@ public class FlutterNativeView implements BinaryMessenger {
     }
 
     public void destroy() {
-        mPluginRegistry.destroy();
         mFlutterView = null;
         nativeDestroy(mNativePlatformView);
         mNativePlatformView = 0;
-        applicationIsRunning = false;
     }
 
     public FlutterPluginRegistry getPluginRegistry() {
@@ -74,16 +71,17 @@ public class FlutterNativeView implements BinaryMessenger {
 
     public void runFromBundle(String bundlePath, String snapshotOverride, String entrypoint, boolean reuseRuntimeController) {
         assertAttached();
-        if (applicationIsRunning)
-            throw new AssertionError("This Flutter engine instance is already running an application");
-
         nativeRunBundleAndSnapshot(mNativePlatformView, bundlePath, snapshotOverride, entrypoint, reuseRuntimeController, mContext.getResources().getAssets());
-
-        applicationIsRunning = true;
     }
 
-    public boolean isApplicationRunning() {
-      return applicationIsRunning;
+    public void runFromSource(final String assetsDirectory, final String main, final String packages) {
+        assertAttached();
+        nativeRunBundleAndSource(mNativePlatformView, assetsDirectory, main, packages);
+    }
+
+    public void setAssetBundlePathOnUI(final String assetsDirectory) {
+        assertAttached();
+        nativeSetAssetBundlePathOnUI(mNativePlatformView, assetsDirectory);
     }
 
     public static String getObservatoryUri() {
@@ -184,13 +182,6 @@ public class FlutterNativeView implements BinaryMessenger {
         mFlutterView.updateSemantics(buffer, strings);
     }
 
-    // Called by native to update the custom accessibility actions.
-    private void updateCustomAccessibilityActions(ByteBuffer buffer, String[] strings) {
-        if (mFlutterView == null)
-            return;
-        mFlutterView.updateCustomAccessibilityActions(buffer, strings);
-    }
-
     // Called by native to notify first Flutter frame rendered.
     private void onFirstFrame() {
         if (mFlutterView == null)
@@ -208,6 +199,14 @@ public class FlutterNativeView implements BinaryMessenger {
         String entrypoint,
         boolean reuseRuntimeController,
         AssetManager manager);
+
+    private static native void nativeRunBundleAndSource(long nativePlatformViewAndroid,
+        String bundlePath,
+        String main,
+        String packages);
+
+    private static native void nativeSetAssetBundlePathOnUI(long nativePlatformViewAndroid,
+        String bundlePath);
 
     private static native String nativeGetObservatoryUri();
 

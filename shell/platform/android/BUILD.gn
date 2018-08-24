@@ -6,13 +6,6 @@ import("$flutter_root/common/config.gni")
 import("$flutter_root/shell/config.gni")
 import("//build/config/android/config.gni")
 import("//build/config/android/rules.gni")
-import("$flutter_root/shell/gpu/gpu.gni")
-
-shell_gpu_configuration("android_gpu_configuration") {
-  enable_software = true
-  enable_vulkan = shell_enable_vulkan
-  enable_gl = true
-}
 
 shared_library("flutter_shell_native") {
   visibility = [ ":*" ]
@@ -52,7 +45,6 @@ shared_library("flutter_shell_native") {
   ]
 
   deps = [
-    ":android_gpu_configuration",
     "$flutter_root/assets",
     "$flutter_root/common",
     "$flutter_root/flow",
@@ -60,13 +52,12 @@ shared_library("flutter_shell_native") {
     "$flutter_root/lib/ui",
     "$flutter_root/runtime",
     "$flutter_root/shell/common",
+    "$flutter_root/shell/gpu",
     "//garnet/public/lib/fxl",
     "//third_party/skia",
     "//third_party/skia:gpu",
   ]
-  if (flutter_runtime_mode == "debug" ||
-      flutter_runtime_mode == "dynamic_profile" ||
-      flutter_runtime_mode == "dynamic_release") {
+  if (flutter_runtime_mode == "debug") {
     deps += [ "//third_party/dart/runtime:libdart_jit" ]
   } else {
     deps += [ "//third_party/dart/runtime:libdart_precompiled_runtime" ]
@@ -108,8 +99,8 @@ java_library("flutter_shell_java") {
     "io/flutter/plugin/common/BasicMessageChannel.java",
     "io/flutter/plugin/common/BinaryCodec.java",
     "io/flutter/plugin/common/BinaryMessenger.java",
-    "io/flutter/plugin/common/EventChannel.java",
     "io/flutter/plugin/common/FlutterException.java",
+    "io/flutter/plugin/common/EventChannel.java",
     "io/flutter/plugin/common/JSONMessageCodec.java",
     "io/flutter/plugin/common/JSONMethodCodec.java",
     "io/flutter/plugin/common/JSONUtil.java",
@@ -124,13 +115,6 @@ java_library("flutter_shell_java") {
     "io/flutter/plugin/editing/InputConnectionAdaptor.java",
     "io/flutter/plugin/editing/TextInputPlugin.java",
     "io/flutter/plugin/platform/PlatformPlugin.java",
-    "io/flutter/plugin/platform/PlatformView.java",
-    "io/flutter/plugin/platform/PlatformViewFactory.java",
-    "io/flutter/plugin/platform/PlatformViewRegistry.java",
-    "io/flutter/plugin/platform/PlatformViewRegistryImpl.java",
-    "io/flutter/plugin/platform/PlatformViewsController.java",
-    "io/flutter/plugin/platform/SingleViewPresentation.java",
-    "io/flutter/plugin/platform/VirtualDisplayController.java",
     "io/flutter/util/PathUtils.java",
     "io/flutter/util/Preconditions.java",
     "io/flutter/view/AccessibilityBridge.java",

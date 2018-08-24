@@ -4,7 +4,6 @@
 
 #include "flutter/lib/ui/painting/canvas.h"
 
-#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "flutter/flow/layers/physical_shape_layer.h"
@@ -12,13 +11,13 @@
 #include "flutter/lib/ui/painting/matrix.h"
 #include "flutter/lib/ui/ui_dart_state.h"
 #include "flutter/lib/ui/window/window.h"
+#include "lib/tonic/converter/dart_converter.h"
+#include "lib/tonic/dart_args.h"
+#include "lib/tonic/dart_binding_macros.h"
+#include "lib/tonic/dart_library_natives.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkRSXform.h"
-#include "third_party/tonic/converter/dart_converter.h"
-#include "third_party/tonic/dart_args.h"
-#include "third_party/tonic/dart_binding_macros.h"
-#include "third_party/tonic/dart_library_natives.h"
 
 using tonic::ToDart;
 
@@ -160,27 +159,25 @@ void Canvas::clipRect(double left,
                       double top,
                       double right,
                       double bottom,
-                      SkClipOp clipOp,
-                      bool doAntiAlias) {
+                      SkClipOp clipOp) {
   if (!canvas_)
     return;
-  canvas_->clipRect(SkRect::MakeLTRB(left, top, right, bottom), clipOp,
-                    doAntiAlias);
+  canvas_->clipRect(SkRect::MakeLTRB(left, top, right, bottom), clipOp, true);
 }
 
-void Canvas::clipRRect(const RRect& rrect, bool doAntiAlias) {
+void Canvas::clipRRect(const RRect& rrect) {
   if (!canvas_)
     return;
-  canvas_->clipRRect(rrect.sk_rrect, doAntiAlias);
+  canvas_->clipRRect(rrect.sk_rrect, true);
 }
 
-void Canvas::clipPath(const CanvasPath* path, bool doAntiAlias) {
+void Canvas::clipPath(const CanvasPath* path) {
   if (!canvas_)
     return;
   if (!path)
     Dart_ThrowException(
         ToDart("Canvas.clipPath called with non-genuine Path."));
-  canvas_->clipPath(path->path(), doAntiAlias);
+  canvas_->clipPath(path->path(), true);
 }
 
 void Canvas::drawColor(SkColor color, SkBlendMode blend_mode) {

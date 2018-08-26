@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
- * Copyright (C) 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011 Apple Inc. All
- * right reserved.
+ * Copyright (C) 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011 Apple Inc. All right reserved.
  * Copyright (C) 2010 Google Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,9 +23,9 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_LINE_LINEBREAKER_H_
 #define SKY_ENGINE_CORE_RENDERING_LINE_LINEBREAKER_H_
 
-#include "flutter/sky/engine/core/rendering/InlineIterator.h"
-#include "flutter/sky/engine/core/rendering/line/LineInfo.h"
-#include "flutter/sky/engine/wtf/Vector.h"
+#include "sky/engine/core/rendering/InlineIterator.h"
+#include "sky/engine/core/rendering/line/LineInfo.h"
+#include "sky/engine/wtf/Vector.h"
 
 namespace blink {
 
@@ -35,34 +34,29 @@ enum WhitespacePosition { LeadingWhitespace, TrailingWhitespace };
 struct RenderTextInfo;
 
 class LineBreaker {
- public:
-  friend class BreakingContext;
-  LineBreaker(RenderParagraph* block) : m_block(block) { reset(); }
+public:
+    friend class BreakingContext;
+    LineBreaker(RenderParagraph* block)
+        : m_block(block)
+    {
+        reset();
+    }
 
-  InlineIterator nextLineBreak(InlineBidiResolver&,
-                               LineInfo&,
-                               RenderTextInfo&,
-                               FloatingObject* lastFloatFromPreviousLine,
-                               WordMeasurements&);
+    InlineIterator nextLineBreak(InlineBidiResolver&, LineInfo&, RenderTextInfo&,
+        FloatingObject* lastFloatFromPreviousLine, WordMeasurements&);
 
-  bool lineWasHyphenated() { return m_hyphenated; }
-  bool lineWasEllipsized() { return m_ellipsized; }
-  const Vector<RenderBox*>& positionedObjects() { return m_positionedObjects; }
+    bool lineWasHyphenated() { return m_hyphenated; }
+    const Vector<RenderBox*>& positionedObjects() { return m_positionedObjects; }
+private:
+    void reset();
 
- private:
-  void reset();
+    void skipLeadingWhitespace(InlineBidiResolver&, LineInfo&, FloatingObject* lastFloatFromPreviousLine, LineWidth&);
 
-  void skipLeadingWhitespace(InlineBidiResolver&,
-                             LineInfo&,
-                             FloatingObject* lastFloatFromPreviousLine,
-                             LineWidth&);
-
-  RenderParagraph* m_block;
-  bool m_hyphenated;
-  bool m_ellipsized;
-  Vector<RenderBox*> m_positionedObjects;
+    RenderParagraph* m_block;
+    bool m_hyphenated;
+    Vector<RenderBox*> m_positionedObjects;
 };
 
-}  // namespace blink
+}
 
 #endif  // SKY_ENGINE_CORE_RENDERING_LINE_LINEBREAKER_H_

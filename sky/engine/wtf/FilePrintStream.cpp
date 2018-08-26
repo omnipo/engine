@@ -23,34 +23,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/wtf/FilePrintStream.h"
+#include "sky/engine/wtf/FilePrintStream.h"
 
 namespace WTF {
 
 FilePrintStream::FilePrintStream(FILE* file, AdoptionMode adoptionMode)
-    : m_file(file), m_adoptionMode(adoptionMode) {}
-
-FilePrintStream::~FilePrintStream() {
-  if (m_adoptionMode == Borrow)
-    return;
-  fclose(m_file);
+    : m_file(file)
+    , m_adoptionMode(adoptionMode)
+{
 }
 
-PassOwnPtr<FilePrintStream> FilePrintStream::open(const char* filename,
-                                                  const char* mode) {
-  FILE* file = fopen(filename, mode);
-  if (!file)
-    return PassOwnPtr<FilePrintStream>();
-
-  return adoptPtr(new FilePrintStream(file));
+FilePrintStream::~FilePrintStream()
+{
+    if (m_adoptionMode == Borrow)
+        return;
+    fclose(m_file);
 }
 
-void FilePrintStream::vprintf(const char* format, va_list argList) {
-  vfprintf(m_file, format, argList);
+PassOwnPtr<FilePrintStream> FilePrintStream::open(const char* filename, const char* mode)
+{
+    FILE* file = fopen(filename, mode);
+    if (!file)
+        return PassOwnPtr<FilePrintStream>();
+
+    return adoptPtr(new FilePrintStream(file));
 }
 
-void FilePrintStream::flush() {
-  fflush(m_file);
+void FilePrintStream::vprintf(const char* format, va_list argList)
+{
+    vfprintf(m_file, format, argList);
 }
 
-}  // namespace WTF
+void FilePrintStream::flush()
+{
+    fflush(m_file);
+}
+
+} // namespace WTF
+

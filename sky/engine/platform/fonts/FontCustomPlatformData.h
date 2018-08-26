@@ -32,14 +32,13 @@
 #ifndef SKY_ENGINE_PLATFORM_FONTS_FONTCUSTOMPLATFORMDATA_H_
 #define SKY_ENGINE_PLATFORM_FONTS_FONTCUSTOMPLATFORMDATA_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/platform/fonts/FontOrientation.h"
-#include "flutter/sky/engine/platform/fonts/FontWidthVariant.h"
-#include "flutter/sky/engine/wtf/Forward.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
-#include "flutter/sky/engine/wtf/RefPtr.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
-#include "third_party/skia/include/core/SkRefCnt.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/platform/fonts/FontOrientation.h"
+#include "sky/engine/platform/fonts/FontWidthVariant.h"
+#include "sky/engine/wtf/Forward.h"
+#include "sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/RefPtr.h"
+#include "sky/engine/wtf/text/WTFString.h"
 
 class SkTypeface;
 
@@ -49,25 +48,20 @@ class FontPlatformData;
 class SharedBuffer;
 
 class PLATFORM_EXPORT FontCustomPlatformData {
-  WTF_MAKE_NONCOPYABLE(FontCustomPlatformData);
+    WTF_MAKE_NONCOPYABLE(FontCustomPlatformData);
+public:
+    static PassOwnPtr<FontCustomPlatformData> create(SharedBuffer*);
+    ~FontCustomPlatformData();
 
- public:
-  static PassOwnPtr<FontCustomPlatformData> create(SharedBuffer*);
-  ~FontCustomPlatformData();
+    FontPlatformData fontPlatformData(float size, bool bold, bool italic, FontOrientation = Horizontal, FontWidthVariant = RegularWidth);
 
-  FontPlatformData fontPlatformData(float size,
-                                    bool bold,
-                                    bool italic,
-                                    FontOrientation = Horizontal,
-                                    FontWidthVariant = RegularWidth);
+    static bool supportsFormat(const String&);
 
-  static bool supportsFormat(const String&);
-
- private:
-  explicit FontCustomPlatformData(sk_sp<SkTypeface>);
-  sk_sp<SkTypeface> m_typeface;
+private:
+    explicit FontCustomPlatformData(PassRefPtr<SkTypeface>);
+    RefPtr<SkTypeface> m_typeface;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_FONTS_FONTCUSTOMPLATFORMDATA_H_

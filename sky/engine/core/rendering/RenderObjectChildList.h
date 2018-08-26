@@ -26,48 +26,44 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_RENDEROBJECTCHILDLIST_H_
 #define SKY_ENGINE_CORE_RENDERING_RENDEROBJECTCHILDLIST_H_
 
-#include "flutter/sky/engine/platform/heap/Handle.h"
-#include "flutter/sky/engine/wtf/Forward.h"
+#include "sky/engine/platform/heap/Handle.h"
+#include "sky/engine/wtf/Forward.h"
 
 namespace blink {
 
 class RenderObject;
 
 class RenderObjectChildList {
-  DISALLOW_ALLOCATION();
+    DISALLOW_ALLOCATION();
+public:
+    RenderObjectChildList()
+        : m_firstChild(nullptr)
+        , m_lastChild(nullptr)
+    {
+    }
 
- public:
-  RenderObjectChildList() : m_firstChild(nullptr), m_lastChild(nullptr) {}
+    RenderObject* firstChild() const { return m_firstChild; }
+    RenderObject* lastChild() const { return m_lastChild; }
 
-  RenderObject* firstChild() const { return m_firstChild; }
-  RenderObject* lastChild() const { return m_lastChild; }
+    // FIXME: Temporary while RenderBox still exists. Eventually this will just happen during insert/append/remove methods on the child list, and nobody
+    // will need to manipulate firstChild or lastChild directly.
+    void setFirstChild(RenderObject* child) { m_firstChild = child; }
+    void setLastChild(RenderObject* child) { m_lastChild = child; }
 
-  // FIXME: Temporary while RenderBox still exists. Eventually this will just
-  // happen during insert/append/remove methods on the child list, and nobody
-  // will need to manipulate firstChild or lastChild directly.
-  void setFirstChild(RenderObject* child) { m_firstChild = child; }
-  void setLastChild(RenderObject* child) { m_lastChild = child; }
+    void destroyLeftoverChildren();
 
-  void destroyLeftoverChildren();
+    RenderObject* removeChildNode(RenderObject* owner, RenderObject*, bool notifyRenderer = true);
+    void insertChildNode(RenderObject* owner, RenderObject* newChild, RenderObject* beforeChild, bool notifyRenderer = true);
+    void appendChildNode(RenderObject* owner, RenderObject* newChild, bool notifyRenderer = true)
+    {
+        insertChildNode(owner, newChild, 0, notifyRenderer);
+    }
 
-  RenderObject* removeChildNode(RenderObject* owner,
-                                RenderObject*,
-                                bool notifyRenderer = true);
-  void insertChildNode(RenderObject* owner,
-                       RenderObject* newChild,
-                       RenderObject* beforeChild,
-                       bool notifyRenderer = true);
-  void appendChildNode(RenderObject* owner,
-                       RenderObject* newChild,
-                       bool notifyRenderer = true) {
-    insertChildNode(owner, newChild, 0, notifyRenderer);
-  }
-
- private:
-  RenderObject* m_firstChild;
-  RenderObject* m_lastChild;
+private:
+    RenderObject* m_firstChild;
+    RenderObject* m_lastChild;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_RENDEROBJECTCHILDLIST_H_

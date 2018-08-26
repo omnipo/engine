@@ -28,238 +28,191 @@
 
 namespace WTF {
 
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableConstKeysIterator;
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableConstValuesIterator;
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableKeysIterator;
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableValuesIterator;
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableConstKeysIterator;
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableConstValuesIterator;
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableKeysIterator;
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableValuesIterator;
 
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableConstIteratorAdapter<HashTableType,
-                                     KeyValuePair<KeyType, MappedType>> {
- private:
-  typedef KeyValuePair<KeyType, MappedType> ValueType;
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableConstIteratorAdapter<HashTableType, KeyValuePair<KeyType, MappedType> > {
+    private:
+        typedef KeyValuePair<KeyType, MappedType> ValueType;
+    public:
+        typedef HashTableConstKeysIterator<HashTableType, KeyType, MappedType> Keys;
+        typedef HashTableConstValuesIterator<HashTableType, KeyType, MappedType> Values;
 
- public:
-  typedef HashTableConstKeysIterator<HashTableType, KeyType, MappedType> Keys;
-  typedef HashTableConstValuesIterator<HashTableType, KeyType, MappedType>
-      Values;
+        HashTableConstIteratorAdapter() {}
+        HashTableConstIteratorAdapter(const typename HashTableType::const_iterator& impl) : m_impl(impl) {}
 
-  HashTableConstIteratorAdapter() {}
-  HashTableConstIteratorAdapter(
-      const typename HashTableType::const_iterator& impl)
-      : m_impl(impl) {}
+        const ValueType* get() const { return (const ValueType*)m_impl.get(); }
+        const ValueType& operator*() const { return *get(); }
+        const ValueType* operator->() const { return get(); }
 
-  const ValueType* get() const { return (const ValueType*)m_impl.get(); }
-  const ValueType& operator*() const { return *get(); }
-  const ValueType* operator->() const { return get(); }
+        HashTableConstIteratorAdapter& operator++() { ++m_impl; return *this; }
+        // postfix ++ intentionally omitted
 
-  HashTableConstIteratorAdapter& operator++() {
-    ++m_impl;
-    return *this;
-  }
-  // postfix ++ intentionally omitted
+        Keys keys() { return Keys(*this); }
+        Values values() { return Values(*this); }
 
-  Keys keys() { return Keys(*this); }
-  Values values() { return Values(*this); }
+        typename HashTableType::const_iterator m_impl;
+    };
 
-  typename HashTableType::const_iterator m_impl;
-};
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableIteratorAdapter<HashTableType, KeyValuePair<KeyType, MappedType> > {
+    private:
+        typedef KeyValuePair<KeyType, MappedType> ValueType;
+    public:
+        typedef HashTableKeysIterator<HashTableType, KeyType, MappedType> Keys;
+        typedef HashTableValuesIterator<HashTableType, KeyType, MappedType> Values;
 
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableIteratorAdapter<HashTableType,
-                                KeyValuePair<KeyType, MappedType>> {
- private:
-  typedef KeyValuePair<KeyType, MappedType> ValueType;
+        HashTableIteratorAdapter() {}
+        HashTableIteratorAdapter(const typename HashTableType::iterator& impl) : m_impl(impl) {}
 
- public:
-  typedef HashTableKeysIterator<HashTableType, KeyType, MappedType> Keys;
-  typedef HashTableValuesIterator<HashTableType, KeyType, MappedType> Values;
+        ValueType* get() const { return (ValueType*)m_impl.get(); }
+        ValueType& operator*() const { return *get(); }
+        ValueType* operator->() const { return get(); }
 
-  HashTableIteratorAdapter() {}
-  HashTableIteratorAdapter(const typename HashTableType::iterator& impl)
-      : m_impl(impl) {}
+        HashTableIteratorAdapter& operator++() { ++m_impl; return *this; }
+        // postfix ++ intentionally omitted
 
-  ValueType* get() const { return (ValueType*)m_impl.get(); }
-  ValueType& operator*() const { return *get(); }
-  ValueType* operator->() const { return get(); }
+        operator HashTableConstIteratorAdapter<HashTableType, ValueType>() {
+            typename HashTableType::const_iterator i = m_impl;
+            return i;
+        }
 
-  HashTableIteratorAdapter& operator++() {
-    ++m_impl;
-    return *this;
-  }
-  // postfix ++ intentionally omitted
+        Keys keys() { return Keys(*this); }
+        Values values() { return Values(*this); }
 
-  operator HashTableConstIteratorAdapter<HashTableType, ValueType>() {
-    typename HashTableType::const_iterator i = m_impl;
-    return i;
-  }
+        typename HashTableType::iterator m_impl;
+    };
 
-  Keys keys() { return Keys(*this); }
-  Values values() { return Values(*this); }
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableConstKeysIterator {
+    private:
+        typedef HashTableConstIteratorAdapter<HashTableType, KeyValuePair<KeyType, MappedType> > ConstIterator;
 
-  typename HashTableType::iterator m_impl;
-};
+    public:
+        HashTableConstKeysIterator(const ConstIterator& impl) : m_impl(impl) {}
 
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableConstKeysIterator {
- private:
-  typedef HashTableConstIteratorAdapter<HashTableType,
-                                        KeyValuePair<KeyType, MappedType>>
-      ConstIterator;
+        const KeyType* get() const { return &(m_impl.get()->key); }
+        const KeyType& operator*() const { return *get(); }
+        const KeyType* operator->() const { return get(); }
 
- public:
-  HashTableConstKeysIterator(const ConstIterator& impl) : m_impl(impl) {}
+        HashTableConstKeysIterator& operator++() { ++m_impl; return *this; }
+        // postfix ++ intentionally omitted
 
-  const KeyType* get() const { return &(m_impl.get()->key); }
-  const KeyType& operator*() const { return *get(); }
-  const KeyType* operator->() const { return get(); }
+        ConstIterator m_impl;
+    };
 
-  HashTableConstKeysIterator& operator++() {
-    ++m_impl;
-    return *this;
-  }
-  // postfix ++ intentionally omitted
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableConstValuesIterator {
+    private:
+        typedef HashTableConstIteratorAdapter<HashTableType, KeyValuePair<KeyType, MappedType> > ConstIterator;
 
-  ConstIterator m_impl;
-};
+    public:
+        HashTableConstValuesIterator(const ConstIterator& impl) : m_impl(impl) {}
 
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableConstValuesIterator {
- private:
-  typedef HashTableConstIteratorAdapter<HashTableType,
-                                        KeyValuePair<KeyType, MappedType>>
-      ConstIterator;
+        const MappedType* get() const { return &(m_impl.get()->value); }
+        const MappedType& operator*() const { return *get(); }
+        const MappedType* operator->() const { return get(); }
 
- public:
-  HashTableConstValuesIterator(const ConstIterator& impl) : m_impl(impl) {}
+        HashTableConstValuesIterator& operator++() { ++m_impl; return *this; }
+        // postfix ++ intentionally omitted
 
-  const MappedType* get() const { return &(m_impl.get()->value); }
-  const MappedType& operator*() const { return *get(); }
-  const MappedType* operator->() const { return get(); }
+        ConstIterator m_impl;
+    };
 
-  HashTableConstValuesIterator& operator++() {
-    ++m_impl;
-    return *this;
-  }
-  // postfix ++ intentionally omitted
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableKeysIterator {
+    private:
+        typedef HashTableIteratorAdapter<HashTableType, KeyValuePair<KeyType, MappedType> > Iterator;
+        typedef HashTableConstIteratorAdapter<HashTableType, KeyValuePair<KeyType, MappedType> > ConstIterator;
 
-  ConstIterator m_impl;
-};
+    public:
+        HashTableKeysIterator(const Iterator& impl) : m_impl(impl) {}
 
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableKeysIterator {
- private:
-  typedef HashTableIteratorAdapter<HashTableType,
-                                   KeyValuePair<KeyType, MappedType>>
-      Iterator;
-  typedef HashTableConstIteratorAdapter<HashTableType,
-                                        KeyValuePair<KeyType, MappedType>>
-      ConstIterator;
+        KeyType* get() const { return &(m_impl.get()->key); }
+        KeyType& operator*() const { return *get(); }
+        KeyType* operator->() const { return get(); }
 
- public:
-  HashTableKeysIterator(const Iterator& impl) : m_impl(impl) {}
+        HashTableKeysIterator& operator++() { ++m_impl; return *this; }
+        // postfix ++ intentionally omitted
 
-  KeyType* get() const { return &(m_impl.get()->key); }
-  KeyType& operator*() const { return *get(); }
-  KeyType* operator->() const { return get(); }
+        operator HashTableConstKeysIterator<HashTableType, KeyType, MappedType>() {
+            ConstIterator i = m_impl;
+            return i;
+        }
 
-  HashTableKeysIterator& operator++() {
-    ++m_impl;
-    return *this;
-  }
-  // postfix ++ intentionally omitted
+        Iterator m_impl;
+    };
 
-  operator HashTableConstKeysIterator<HashTableType, KeyType, MappedType>() {
-    ConstIterator i = m_impl;
-    return i;
-  }
+    template<typename HashTableType, typename KeyType, typename MappedType> struct HashTableValuesIterator {
+    private:
+        typedef HashTableIteratorAdapter<HashTableType, KeyValuePair<KeyType, MappedType> > Iterator;
+        typedef HashTableConstIteratorAdapter<HashTableType, KeyValuePair<KeyType, MappedType> > ConstIterator;
 
-  Iterator m_impl;
-};
+    public:
+        HashTableValuesIterator(const Iterator& impl) : m_impl(impl) {}
 
-template <typename HashTableType, typename KeyType, typename MappedType>
-struct HashTableValuesIterator {
- private:
-  typedef HashTableIteratorAdapter<HashTableType,
-                                   KeyValuePair<KeyType, MappedType>>
-      Iterator;
-  typedef HashTableConstIteratorAdapter<HashTableType,
-                                        KeyValuePair<KeyType, MappedType>>
-      ConstIterator;
+        MappedType* get() const { return &(m_impl.get()->value); }
+        MappedType& operator*() const { return *get(); }
+        MappedType* operator->() const { return get(); }
 
- public:
-  HashTableValuesIterator(const Iterator& impl) : m_impl(impl) {}
+        HashTableValuesIterator& operator++() { ++m_impl; return *this; }
+        // postfix ++ intentionally omitted
 
-  MappedType* get() const { return &(m_impl.get()->value); }
-  MappedType& operator*() const { return *get(); }
-  MappedType* operator->() const { return get(); }
+        operator HashTableConstValuesIterator<HashTableType, KeyType, MappedType>() {
+            ConstIterator i = m_impl;
+            return i;
+        }
 
-  HashTableValuesIterator& operator++() {
-    ++m_impl;
-    return *this;
-  }
-  // postfix ++ intentionally omitted
+        Iterator m_impl;
+    };
 
-  operator HashTableConstValuesIterator<HashTableType, KeyType, MappedType>() {
-    ConstIterator i = m_impl;
-    return i;
-  }
+    template<typename T, typename U, typename V>
+        inline bool operator==(const HashTableConstKeysIterator<T, U, V>& a, const HashTableConstKeysIterator<T, U, V>& b)
+    {
+        return a.m_impl == b.m_impl;
+    }
 
-  Iterator m_impl;
-};
+    template<typename T, typename U, typename V>
+        inline bool operator!=(const HashTableConstKeysIterator<T, U, V>& a, const HashTableConstKeysIterator<T, U, V>& b)
+    {
+        return a.m_impl != b.m_impl;
+    }
 
-template <typename T, typename U, typename V>
-inline bool operator==(const HashTableConstKeysIterator<T, U, V>& a,
-                       const HashTableConstKeysIterator<T, U, V>& b) {
-  return a.m_impl == b.m_impl;
-}
+    template<typename T, typename U, typename V>
+        inline bool operator==(const HashTableConstValuesIterator<T, U, V>& a, const HashTableConstValuesIterator<T, U, V>& b)
+    {
+        return a.m_impl == b.m_impl;
+    }
 
-template <typename T, typename U, typename V>
-inline bool operator!=(const HashTableConstKeysIterator<T, U, V>& a,
-                       const HashTableConstKeysIterator<T, U, V>& b) {
-  return a.m_impl != b.m_impl;
-}
+    template<typename T, typename U, typename V>
+        inline bool operator!=(const HashTableConstValuesIterator<T, U, V>& a, const HashTableConstValuesIterator<T, U, V>& b)
+    {
+        return a.m_impl != b.m_impl;
+    }
 
-template <typename T, typename U, typename V>
-inline bool operator==(const HashTableConstValuesIterator<T, U, V>& a,
-                       const HashTableConstValuesIterator<T, U, V>& b) {
-  return a.m_impl == b.m_impl;
-}
+    template<typename T, typename U, typename V>
+        inline bool operator==(const HashTableKeysIterator<T, U, V>& a, const HashTableKeysIterator<T, U, V>& b)
+    {
+        return a.m_impl == b.m_impl;
+    }
 
-template <typename T, typename U, typename V>
-inline bool operator!=(const HashTableConstValuesIterator<T, U, V>& a,
-                       const HashTableConstValuesIterator<T, U, V>& b) {
-  return a.m_impl != b.m_impl;
-}
+    template<typename T, typename U, typename V>
+        inline bool operator!=(const HashTableKeysIterator<T, U, V>& a, const HashTableKeysIterator<T, U, V>& b)
+    {
+        return a.m_impl != b.m_impl;
+    }
 
-template <typename T, typename U, typename V>
-inline bool operator==(const HashTableKeysIterator<T, U, V>& a,
-                       const HashTableKeysIterator<T, U, V>& b) {
-  return a.m_impl == b.m_impl;
-}
+    template<typename T, typename U, typename V>
+        inline bool operator==(const HashTableValuesIterator<T, U, V>& a, const HashTableValuesIterator<T, U, V>& b)
+    {
+        return a.m_impl == b.m_impl;
+    }
 
-template <typename T, typename U, typename V>
-inline bool operator!=(const HashTableKeysIterator<T, U, V>& a,
-                       const HashTableKeysIterator<T, U, V>& b) {
-  return a.m_impl != b.m_impl;
-}
+    template<typename T, typename U, typename V>
+        inline bool operator!=(const HashTableValuesIterator<T, U, V>& a, const HashTableValuesIterator<T, U, V>& b)
+    {
+        return a.m_impl != b.m_impl;
+    }
 
-template <typename T, typename U, typename V>
-inline bool operator==(const HashTableValuesIterator<T, U, V>& a,
-                       const HashTableValuesIterator<T, U, V>& b) {
-  return a.m_impl == b.m_impl;
-}
 
-template <typename T, typename U, typename V>
-inline bool operator!=(const HashTableValuesIterator<T, U, V>& a,
-                       const HashTableValuesIterator<T, U, V>& b) {
-  return a.m_impl != b.m_impl;
-}
-
-}  // namespace WTF
+} // namespace WTF
 
 #endif  // SKY_ENGINE_WTF_HASHITERATORS_H_

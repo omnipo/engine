@@ -21,11 +21,11 @@
 #ifndef SKY_ENGINE_WTF_NONCOPYABLE_H_
 #define SKY_ENGINE_WTF_NONCOPYABLE_H_
 
-#include "flutter/sky/engine/wtf/Compiler.h"
+#include "sky/engine/wtf/Compiler.h"
 
 #define WTF_MAKE_NONCOPYABLE(ClassName) \
- private:                               \
-  ClassName(const ClassName&) = delete; \
-  ClassName& operator=(const ClassName&) = delete;
+    private: \
+        ClassName(const ClassName&) = delete; \
+        ClassName& operator=(const ClassName&) = delete;
 
 #endif  // SKY_ENGINE_WTF_NONCOPYABLE_H_

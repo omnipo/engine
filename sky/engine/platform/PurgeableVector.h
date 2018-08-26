@@ -31,10 +31,10 @@
 #ifndef SKY_ENGINE_PLATFORM_PURGEABLEVECTOR_H_
 #define SKY_ENGINE_PLATFORM_PURGEABLEVECTOR_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/wtf/Forward.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
-#include "flutter/sky/engine/wtf/Vector.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/wtf/Forward.h"
+#include "sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/Vector.h"
 
 namespace blink {
 
@@ -45,80 +45,79 @@ class WebDiscardableMemory;
 // means that N calls to lock() must be followed by N+1 calls to unlock() to
 // actually make the vector purgeable.
 class PLATFORM_EXPORT PurgeableVector {
-  WTF_MAKE_NONCOPYABLE(PurgeableVector);
+    WTF_MAKE_NONCOPYABLE(PurgeableVector);
+public:
+    enum PurgeableOption {
+        NotPurgeable,
+        Purgeable,
+    };
 
- public:
-  enum PurgeableOption {
-    NotPurgeable,
-    Purgeable,
-  };
+    // Clients who know in advance that they will call unlock() should construct
+    // the instance with the Purgeable option so that the instance uses
+    // discardable memory from the start and unlock() doesn't cause a memcpy().
+    PurgeableVector(PurgeableOption = Purgeable);
 
-  // Clients who know in advance that they will call unlock() should construct
-  // the instance with the Purgeable option so that the instance uses
-  // discardable memory from the start and unlock() doesn't cause a memcpy().
-  PurgeableVector(PurgeableOption = Purgeable);
+    ~PurgeableVector();
 
-  ~PurgeableVector();
+    // WARNING: This causes a memcpy() if the instance was constructed with the
+    // Purgeable hint or had its internal vector moved to discardable memory
+    // after a call to unlock().
+    void adopt(Vector<char>& other);
 
-  // WARNING: This causes a memcpy() if the instance was constructed with the
-  // Purgeable hint or had its internal vector moved to discardable memory
-  // after a call to unlock().
-  void adopt(Vector<char>& other);
+    void append(const char* data, size_t length);
 
-  void append(const char* data, size_t length);
+    void grow(size_t);
 
-  void grow(size_t);
+    void clear();
 
-  void clear();
+    // The instance must be locked before calling this.
+    char* data();
 
-  // The instance must be locked before calling this.
-  char* data();
+    size_t size() const;
 
-  size_t size() const;
+    // Returns whether the memory is still resident.
+    bool lock();
 
-  // Returns whether the memory is still resident.
-  bool lock();
+    // WARNING: Calling unlock() on an instance that wasn't created with the
+    // Purgeable option does an extra memcpy().
+    void unlock();
 
-  // WARNING: Calling unlock() on an instance that wasn't created with the
-  // Purgeable option does an extra memcpy().
-  void unlock();
+    bool isLocked() const;
 
-  bool isLocked() const;
+    // Note that this method should be used carefully since it may not use
+    // exponential growth internally. This means that repeated/invalid uses of
+    // it can result in O(N^2) append(). If you don't exactly know what you are
+    // doing then you should probably not call this method.
+    void reserveCapacity(size_t capacity);
 
-  // Note that this method should be used carefully since it may not use
-  // exponential growth internally. This means that repeated/invalid uses of
-  // it can result in O(N^2) append(). If you don't exactly know what you are
-  // doing then you should probably not call this method.
-  void reserveCapacity(size_t capacity);
+private:
+    enum PurgeableAllocationStrategy {
+        UseExactCapacity,
+        UseExponentialGrowth,
+    };
 
- private:
-  enum PurgeableAllocationStrategy {
-    UseExactCapacity,
-    UseExponentialGrowth,
-  };
+    // Copies data from the discardable buffer to the vector and clears the
+    // discardable buffer.
+    void moveDataFromDiscardableToVector();
 
-  // Copies data from the discardable buffer to the vector and clears the
-  // discardable buffer.
-  void moveDataFromDiscardableToVector();
+    void clearDiscardable();
 
-  void clearDiscardable();
+    bool reservePurgeableCapacity(size_t capacity, PurgeableAllocationStrategy);
 
-  bool reservePurgeableCapacity(size_t capacity, PurgeableAllocationStrategy);
+    size_t adjustPurgeableCapacity(size_t capacity) const;
 
-  size_t adjustPurgeableCapacity(size_t capacity) const;
-
-  // Vector used when the instance is constructed without the purgeability
-  // hint or when discardable memory allocation fails.
-  // Note that there can't be data both in |m_vector| and
-  // |m_discardable|, i.e. only one of them is used at a given time.
-  Vector<char> m_vector;
-  OwnPtr<WebDiscardableMemory> m_discardable;
-  size_t m_discardableCapacity;
-  size_t m_discardableSize;
-  bool m_isPurgeable;
-  int m_locksCount;
+    // Vector used when the instance is constructed without the purgeability
+    // hint or when discardable memory allocation fails.
+    // Note that there can't be data both in |m_vector| and
+    // |m_discardable|, i.e. only one of them is used at a given time.
+    Vector<char> m_vector;
+    OwnPtr<WebDiscardableMemory> m_discardable;
+    size_t m_discardableCapacity;
+    size_t m_discardableSize;
+    bool m_isPurgeable;
+    int m_locksCount;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_PURGEABLEVECTOR_H_

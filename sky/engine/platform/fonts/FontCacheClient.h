@@ -31,19 +31,19 @@
 #ifndef SKY_ENGINE_PLATFORM_FONTS_FONTCACHECLIENT_H_
 #define SKY_ENGINE_PLATFORM_FONTS_FONTCACHECLIENT_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/platform/heap/Handle.h"
-#include "flutter/sky/engine/wtf/RefCounted.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/platform/heap/Handle.h"
+#include "sky/engine/wtf/RefCounted.h"
 
 namespace blink {
 
 class PLATFORM_EXPORT FontCacheClient : public RefCounted<FontCacheClient> {
- public:
-  virtual ~FontCacheClient() {}
+public:
+    virtual ~FontCacheClient() { }
 
-  virtual void fontCacheInvalidated() = 0;
+    virtual void fontCacheInvalidated() = 0;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_FONTS_FONTCACHECLIENT_H_

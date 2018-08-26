@@ -2,6 +2,22 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("config.gni")
+if (is_clang) {
+  import("//build/config/clang/clang.gni")
+}
+if (is_posix) {
+  import("//build/config/gcc/gcc_version.gni")
+}
+
+visibility = [ "//sky/*" ]
+
+# features ---------------------------------------------------------------------
+
+config("features") {
+  defines = feature_defines_list
+}
+
 # inside_blink -----------------------------------------------------------------
 
 config("inside_blink") {
@@ -19,15 +35,24 @@ config("config") {
     "$root_out_dir",
   ]
 
-  if (!is_win) {
-    cflags = [ "-Wno-inconsistent-missing-override" ]
-  } else {
-    defines = [ "_USE_MATH_DEFINES" ]
+  cflags = []
+  defines = []
+
+  # TODO(GYP) this should be based on gcc_version >= 46 but GN doesn't have a
+  # concept of GCC version yet.
+
+  # Disable warnings about c++0x compatibility, as some names (such as
+  # nullptr) conflict with upcoming c++0x types.
+  cflags_cc = [ "-Wno-c++0x-compat" ]
+
+  if (is_linux && target_cpu == "arm") {
+    # Due to a bug in gcc arm, we get warnings about uninitialized
+    # timesNewRoman.unstatic.3258 and colorTransparent.unstatic.4879.
+    cflags += [ "-Wno-uninitialized" ]
   }
 
-  if (is_fuchsia) {
-    # TODO(abarth): Remove once the kernel support unmapping memory properly.
-    defines = [ "MEMORY_TOOL_REPLACES_ALLOCATOR" ]
+  if (is_posix && gcc_version >= 49) {
+    cflags += [ "-Wno-unused-but-set-variable" ]
   }
 }
 
@@ -42,12 +67,9 @@ config("non_test_config") {
 }
 
 group("engine") {
-  public_configs = [ ":config" ]
-
-  public_deps = [
-    "$flutter_root/sky/engine/core",
-    "$flutter_root/sky/engine/platform",
-    "$flutter_root/sky/engine/web",
-    "$flutter_root/sky/engine/wtf",
+  deps = [
+    "//sky/engine/platform",
+    "//sky/engine/public/sky",
+    "//sky/engine/web",
   ]
 }

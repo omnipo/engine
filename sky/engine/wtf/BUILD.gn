@@ -2,32 +2,49 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config("clang_warnings") {
-  if (is_clang) {
-    cflags = [
-      "-Wno-for-loop-analysis",
-      "-Wno-shift-negative-value",
-    ]
-  }
-}
+import("//testing/test.gni")
 
-source_set("wtf") {
+visibility = [ "//sky/*" ]
+
+component("wtf") {
   sources = [
     "ASCIICType.h",
     "AddressSpaceRandomization.cpp",
     "AddressSpaceRandomization.h",
     "Alignment.h",
+    "ArrayBuffer.cpp",
+    "ArrayBuffer.h",
+    "ArrayBufferBuilder.cpp",
+    "ArrayBufferBuilder.h",
+    "ArrayBufferContents.cpp",
+    "ArrayBufferContents.h",
+    "ArrayBufferDeallocationObserver.h",
+    "ArrayBufferView.cpp",
+    "ArrayBufferView.h",
+    "ArrayPiece.cpp",
+    "ArrayPiece.h",
     "Assertions.cpp",
     "Assertions.h",
     "Atomics.h",
+    "BitArray.h",
+    "BitVector.cpp",
+    "BitVector.h",
     "BitwiseOperations.h",
+    "BloomFilter.h",
     "ByteOrder.h",
     "ByteSwap.h",
     "CPU.h",
     "CheckedArithmetic.h",
     "Compiler.h",
+    "Complex.h",
+    "CryptographicallyRandomNumber.cpp",
+    "CryptographicallyRandomNumber.h",
+    "CurrentTime.cpp",
+    "CurrentTime.h",
     "DataLog.cpp",
     "DataLog.h",
+    "DateMath.cpp",
+    "DateMath.h",
     "DefaultAllocator.cpp",
     "DefaultAllocator.h",
     "Deque.h",
@@ -41,6 +58,8 @@ source_set("wtf") {
     "FastMalloc.h",
     "FilePrintStream.cpp",
     "FilePrintStream.h",
+    "Float32Array.h",
+    "Float64Array.h",
     "Forward.h",
     "GetPtr.h",
     "HashCountedSet.h",
@@ -55,6 +74,10 @@ source_set("wtf") {
     "HexNumber.h",
     "InstanceCounter.cpp",
     "InstanceCounter.h",
+    "Int16Array.h",
+    "Int32Array.h",
+    "Int8Array.h",
+    "IntegralTypedArrayBase.h",
     "LeakAnnotations.h",
     "LinkedHashSet.h",
     "LinkedStack.h",
@@ -65,6 +88,7 @@ source_set("wtf") {
     "MakeUnique.h",
     "MallocZoneSupport.h",
     "MathExtras.h",
+    "MessageQueue.h",
     "NonCopyingSort.h",
     "Noncopyable.h",
     "NotFound.h",
@@ -81,6 +105,7 @@ source_set("wtf") {
     "PassTraits.h",
     "PrintStream.cpp",
     "PrintStream.h",
+    "ProcessID.h",
     "RawPtr.h",
     "RefCounted.h",
     "RefCountedLeakCounter.cpp",
@@ -96,13 +121,25 @@ source_set("wtf") {
     "StringExtras.h",
     "StringHasher.h",
     "TemporaryChange.h",
+    "TerminatedArray.h",
+    "TerminatedArrayBuilder.h",
+    "ThreadIdentifierDataPthreads.cpp",
+    "ThreadIdentifierDataPthreads.h",
     "ThreadRestrictionVerifier.h",
     "ThreadSafeRefCounted.h",
     "ThreadSpecific.h",
     "Threading.h",
     "ThreadingPrimitives.h",
+    "ThreadingPthreads.cpp",
+    "TreeNode.h",
+    "TriState.h",
     "TypeTraits.cpp",
     "TypeTraits.h",
+    "TypedArrayBase.h",
+    "Uint16Array.h",
+    "Uint32Array.h",
+    "Uint8Array.h",
+    "Uint8ClampedArray.h",
     "Vector.h",
     "VectorTraits.h",
     "WTF.cpp",
@@ -110,6 +147,7 @@ source_set("wtf") {
     "WTFExport.h",
     "WTFThreadData.cpp",
     "WTFThreadData.h",
+    "WeakPtr.h",
     "asm/SaturatedArithmeticARM.h",
     "dtoa.cpp",
     "dtoa.h",
@@ -135,6 +173,8 @@ source_set("wtf") {
     "text/AtomicString.cpp",
     "text/AtomicString.h",
     "text/AtomicStringHash.h",
+    "text/Base64.cpp",
+    "text/Base64.h",
     "text/CString.cpp",
     "text/CString.h",
     "text/IntegerToStringConversion.h",
@@ -183,48 +223,31 @@ source_set("wtf") {
   ]
 
   configs += [
-    ":clang_warnings",
-    "$flutter_root/sky/engine:config",
-    "$flutter_root/sky/engine:non_test_config",
+    "//sky/engine:config",
+    "//sky/engine:non_test_config",
   ]
 
-  public_configs = [
-    "$flutter_root/common:flutter_config",
-    "$flutter_root:config",
-    "//third_party/icu:icu_config",
-  ]
+  defines = [ "WTF_IMPLEMENTATION=1" ]
 
-  public_deps = [
-    "//garnet/public/lib/fxl",
+  direct_dependent_configs = [ "//sky/engine:features" ]
+
+  deps = [
+    "//base",
     "//third_party/icu",
   ]
 
-  deps = [
-    "$flutter_root/glue",
-  ]
+  forward_dependent_configs_from = [ "//third_party/icu" ]
 
   if (is_android) {
     libs = [ "log" ]
   }
-
-  if (is_win) {
-    sources += [
-      "ThreadSpecificWin.cpp",
-      "ThreadingWin.cpp",
-    ]
-  } else {
-    sources += [
-      "ThreadIdentifierDataPthreads.cpp",
-      "ThreadIdentifierDataPthreads.h",
-      "ThreadingPthreads.cpp",
-    ]
-  }
 }
 
-executable("wtf_unittests") {
-  testonly = true
+test("unittests") {
+  output_name = "sky_wtf_unittests"
 
   sources = [
+    "ArrayBufferBuilderTest.cpp",
     "CheckedArithmeticTest.cpp",
     "DequeTest.cpp",
     "DoubleBufferedDequeTest.cpp",
@@ -238,10 +261,9 @@ executable("wtf_unittests") {
     "StringExtrasTest.cpp",
     "StringHasherTest.cpp",
     "TemporaryChangeTest.cpp",
+    "TreeNodeTest.cpp",
     "VectorTest.cpp",
     "testing/RunAllTests.cpp",
-    "testing/WTFTestHelpers.cpp",
-    "testing/WTFTestHelpers.h",
     "testing/WTFTestHelpersTest.cpp",
     "text/AtomicStringTest.cpp",
     "text/CStringTest.cpp",
@@ -249,25 +271,41 @@ executable("wtf_unittests") {
     "text/StringBuilderTest.cpp",
     "text/StringImplTest.cpp",
     "text/StringOperatorsTest.cpp",
+    "text/TextCodecReplacementTest.cpp",
     "text/TextCodecUTF8Test.cpp",
-
-    # The following tests depend on either ICU or the locale. Disable them for
-    # now.
-    # "text/TextCodecReplacementTest.cpp",
-    # "text/WTFStringTest.cpp",
+    "text/WTFStringTest.cpp",
   ]
 
+  configs += [ "//sky/engine:config" ]
+
+  deps = [
+    ":test_support",
+    ":wtf",
+    "//base",
+    "//base/allocator",
+    "//base/test:test_support",
+    "//testing/gmock",
+    "//testing/gtest",
+  ]
+}
+
+component("test_support") {
+  output_name = "wtf_test_support"
+
+  sources = [
+    "testing/WTFTestHelpers.cpp",
+    "testing/WTFTestHelpers.h",
+    "testing/WTFUnitTestHelpersExport.h",
+  ]
+
+  defines = [ "WTF_UNITTEST_HELPERS_IMPLEMENTATION=1" ]
+
   configs += [
-    ":clang_warnings",
-    "$flutter_root/sky/engine:config",
+    "//sky/engine:config",
+    "//sky/engine:non_test_config",
   ]
 
   deps = [
     ":wtf",
-    "//third_party/dart/runtime:libdart_jit",
-
-    # Does not use $flutter_root/testing because it needs and provides its own main
-    # function in RunAllTests.cpp.
-    "//third_party/googletest:gtest",
   ]
 }

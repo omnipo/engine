@@ -28,68 +28,65 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/wtf/OperatingSystem.h"
-#include "flutter/sky/engine/wtf/Threading.h"
-
-#if USE(PTHREADS)
+#include "sky/engine/wtf/Threading.h"
 
 #include <errno.h>
-#include "flutter/sky/engine/wtf/HashMap.h"
-#include "flutter/sky/engine/wtf/OwnPtr.h"
-#include "flutter/sky/engine/wtf/PassOwnPtr.h"
-#include "flutter/sky/engine/wtf/StdLibExtras.h"
-#include "flutter/sky/engine/wtf/ThreadIdentifierDataPthreads.h"
-#include "flutter/sky/engine/wtf/ThreadSpecific.h"
-#include "flutter/sky/engine/wtf/ThreadingPrimitives.h"
-#include "flutter/sky/engine/wtf/WTFThreadData.h"
-#include "flutter/sky/engine/wtf/dtoa.h"
+#include "sky/engine/wtf/DateMath.h"
+#include "sky/engine/wtf/HashMap.h"
+#include "sky/engine/wtf/OwnPtr.h"
+#include "sky/engine/wtf/PassOwnPtr.h"
+#include "sky/engine/wtf/StdLibExtras.h"
+#include "sky/engine/wtf/ThreadIdentifierDataPthreads.h"
+#include "sky/engine/wtf/ThreadSpecific.h"
+#include "sky/engine/wtf/ThreadingPrimitives.h"
+#include "sky/engine/wtf/WTFThreadData.h"
+#include "sky/engine/wtf/dtoa.h"
 #include "wtf/dtoa/cached-powers.h"
 
 #include <limits.h>
 #include <sched.h>
 #include <sys/time.h>
 
+#if USE(PTHREADS)
+
 namespace WTF {
 
 class PthreadState {
-  WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    enum JoinableState {
+        Joinable, // The default thread state. The thread can be joined on.
 
- public:
-  enum JoinableState {
-    Joinable,  // The default thread state. The thread can be joined on.
+        Joined, // Somebody waited on this thread to exit and this thread finally exited. This state is here because there can be a
+                // period of time between when the thread exits (which causes pthread_join to return and the remainder of waitOnThreadCompletion to run)
+                // and when threadDidExit is called. We need threadDidExit to take charge and delete the thread data since there's
+                // nobody else to pick up the slack in this case (since waitOnThreadCompletion has already returned).
 
-    Joined,  // Somebody waited on this thread to exit and this thread finally
-             // exited. This state is here because there can be a period of time
-             // between when the thread exits (which causes pthread_join to
-             // return and the remainder of waitOnThreadCompletion to run) and
-             // when threadDidExit is called. We need threadDidExit to take
-             // charge and delete the thread data since there's nobody else to
-             // pick up the slack in this case (since waitOnThreadCompletion has
-             // already returned).
+        Detached // The thread has been detached and can no longer be joined on. At this point, the thread must take care of cleaning up after itself.
+    };
 
-    Detached  // The thread has been detached and can no longer be joined on. At
-              // this point, the thread must take care of cleaning up after
-              // itself.
-  };
+    // Currently all threads created by WTF start out as joinable.
+    PthreadState(pthread_t handle)
+        : m_joinableState(Joinable)
+        , m_didExit(false)
+        , m_pthreadHandle(handle)
+    {
+    }
 
-  // Currently all threads created by WTF start out as joinable.
-  PthreadState(pthread_t handle)
-      : m_joinableState(Joinable), m_didExit(false), m_pthreadHandle(handle) {}
+    JoinableState joinableState() { return m_joinableState; }
+    pthread_t pthreadHandle() { return m_pthreadHandle; }
+    void didBecomeDetached() { m_joinableState = Detached; }
+    void didExit() { m_didExit = true; }
+    void didJoin() { m_joinableState = Joined; }
+    bool hasExited() { return m_didExit; }
 
-  JoinableState joinableState() { return m_joinableState; }
-  pthread_t pthreadHandle() { return m_pthreadHandle; }
-  void didBecomeDetached() { m_joinableState = Detached; }
-  void didExit() { m_didExit = true; }
-  void didJoin() { m_joinableState = Joined; }
-  bool hasExited() { return m_didExit; }
-
- private:
-  JoinableState m_joinableState;
-  bool m_didExit;
-  pthread_t m_pthreadHandle;
+private:
+    JoinableState m_joinableState;
+    bool m_didExit;
+    pthread_t m_pthreadHandle;
 };
 
-typedef HashMap<ThreadIdentifier, OwnPtr<PthreadState>> ThreadMap;
+typedef HashMap<ThreadIdentifier, OwnPtr<PthreadState> > ThreadMap;
 
 static Mutex* atomicallyInitializedStaticMutex;
 
@@ -97,125 +94,136 @@ void unsafeThreadWasDetached(ThreadIdentifier);
 void threadDidExit(ThreadIdentifier);
 void threadWasJoined(ThreadIdentifier);
 
-static Mutex& threadMapMutex() {
-  DEFINE_STATIC_LOCAL(Mutex, mutex, ());
-  return mutex;
+static Mutex& threadMapMutex()
+{
+    DEFINE_STATIC_LOCAL(Mutex, mutex, ());
+    return mutex;
 }
 
-void initializeThreading() {
-  // This should only be called once.
-  ASSERT(!atomicallyInitializedStaticMutex);
+void initializeThreading()
+{
+    // This should only be called once.
+    ASSERT(!atomicallyInitializedStaticMutex);
 
-  // StringImpl::empty() does not construct its static string in a threadsafe
-  // fashion, so ensure it has been initialized from here.
-  StringImpl::empty();
-  atomicallyInitializedStaticMutex = new Mutex;
-  threadMapMutex();
-  ThreadIdentifierData::initializeOnce();
-  wtfThreadData();
-  s_dtoaP5Mutex = new Mutex;
+    // StringImpl::empty() does not construct its static string in a threadsafe fashion,
+    // so ensure it has been initialized from here.
+    StringImpl::empty();
+    atomicallyInitializedStaticMutex = new Mutex;
+    threadMapMutex();
+    ThreadIdentifierData::initializeOnce();
+    wtfThreadData();
+    s_dtoaP5Mutex = new Mutex;
+    initializeDates();
 }
 
-void lockAtomicallyInitializedStaticMutex() {
-  ASSERT(atomicallyInitializedStaticMutex);
-  atomicallyInitializedStaticMutex->lock();
+void lockAtomicallyInitializedStaticMutex()
+{
+    ASSERT(atomicallyInitializedStaticMutex);
+    atomicallyInitializedStaticMutex->lock();
 }
 
-void unlockAtomicallyInitializedStaticMutex() {
-  atomicallyInitializedStaticMutex->unlock();
+void unlockAtomicallyInitializedStaticMutex()
+{
+    atomicallyInitializedStaticMutex->unlock();
 }
 
-static ThreadMap& threadMap() {
-  DEFINE_STATIC_LOCAL(ThreadMap, map, ());
-  return map;
+static ThreadMap& threadMap()
+{
+    DEFINE_STATIC_LOCAL(ThreadMap, map, ());
+    return map;
 }
 
-static ThreadIdentifier identifierByPthreadHandle(
-    const pthread_t& pthreadHandle) {
-  MutexLocker locker(threadMapMutex());
+static ThreadIdentifier identifierByPthreadHandle(const pthread_t& pthreadHandle)
+{
+    MutexLocker locker(threadMapMutex());
 
-  ThreadMap::iterator i = threadMap().begin();
-  for (; i != threadMap().end(); ++i) {
-    if (pthread_equal(i->value->pthreadHandle(), pthreadHandle) &&
-        !i->value->hasExited())
-      return i->key;
-  }
+    ThreadMap::iterator i = threadMap().begin();
+    for (; i != threadMap().end(); ++i) {
+        if (pthread_equal(i->value->pthreadHandle(), pthreadHandle) && !i->value->hasExited())
+            return i->key;
+    }
 
-  return 0;
+    return 0;
 }
 
-static ThreadIdentifier establishIdentifierForPthreadHandle(
-    const pthread_t& pthreadHandle) {
-  ASSERT(!identifierByPthreadHandle(pthreadHandle));
-  MutexLocker locker(threadMapMutex());
-  static ThreadIdentifier identifierCount = 1;
-  threadMap().add(identifierCount, adoptPtr(new PthreadState(pthreadHandle)));
-  return identifierCount++;
+static ThreadIdentifier establishIdentifierForPthreadHandle(const pthread_t& pthreadHandle)
+{
+    ASSERT(!identifierByPthreadHandle(pthreadHandle));
+    MutexLocker locker(threadMapMutex());
+    static ThreadIdentifier identifierCount = 1;
+    threadMap().add(identifierCount, adoptPtr(new PthreadState(pthreadHandle)));
+    return identifierCount++;
 }
 
-void initializeCurrentThreadInternal(const char* threadName) {
-  ThreadIdentifier id = identifierByPthreadHandle(pthread_self());
-  ASSERT(id);
-  ThreadIdentifierData::initialize(id);
+void initializeCurrentThreadInternal(const char* threadName)
+{
+    ThreadIdentifier id = identifierByPthreadHandle(pthread_self());
+    ASSERT(id);
+    ThreadIdentifierData::initialize(id);
 }
 
-void threadDidExit(ThreadIdentifier threadID) {
-  MutexLocker locker(threadMapMutex());
-  PthreadState* state = threadMap().get(threadID);
-  ASSERT(state);
+void threadDidExit(ThreadIdentifier threadID)
+{
+    MutexLocker locker(threadMapMutex());
+    PthreadState* state = threadMap().get(threadID);
+    ASSERT(state);
 
-  state->didExit();
+    state->didExit();
 
-  if (state->joinableState() != PthreadState::Joinable)
-    threadMap().remove(threadID);
+    if (state->joinableState() != PthreadState::Joinable)
+        threadMap().remove(threadID);
 }
 
-ThreadIdentifier currentThread() {
-  ThreadIdentifier id = ThreadIdentifierData::identifier();
-  if (id)
+ThreadIdentifier currentThread()
+{
+    ThreadIdentifier id = ThreadIdentifierData::identifier();
+    if (id)
+        return id;
+
+    // Not a WTF-created thread, ThreadIdentifier is not established yet.
+    id = establishIdentifierForPthreadHandle(pthread_self());
+    ThreadIdentifierData::initialize(id);
     return id;
-
-  // Not a WTF-created thread, ThreadIdentifier is not established yet.
-  id = establishIdentifierForPthreadHandle(pthread_self());
-  ThreadIdentifierData::initialize(id);
-  return id;
 }
 
-MutexBase::MutexBase(bool recursive) {
-  pthread_mutexattr_t attr;
-  pthread_mutexattr_init(&attr);
-  pthread_mutexattr_settype(
-      &attr, recursive ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_NORMAL);
+MutexBase::MutexBase(bool recursive)
+{
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, recursive ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_NORMAL);
 
-  int result = pthread_mutex_init(&m_mutex.m_internalMutex, &attr);
-  ASSERT_UNUSED(result, !result);
+    int result = pthread_mutex_init(&m_mutex.m_internalMutex, &attr);
+    ASSERT_UNUSED(result, !result);
 #if ENABLE(ASSERT)
-  m_mutex.m_recursionCount = 0;
+    m_mutex.m_recursionCount = 0;
 #endif
 
-  pthread_mutexattr_destroy(&attr);
+    pthread_mutexattr_destroy(&attr);
 }
 
-MutexBase::~MutexBase() {
-  int result = pthread_mutex_destroy(&m_mutex.m_internalMutex);
-  ASSERT_UNUSED(result, !result);
+MutexBase::~MutexBase()
+{
+    int result = pthread_mutex_destroy(&m_mutex.m_internalMutex);
+    ASSERT_UNUSED(result, !result);
 }
 
-void MutexBase::lock() {
-  int result = pthread_mutex_lock(&m_mutex.m_internalMutex);
-  ASSERT_UNUSED(result, !result);
+void MutexBase::lock()
+{
+    int result = pthread_mutex_lock(&m_mutex.m_internalMutex);
+    ASSERT_UNUSED(result, !result);
 #if ENABLE(ASSERT)
-  ++m_mutex.m_recursionCount;
+    ++m_mutex.m_recursionCount;
 #endif
 }
 
-void MutexBase::unlock() {
+void MutexBase::unlock()
+{
 #if ENABLE(ASSERT)
-  ASSERT(m_mutex.m_recursionCount);
-  --m_mutex.m_recursionCount;
+    ASSERT(m_mutex.m_recursionCount);
+    --m_mutex.m_recursionCount;
 #endif
-  int result = pthread_mutex_unlock(&m_mutex.m_internalMutex);
-  ASSERT_UNUSED(result, !result);
+    int result = pthread_mutex_unlock(&m_mutex.m_internalMutex);
+    ASSERT_UNUSED(result, !result);
 }
 
 // There is a separate tryLock implementation for the Mutex and the
@@ -223,39 +231,98 @@ void MutexBase::unlock() {
 // succeed or not for the non-recursive mutex. On Linux the two implementations
 // are equal except we can assert the recursion count is always zero for the
 // non-recursive mutex.
-bool Mutex::tryLock() {
-  int result = pthread_mutex_trylock(&m_mutex.m_internalMutex);
-  if (result == 0) {
+bool Mutex::tryLock()
+{
+    int result = pthread_mutex_trylock(&m_mutex.m_internalMutex);
+    if (result == 0) {
 #if ENABLE(ASSERT)
-    // The Mutex class is not recursive, so the recursionCount should be
-    // zero after getting the lock.
-    ASSERT(!m_mutex.m_recursionCount);
-    ++m_mutex.m_recursionCount;
+        // The Mutex class is not recursive, so the recursionCount should be
+        // zero after getting the lock.
+        ASSERT(!m_mutex.m_recursionCount);
+        ++m_mutex.m_recursionCount;
 #endif
-    return true;
-  }
-  if (result == EBUSY)
-    return false;
+        return true;
+    }
+    if (result == EBUSY)
+        return false;
 
-  ASSERT_NOT_REACHED();
-  return false;
+    ASSERT_NOT_REACHED();
+    return false;
 }
 
-bool RecursiveMutex::tryLock() {
-  int result = pthread_mutex_trylock(&m_mutex.m_internalMutex);
-  if (result == 0) {
+bool RecursiveMutex::tryLock()
+{
+    int result = pthread_mutex_trylock(&m_mutex.m_internalMutex);
+    if (result == 0) {
 #if ENABLE(ASSERT)
-    ++m_mutex.m_recursionCount;
+        ++m_mutex.m_recursionCount;
 #endif
-    return true;
-  }
-  if (result == EBUSY)
-    return false;
+        return true;
+    }
+    if (result == EBUSY)
+        return false;
 
-  ASSERT_NOT_REACHED();
-  return false;
+    ASSERT_NOT_REACHED();
+    return false;
 }
 
-}  // namespace WTF
+ThreadCondition::ThreadCondition()
+{
+    pthread_cond_init(&m_condition, NULL);
+}
 
-#endif  // USE(PTHREADS)
+ThreadCondition::~ThreadCondition()
+{
+    pthread_cond_destroy(&m_condition);
+}
+
+void ThreadCondition::wait(MutexBase& mutex)
+{
+    PlatformMutex& platformMutex = mutex.impl();
+    int result = pthread_cond_wait(&m_condition, &platformMutex.m_internalMutex);
+    ASSERT_UNUSED(result, !result);
+#if ENABLE(ASSERT)
+    ++platformMutex.m_recursionCount;
+#endif
+}
+
+bool ThreadCondition::timedWait(MutexBase& mutex, double absoluteTime)
+{
+    if (absoluteTime < currentTime())
+        return false;
+
+    if (absoluteTime > INT_MAX) {
+        wait(mutex);
+        return true;
+    }
+
+    int timeSeconds = static_cast<int>(absoluteTime);
+    int timeNanoseconds = static_cast<int>((absoluteTime - timeSeconds) * 1E9);
+
+    timespec targetTime;
+    targetTime.tv_sec = timeSeconds;
+    targetTime.tv_nsec = timeNanoseconds;
+
+    PlatformMutex& platformMutex = mutex.impl();
+    int result = pthread_cond_timedwait(&m_condition, &platformMutex.m_internalMutex, &targetTime);
+#if ENABLE(ASSERT)
+    ++platformMutex.m_recursionCount;
+#endif
+    return result == 0;
+}
+
+void ThreadCondition::signal()
+{
+    int result = pthread_cond_signal(&m_condition);
+    ASSERT_UNUSED(result, !result);
+}
+
+void ThreadCondition::broadcast()
+{
+    int result = pthread_cond_broadcast(&m_condition);
+    ASSERT_UNUSED(result, !result);
+}
+
+} // namespace WTF
+
+#endif // USE(PTHREADS)

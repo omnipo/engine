@@ -20,30 +20,30 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_POINTEREVENTSHITRULES_H_
 #define SKY_ENGINE_CORE_RENDERING_POINTEREVENTSHITRULES_H_
 
-#include "flutter/sky/engine/core/rendering/HitTestRequest.h"
-#include "flutter/sky/engine/core/rendering/style/RenderStyleConstants.h"
+#include "sky/engine/core/rendering/HitTestRequest.h"
+#include "sky/engine/core/rendering/style/RenderStyleConstants.h"
 
 namespace blink {
 
 class PointerEventsHitRules {
- public:
-  enum EHitTesting {
-    SVG_IMAGE_HITTESTING,
-    SVG_GEOMETRY_HITTESTING,
-    SVG_TEXT_HITTESTING
-  };
+public:
+    enum EHitTesting {
+        SVG_IMAGE_HITTESTING,
+        SVG_GEOMETRY_HITTESTING,
+        SVG_TEXT_HITTESTING
+    };
 
-  PointerEventsHitRules(EHitTesting, const HitTestRequest&, EPointerEvents);
+    PointerEventsHitRules(EHitTesting, const HitTestRequest&, EPointerEvents);
 
-  bool requireVisible;
-  bool requireFill;
-  bool requireStroke;
-  bool canHitStroke;
-  bool canHitFill;
-  bool canHitBoundingBox;
+    bool requireVisible;
+    bool requireFill;
+    bool requireStroke;
+    bool canHitStroke;
+    bool canHitFill;
+    bool canHitBoundingBox;
 };
 
-}  // namespace blink
+}
 
 #endif  // SKY_ENGINE_CORE_RENDERING_POINTEREVENTSHITRULES_H_
 

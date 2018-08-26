@@ -25,43 +25,42 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_STYLE_STYLEINHERITEDDATA_H_
 #define SKY_ENGINE_CORE_RENDERING_STYLE_STYLEINHERITEDDATA_H_
 
-#include "flutter/sky/engine/platform/Length.h"
-#include "flutter/sky/engine/platform/fonts/Font.h"
-#include "flutter/sky/engine/platform/graphics/Color.h"
-#include "flutter/sky/engine/wtf/PassRefPtr.h"
-#include "flutter/sky/engine/wtf/RefCounted.h"
-#include "flutter/sky/engine/wtf/RefPtr.h"
+#include "sky/engine/platform/Length.h"
+#include "sky/engine/platform/fonts/Font.h"
+#include "sky/engine/platform/graphics/Color.h"
+#include "sky/engine/wtf/PassRefPtr.h"
+#include "sky/engine/wtf/RefCounted.h"
+#include "sky/engine/wtf/RefPtr.h"
 
 namespace blink {
 
 class StyleInheritedData : public RefCounted<StyleInheritedData> {
- public:
-  static PassRefPtr<StyleInheritedData> create() {
-    return adoptRef(new StyleInheritedData);
-  }
-  PassRefPtr<StyleInheritedData> copy() const {
-    return adoptRef(new StyleInheritedData(*this));
-  }
-  ~StyleInheritedData();
+public:
+    static PassRefPtr<StyleInheritedData> create() { return adoptRef(new StyleInheritedData); }
+    PassRefPtr<StyleInheritedData> copy() const { return adoptRef(new StyleInheritedData(*this)); }
+    ~StyleInheritedData();
 
-  bool operator==(const StyleInheritedData& o) const;
-  bool operator!=(const StyleInheritedData& o) const { return !(*this == o); }
+    bool operator==(const StyleInheritedData& o) const;
+    bool operator!=(const StyleInheritedData& o) const
+    {
+        return !(*this == o);
+    }
 
-  short horizontal_border_spacing;
-  short vertical_border_spacing;
+    short horizontal_border_spacing;
+    short vertical_border_spacing;
 
-  // could be packed in a short but doesn't
-  // make a difference currently because of padding
-  Length line_height;
+    // could be packed in a short but doesn't
+    // make a difference currently because of padding
+    Length line_height;
 
-  Font font;
-  Color color;
+    Font font;
+    Color color;
 
- private:
-  StyleInheritedData();
-  StyleInheritedData(const StyleInheritedData&);
+private:
+    StyleInheritedData();
+    StyleInheritedData(const StyleInheritedData&);
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_STYLE_STYLEINHERITEDDATA_H_

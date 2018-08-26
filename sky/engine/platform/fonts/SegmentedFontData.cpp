@@ -23,82 +23,86 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/fonts/SegmentedFontData.h"
+#include "sky/engine/platform/fonts/SegmentedFontData.h"
 
-#include "flutter/sky/engine/platform/fonts/SimpleFontData.h"
-#include "flutter/sky/engine/wtf/Assertions.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
+#include "sky/engine/platform/fonts/SimpleFontData.h"
+#include "sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/text/WTFString.h"
 
 namespace blink {
 
-SegmentedFontData::~SegmentedFontData() {
-  GlyphPageTreeNode::pruneTreeCustomFontData(this);
+SegmentedFontData::~SegmentedFontData()
+{
+    GlyphPageTreeNode::pruneTreeCustomFontData(this);
 }
 
-const SimpleFontData* SegmentedFontData::fontDataForCharacter(UChar32 c) const {
-  Vector<FontDataRange>::const_iterator end = m_ranges.end();
-  for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end;
-       ++it) {
-    if (it->from() <= c && it->to() >= c)
-      return it->fontData().get();
-  }
-  return m_ranges[0].fontData().get();
+const SimpleFontData* SegmentedFontData::fontDataForCharacter(UChar32 c) const
+{
+    Vector<FontDataRange>::const_iterator end = m_ranges.end();
+    for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end; ++it) {
+        if (it->from() <= c && it->to() >= c)
+            return it->fontData().get();
+    }
+    return m_ranges[0].fontData().get();
 }
 
-bool SegmentedFontData::containsCharacter(UChar32 c) const {
-  Vector<FontDataRange>::const_iterator end = m_ranges.end();
-  for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end;
-       ++it) {
-    if (c >= it->from() && c <= it->to())
-      return true;
-  }
-  return false;
+bool SegmentedFontData::containsCharacter(UChar32 c) const
+{
+    Vector<FontDataRange>::const_iterator end = m_ranges.end();
+    for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end; ++it) {
+        if (c >= it->from() && c <= it->to())
+            return true;
+    }
+    return false;
 }
 
-bool SegmentedFontData::isCustomFont() const {
-  // All segmented fonts are custom fonts.
-  return true;
+bool SegmentedFontData::isCustomFont() const
+{
+    // All segmented fonts are custom fonts.
+    return true;
 }
 
-bool SegmentedFontData::isLoading() const {
-  Vector<FontDataRange>::const_iterator end = m_ranges.end();
-  for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end;
-       ++it) {
-    if (it->fontData()->isLoading())
-      return true;
-  }
-  return false;
+bool SegmentedFontData::isLoading() const
+{
+    Vector<FontDataRange>::const_iterator end = m_ranges.end();
+    for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end; ++it) {
+        if (it->fontData()->isLoading())
+            return true;
+    }
+    return false;
 }
 
 // Returns true if any of the sub fonts are loadingFallback.
-bool SegmentedFontData::isLoadingFallback() const {
-  Vector<FontDataRange>::const_iterator end = m_ranges.end();
-  for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end;
-       ++it) {
-    if (it->fontData()->isLoadingFallback())
-      return true;
-  }
-  return false;
+bool SegmentedFontData::isLoadingFallback() const
+{
+    Vector<FontDataRange>::const_iterator end = m_ranges.end();
+    for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end; ++it) {
+        if (it->fontData()->isLoadingFallback())
+            return true;
+    }
+    return false;
 }
 
-bool SegmentedFontData::isSegmented() const {
-  return true;
+bool SegmentedFontData::isSegmented() const
+{
+    return true;
 }
 
-bool SegmentedFontData::shouldSkipDrawing() const {
-  Vector<FontDataRange>::const_iterator end = m_ranges.end();
-  for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end;
-       ++it) {
-    if (it->fontData()->shouldSkipDrawing())
-      return true;
-  }
-  return false;
+bool SegmentedFontData::shouldSkipDrawing() const
+{
+    Vector<FontDataRange>::const_iterator end = m_ranges.end();
+    for (Vector<FontDataRange>::const_iterator it = m_ranges.begin(); it != end; ++it) {
+        if (it->fontData()->shouldSkipDrawing())
+            return true;
+    }
+    return false;
 }
 
 #ifndef NDEBUG
-String SegmentedFontData::description() const {
-  return "[segmented font]";
+String SegmentedFontData::description() const
+{
+    return "[segmented font]";
 }
 #endif
 
-}  // namespace blink
+} // namespace blink

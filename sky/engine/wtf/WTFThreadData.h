@@ -27,13 +27,13 @@
 #ifndef SKY_ENGINE_WTF_WTFTHREADDATA_H_
 #define SKY_ENGINE_WTF_WTFTHREADDATA_H_
 
-#include "flutter/sky/engine/wtf/HashMap.h"
-#include "flutter/sky/engine/wtf/HashSet.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
-#include "flutter/sky/engine/wtf/ThreadSpecific.h"
-#include "flutter/sky/engine/wtf/Threading.h"
-#include "flutter/sky/engine/wtf/WTFExport.h"
-#include "flutter/sky/engine/wtf/text/StringHash.h"
+#include "sky/engine/wtf/HashMap.h"
+#include "sky/engine/wtf/HashSet.h"
+#include "sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/ThreadSpecific.h"
+#include "sky/engine/wtf/Threading.h"
+#include "sky/engine/wtf/WTFExport.h"
+#include "sky/engine/wtf/text/StringHash.h"
 
 namespace WTF {
 
@@ -43,39 +43,42 @@ struct ICUConverterWrapper;
 typedef void (*AtomicStringTableDestructor)(AtomicStringTable*);
 
 class WTF_EXPORT WTFThreadData {
-  WTF_MAKE_NONCOPYABLE(WTFThreadData);
+    WTF_MAKE_NONCOPYABLE(WTFThreadData);
+public:
+    WTFThreadData();
+    ~WTFThreadData();
 
- public:
-  WTFThreadData();
-  ~WTFThreadData();
+    AtomicStringTable* atomicStringTable()
+    {
+        return m_atomicStringTable;
+    }
 
-  AtomicStringTable* atomicStringTable() { return m_atomicStringTable; }
+    ICUConverterWrapper& cachedConverterICU() { return *m_cachedConverterICU; }
 
-  ICUConverterWrapper& cachedConverterICU() { return *m_cachedConverterICU; }
+private:
+    AtomicStringTable* m_atomicStringTable;
+    AtomicStringTableDestructor m_atomicStringTableDestructor;
+    OwnPtr<ICUConverterWrapper> m_cachedConverterICU;
 
- private:
-  AtomicStringTable* m_atomicStringTable;
-  AtomicStringTableDestructor m_atomicStringTableDestructor;
-  OwnPtr<ICUConverterWrapper> m_cachedConverterICU;
-
-  static ThreadSpecific<WTFThreadData>* staticData;
-  friend WTFThreadData& wtfThreadData();
-  friend class AtomicStringTable;
+    static ThreadSpecific<WTFThreadData>* staticData;
+    friend WTFThreadData& wtfThreadData();
+    friend class AtomicStringTable;
 };
 
-inline WTFThreadData& wtfThreadData() {
-  // WRT WebCore:
-  //    WTFThreadData is used on main thread before it could possibly be used
-  //    on secondary ones, so there is no need for synchronization here.
-  // WRT JavaScriptCore:
-  //    wtfThreadData() is initially called from initializeThreading(), ensuring
-  //    this is initially called in a pthread_once locked context.
-  if (!WTFThreadData::staticData)
-    WTFThreadData::staticData = new ThreadSpecific<WTFThreadData>;
-  return **WTFThreadData::staticData;
+inline WTFThreadData& wtfThreadData()
+{
+    // WRT WebCore:
+    //    WTFThreadData is used on main thread before it could possibly be used
+    //    on secondary ones, so there is no need for synchronization here.
+    // WRT JavaScriptCore:
+    //    wtfThreadData() is initially called from initializeThreading(), ensuring
+    //    this is initially called in a pthread_once locked context.
+    if (!WTFThreadData::staticData)
+        WTFThreadData::staticData = new ThreadSpecific<WTFThreadData>;
+    return **WTFThreadData::staticData;
 }
 
-}  // namespace WTF
+} // namespace WTF
 
 using WTF::WTFThreadData;
 using WTF::wtfThreadData;

@@ -25,39 +25,45 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_STYLE_OUTLINEVALUE_H_
 #define SKY_ENGINE_CORE_RENDERING_STYLE_OUTLINEVALUE_H_
 
-#include "flutter/sky/engine/core/rendering/style/BorderValue.h"
+#include "sky/engine/core/rendering/style/BorderValue.h"
 
 namespace blink {
 
 class OutlineValue : public BorderValue {
-  friend class RenderStyle;
+friend class RenderStyle;
+public:
+    OutlineValue()
+        : m_offset(0)
+    {
+    }
 
- public:
-  OutlineValue() : m_offset(0) {}
+    bool operator==(const OutlineValue& o) const
+    {
+        return BorderValue::operator==(o) && m_offset == o.m_offset && m_isAuto == o.m_isAuto;
+    }
 
-  bool operator==(const OutlineValue& o) const {
-    return BorderValue::operator==(o) && m_offset == o.m_offset &&
-           m_isAuto == o.m_isAuto;
-  }
+    bool operator!=(const OutlineValue& o) const
+    {
+        return !(*this == o);
+    }
 
-  bool operator!=(const OutlineValue& o) const { return !(*this == o); }
+    bool visuallyEqual(const OutlineValue& o) const
+    {
+        if (m_style == BNONE && o.m_style == BNONE)
+            return true;
+        return *this == o;
+    }
 
-  bool visuallyEqual(const OutlineValue& o) const {
-    if (m_style == BNONE && o.m_style == BNONE)
-      return true;
-    return *this == o;
-  }
+    int offset() const { return m_offset; }
+    void setOffset(int offset) { m_offset = offset; }
 
-  int offset() const { return m_offset; }
-  void setOffset(int offset) { m_offset = offset; }
+    OutlineIsAuto isAuto() const { return static_cast<OutlineIsAuto>(m_isAuto); }
+    void setIsAuto(OutlineIsAuto isAuto) { m_isAuto = isAuto; }
 
-  OutlineIsAuto isAuto() const { return static_cast<OutlineIsAuto>(m_isAuto); }
-  void setIsAuto(OutlineIsAuto isAuto) { m_isAuto = isAuto; }
-
- private:
-  int m_offset;
+private:
+    int m_offset;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_STYLE_OUTLINEVALUE_H_

@@ -26,71 +26,90 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_CLIPRECTS_H_
 #define SKY_ENGINE_CORE_RENDERING_CLIPRECTS_H_
 
-#include "flutter/sky/engine/core/rendering/ClipRect.h"
+#include "sky/engine/core/rendering/ClipRect.h"
 
 namespace blink {
 
 class ClipRects {
-  WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    static PassRefPtr<ClipRects> create()
+    {
+        return adoptRef(new ClipRects);
+    }
 
- public:
-  static PassRefPtr<ClipRects> create() { return adoptRef(new ClipRects); }
+    static PassRefPtr<ClipRects> create(const ClipRects& other)
+    {
+        return adoptRef(new ClipRects(other));
+    }
 
-  static PassRefPtr<ClipRects> create(const ClipRects& other) {
-    return adoptRef(new ClipRects(other));
-  }
+    ClipRects()
+        : m_refCnt(1)
+        , m_fixed(0)
+    {
+    }
 
-  ClipRects() : m_refCnt(1), m_fixed(0) {}
+    void reset(const LayoutRect& r)
+    {
+        m_overflowClipRect = r;
+        m_posClipRect = r;
+        m_fixed = 0;
+    }
 
-  void reset(const LayoutRect& r) {
-    m_overflowClipRect = r;
-    m_posClipRect = r;
-    m_fixed = 0;
-  }
+    const ClipRect& overflowClipRect() const { return m_overflowClipRect; }
+    void setOverflowClipRect(const ClipRect& r) { m_overflowClipRect = r; }
 
-  const ClipRect& overflowClipRect() const { return m_overflowClipRect; }
-  void setOverflowClipRect(const ClipRect& r) { m_overflowClipRect = r; }
+    const ClipRect& posClipRect() const { return m_posClipRect; }
+    void setPosClipRect(const ClipRect& r) { m_posClipRect = r; }
 
-  const ClipRect& posClipRect() const { return m_posClipRect; }
-  void setPosClipRect(const ClipRect& r) { m_posClipRect = r; }
+    bool fixed() const { return static_cast<bool>(m_fixed); }
+    void setFixed(bool fixed) { m_fixed = fixed ? 1 : 0; }
 
-  bool fixed() const { return static_cast<bool>(m_fixed); }
-  void setFixed(bool fixed) { m_fixed = fixed ? 1 : 0; }
+    void ref() { m_refCnt++; }
+    void deref()
+    {
+        if (!--m_refCnt)
+            delete this;
+    }
 
-  void ref() { m_refCnt++; }
-  void deref() {
-    if (!--m_refCnt)
-      delete this;
-  }
+    bool operator==(const ClipRects& other) const
+    {
+        return m_overflowClipRect == other.overflowClipRect()
+            && m_posClipRect == other.posClipRect()
+            && fixed() == other.fixed();
+    }
 
-  bool operator==(const ClipRects& other) const {
-    return m_overflowClipRect == other.overflowClipRect() &&
-           m_posClipRect == other.posClipRect() && fixed() == other.fixed();
-  }
+    ClipRects& operator=(const ClipRects& other)
+    {
+        m_overflowClipRect = other.overflowClipRect();
+        m_posClipRect = other.posClipRect();
+        m_fixed = other.fixed();
+        return *this;
+    }
 
-  ClipRects& operator=(const ClipRects& other) {
-    m_overflowClipRect = other.overflowClipRect();
-    m_posClipRect = other.posClipRect();
-    m_fixed = other.fixed();
-    return *this;
-  }
+private:
+    ClipRects(const LayoutRect& r)
+        : m_overflowClipRect(r)
+        , m_posClipRect(r)
+        , m_refCnt(1)
+        , m_fixed(0)
+    {
+    }
 
- private:
-  ClipRects(const LayoutRect& r)
-      : m_overflowClipRect(r), m_posClipRect(r), m_refCnt(1), m_fixed(0) {}
+    ClipRects(const ClipRects& other)
+        : m_overflowClipRect(other.overflowClipRect())
+        , m_posClipRect(other.posClipRect())
+        , m_refCnt(1)
+        , m_fixed(other.fixed())
+    {
+    }
 
-  ClipRects(const ClipRects& other)
-      : m_overflowClipRect(other.overflowClipRect()),
-        m_posClipRect(other.posClipRect()),
-        m_refCnt(1),
-        m_fixed(other.fixed()) {}
-
-  ClipRect m_overflowClipRect;
-  ClipRect m_posClipRect;
-  unsigned m_refCnt : 31;
-  unsigned m_fixed : 1;
+    ClipRect m_overflowClipRect;
+    ClipRect m_posClipRect;
+    unsigned m_refCnt : 31;
+    unsigned m_fixed : 1;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_CLIPRECTS_H_

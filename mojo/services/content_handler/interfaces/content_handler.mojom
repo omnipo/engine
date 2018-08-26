@@ -1,0 +1,13 @@
+// Copyright 2014 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+[DartPackage="mojo_services"]
+module mojo;
+
+import "mojo/public/interfaces/application/application.mojom";
+import "mojo/public/interfaces/network/url_response.mojom";
+
+interface ContentHandler {
+  StartApplication(Application& application, URLResponse response);
+};

@@ -19,22 +19,28 @@
  *
  */
 
-#include "flutter/sky/engine/core/rendering/style/StyleSurroundData.h"
+#include "sky/engine/core/rendering/style/StyleSurroundData.h"
 
 namespace blink {
 
-StyleSurroundData::StyleSurroundData() : margin(Fixed), padding(Fixed) {}
-
-StyleSurroundData::StyleSurroundData(const StyleSurroundData& o)
-    : RefCounted<StyleSurroundData>(),
-      offset(o.offset),
-      margin(o.margin),
-      padding(o.padding),
-      border(o.border) {}
-
-bool StyleSurroundData::operator==(const StyleSurroundData& o) const {
-  return offset == o.offset && margin == o.margin && padding == o.padding &&
-         border == o.border;
+StyleSurroundData::StyleSurroundData()
+    : margin(Fixed)
+    , padding(Fixed)
+{
 }
 
-}  // namespace blink
+StyleSurroundData::StyleSurroundData(const StyleSurroundData& o)
+    : RefCounted<StyleSurroundData>()
+    , offset(o.offset)
+    , margin(o.margin)
+    , padding(o.padding)
+    , border(o.border)
+{
+}
+
+bool StyleSurroundData::operator==(const StyleSurroundData& o) const
+{
+    return offset == o.offset && margin == o.margin && padding == o.padding && border == o.border;
+}
+
+} // namespace blink

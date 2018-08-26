@@ -2,88 +2,106 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+root_dist_dir = "$root_build_dir/dist"
+
+copy("sky_viewer") {
+  sources = [
+    "$root_build_dir/sky_viewer.mojo",
+  ]
+  if (is_linux || is_android) {
+    sources += [ "$root_build_dir/symbols/libsky_viewer_library.so" ]
+  }
+  outputs = [ "$root_dist_dir/viewer/{{source_file_part}}" ]
+
+  deps = [
+    "//services/sky",
+  ]
+}
+
+copy("sky_shell") {
+  if (is_android) {
+    sources = [
+      "$root_build_dir/apks/SkyShell.apk",
+    ]
+
+    deps = [
+      "//sky/shell",
+    ]
+  } else if (is_mac) {
+    sources = [
+      "$root_build_dir/SkyShell.app",
+    ]
+
+    deps = [
+      "//sky/shell:shell_struct",
+    ]
+  } else if(!is_ios) {
+    sources = [
+      "$root_build_dir/sky_shell",
+      "$root_build_dir/icudtl.dat",
+    ]
+
+    deps = [
+      "//sky/shell",
+      "//third_party/icu:icudata",
+    ]
+  } else {
+    sources = []
+    deps = []
+  }
+
+  sky_snapshot_dir =
+      get_label_info("//sky/tools/sky_snapshot($host_toolchain)", "root_out_dir")
+
+  sources += [ "$sky_snapshot_dir/sky_snapshot" ]
+
+  deps += [
+    "//sky/tools/sky_snapshot($host_toolchain)",
+  ]
+
+  outputs = [ "$root_dist_dir/shell/{{source_file_part}}" ]
+}
+
 if (is_android) {
-  action("flutter_services") {
-    script = "$flutter_root/sky/tools/dist_dart_pkg.py"
+  import("//build/config/android/rules.gni")
 
-    source = "$flutter_root/sky/packages/flutter_services"
-    dest = "$root_build_dir/dist/packages/flutter_services"
-
-    inputs = [
-      source,
+  copy_ex("sky_engine") {
+    clear_dir = true
+    # Note: The package actually ends up in $root_dist_dir/packages/sky_engine/sky_engine
+    dest = "$root_dist_dir/packages/sky_engine"
+    sources = [
+      "$root_gen_dir/dart-pkg/sky_engine",
     ]
-    outputs = [
-      dest,
-    ]
-
-    args = [
-      "--source",
-      rebase_path(source),
-      "--dest",
-      rebase_path(dest),
-    ]
-
     deps = [
-      "$flutter_root/sky/packages/flutter_services",
-    ]
-  }
-  action("sky_engine") {
-    script = "$flutter_root/sky/tools/dist_dart_pkg.py"
-
-    source = "$root_gen_dir/dart-pkg/sky_engine"
-    dest = "$root_build_dir/dist/packages/sky_engine"
-
-    inputs = [
-      source,
-    ]
-    outputs = [
-      dest,
-    ]
-
-    args = [
-      "--source",
-      rebase_path(source),
-      "--dest",
-      rebase_path(dest),
-    ]
-
-    deps = [
-      "$flutter_root/sky/packages/sky_engine",
-      "$flutter_root/sky/packages/sky_engine:sky_engine_pkg_helper",
+      "//sky/packages/sky_engine",
     ]
   }
 
-  action("sky_services") {
-    script = "$flutter_root/sky/tools/dist_dart_pkg.py"
-
-    source = "$root_gen_dir/dart-pkg/sky_services"
-    dest = "$root_build_dir/dist/packages/sky_services"
-
-    inputs = [
-      source,
+  copy_ex("sky_services") {
+    clear_dir = true
+    # Note: The package actually ends up in $root_dist_dir/packages/sky_services/sky_services
+    dest = "$root_dist_dir/packages/sky_services"
+    sources = [
+      "$root_gen_dir/dart-pkg/sky_services",
     ]
-    outputs = [
-      dest,
-    ]
-
-    args = [
-      "--source",
-      rebase_path(source),
-      "--dest",
-      rebase_path(dest),
-    ]
-
     deps = [
-      "$flutter_root/sky/packages/sky_services",
-      "$flutter_root/sky/packages/sky_services:sky_services_pkg_helper",
+      "//sky/packages/sky_services",
     ]
   }
+
 }
 
 group("dist") {
+  deps = [
+    ":sky_viewer",
+  ]
+
+  if (!is_ios && !is_mac) {
+    deps += [ ":sky_shell" ]
+  }
+
   if (is_android) {
-    deps = [
-      ":flutter_services",
+    deps += [
       ":sky_engine",
       ":sky_services",
     ]

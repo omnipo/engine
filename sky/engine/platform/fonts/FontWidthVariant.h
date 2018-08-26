@@ -26,23 +26,22 @@
 #ifndef SKY_ENGINE_PLATFORM_FONTS_FONTWIDTHVARIANT_H_
 #define SKY_ENGINE_PLATFORM_FONTS_FONTWIDTHVARIANT_H_
 
-#include "flutter/sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/Assertions.h"
 
 namespace blink {
 
 enum FontWidthVariant {
-  RegularWidth,
-  HalfWidth,
-  ThirdWidth,
-  QuarterWidth,
-  LastFontWidthVariant = QuarterWidth
+    RegularWidth,
+    HalfWidth,
+    ThirdWidth,
+    QuarterWidth,
+    LastFontWidthVariant = QuarterWidth
 };
 
 const unsigned FontWidthVariantWidth = 2;
 
-COMPILE_ASSERT(LastFontWidthVariant >> FontWidthVariantWidth == 0,
-               FontWidthVariantWidth_is_correct);
+COMPILE_ASSERT(LastFontWidthVariant >> FontWidthVariantWidth == 0, FontWidthVariantWidth_is_correct);
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_FONTS_FONTWIDTHVARIANT_H_

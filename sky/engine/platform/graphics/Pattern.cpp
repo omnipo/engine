@@ -25,33 +25,89 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/graphics/Pattern.h"
+#include "sky/engine/platform/graphics/Pattern.h"
 
-#include "flutter/sky/engine/platform/graphics/skia/SkiaUtils.h"
+#include "sky/engine/platform/graphics/skia/SkiaUtils.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 
 namespace blink {
 
-PassRefPtr<Pattern> Pattern::createBitmapPattern(PassRefPtr<Image> tileImage,
-                                                 RepeatMode repeatMode) {
-  return adoptRef(new Pattern(tileImage, repeatMode));
+PassRefPtr<Pattern> Pattern::createBitmapPattern(PassRefPtr<Image> tileImage, RepeatMode repeatMode)
+{
+    return adoptRef(new Pattern(tileImage, repeatMode));
 }
 
-Pattern::Pattern(PassRefPtr<Image> image, RepeatMode repeatMode) {}
-
-Pattern::~Pattern() {}
-
-SkShader* Pattern::shader() {
-  return m_pattern.get();
+Pattern::Pattern(PassRefPtr<Image> image, RepeatMode repeatMode)
+    : m_repeatMode(repeatMode)
+    , m_externalMemoryAllocated(0)
+{
+    if (image) {
+        m_tileImage = image->nativeImageForCurrentFrame();
+    }
 }
 
-void Pattern::setPatternSpaceTransform(
-    const AffineTransform& patternSpaceTransformation) {
-  if (patternSpaceTransformation == m_patternSpaceTransformation)
-    return;
-
-  m_patternSpaceTransformation = patternSpaceTransformation;
-  m_pattern.reset();
+Pattern::~Pattern()
+{
 }
 
-}  // namespace blink
+SkShader* Pattern::shader()
+{
+    if (m_pattern)
+        return m_pattern.get();
+
+    SkMatrix localMatrix = affineTransformToSkMatrix(m_patternSpaceTransformation);
+
+    // If we don't have a bitmap, return a transparent shader.
+    if (!m_tileImage) {
+        m_pattern = adoptRef(SkShader::CreateColorShader(SK_ColorTRANSPARENT));
+    } else if (m_repeatMode == RepeatModeXY) {
+        m_pattern = adoptRef(SkShader::CreateBitmapShader(m_tileImage->bitmap(),
+            SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode, &localMatrix));
+    } else {
+        // Skia does not have a "draw the tile only once" option. Clamp_TileMode
+        // repeats the last line of the image after drawing one tile. To avoid
+        // filling the space with arbitrary pixels, this workaround forces the
+        // image to have a line of transparent pixels on the "repeated" edge(s),
+        // thus causing extra space to be transparent filled.
+        SkShader::TileMode tileModeX = (m_repeatMode & RepeatModeX)
+            ? SkShader::kRepeat_TileMode
+            : SkShader::kClamp_TileMode;
+        SkShader::TileMode tileModeY = (m_repeatMode & RepeatModeY)
+            ? SkShader::kRepeat_TileMode
+            : SkShader::kClamp_TileMode;
+        int expandW = (m_repeatMode & RepeatModeX) ? 0 : 1;
+        int expandH = (m_repeatMode & RepeatModeY) ? 0 : 1;
+
+        // Create a transparent bitmap 1 pixel wider and/or taller than the
+        // original, then copy the orignal into it.
+        // FIXME: Is there a better way to pad (not scale) an image in skia?
+        SkImageInfo info = m_tileImage->bitmap().info();
+        // we explicitly require non-opaquness, since we are going to add a transparent strip.
+        SkImageInfo newInfo = SkImageInfo::Make(
+            info.width() + expandW, info.height() + expandH, info.colorType(),
+            kPremul_SkAlphaType, info.profileType());
+
+        SkBitmap bm2;
+        bm2.allocPixels(newInfo);
+        bm2.eraseARGB(0x00, 0x00, 0x00, 0x00);
+        SkCanvas canvas(bm2);
+        canvas.drawBitmap(m_tileImage->bitmap(), 0, 0);
+        bm2.setImmutable();
+        m_pattern = adoptRef(SkShader::CreateBitmapShader(bm2, tileModeX, tileModeY, &localMatrix));
+
+        // Clamp to int, since that's what the adjust function takes.
+        m_externalMemoryAllocated = static_cast<int>(std::min(static_cast<size_t>(INT_MAX), bm2.getSafeSize()));
+    }
+    return m_pattern.get();
+}
+
+void Pattern::setPatternSpaceTransform(const AffineTransform& patternSpaceTransformation)
+{
+    if (patternSpaceTransformation == m_patternSpaceTransformation)
+        return;
+
+    m_patternSpaceTransformation = patternSpaceTransformation;
+    m_pattern.clear();
+}
+
+} // namespace blink

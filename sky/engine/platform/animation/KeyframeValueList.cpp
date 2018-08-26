@@ -24,27 +24,28 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/animation/KeyframeValueList.h"
+#include "sky/engine/platform/animation/KeyframeValueList.h"
 
 namespace blink {
 
-void KeyframeValueList::insert(PassOwnPtr<const AnimationValue> value) {
-  for (size_t i = 0; i < m_values.size(); ++i) {
-    const AnimationValue* curValue = m_values[i].get();
-    if (curValue->keyTime() == value->keyTime()) {
-      ASSERT_NOT_REACHED();
-      // insert after
-      m_values.insert(i + 1, value);
-      return;
+void KeyframeValueList::insert(PassOwnPtr<const AnimationValue> value)
+{
+    for (size_t i = 0; i < m_values.size(); ++i) {
+        const AnimationValue* curValue = m_values[i].get();
+        if (curValue->keyTime() == value->keyTime()) {
+            ASSERT_NOT_REACHED();
+            // insert after
+            m_values.insert(i + 1, value);
+            return;
+        }
+        if (curValue->keyTime() > value->keyTime()) {
+            // insert before
+            m_values.insert(i, value);
+            return;
+        }
     }
-    if (curValue->keyTime() > value->keyTime()) {
-      // insert before
-      m_values.insert(i, value);
-      return;
-    }
-  }
 
-  m_values.append(value);
+    m_values.append(value);
 }
 
-}  // namespace blink
+} // namespace blink

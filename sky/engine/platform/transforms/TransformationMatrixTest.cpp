@@ -2,26 +2,26 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/sky/engine/platform/transforms/TransformationMatrix.h"
+#include "sky/engine/platform/transforms/TransformationMatrix.h"
 
 #include <gtest/gtest.h>
 
 using namespace blink;
 namespace {
 
-TEST(TransformationMatrixTest, NonInvertableBlendTest) {
-  TransformationMatrix from;
-  TransformationMatrix to(2.7133590938, 0.0, 0.0, 0.0, 0.0, 2.4645137761, 0.0,
-                          0.0, 0.0, 0.0, 0.00, 0.01, 0.02, 0.03, 0.04, 0.05);
-  TransformationMatrix result;
+TEST(TransformationMatrixTest, NonInvertableBlendTest)
+{
+    TransformationMatrix from;
+    TransformationMatrix to(2.7133590938, 0.0, 0.0, 0.0, 0.0, 2.4645137761, 0.0, 0.0, 0.0, 0.0, 0.00, 0.01, 0.02, 0.03, 0.04, 0.05);
+    TransformationMatrix result;
 
-  result = to;
-  result.blend(from, 0.25);
-  EXPECT_TRUE(result == from);
+    result = to;
+    result.blend(from, 0.25);
+    EXPECT_TRUE(result == from);
 
-  result = to;
-  result.blend(from, 0.75);
-  EXPECT_TRUE(result == to);
+    result = to;
+    result.blend(from, 0.75);
+    EXPECT_TRUE(result == to);
 }
 
-}  // namespace
+} // namespace

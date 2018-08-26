@@ -32,31 +32,25 @@
 #ifndef SKY_ENGINE_PLATFORM_TEXT_LINEENDING_H_
 #define SKY_ENGINE_PLATFORM_TEXT_LINEENDING_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/wtf/Forward.h"
-#include "flutter/sky/engine/wtf/Vector.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/wtf/Forward.h"
+#include "sky/engine/wtf/Vector.h"
 
 namespace blink {
 
 // Normalize all line-endings in the given string to CRLF.
 PLATFORM_EXPORT CString normalizeLineEndingsToCRLF(const CString& from);
 
-// Normalize all line-endings in the given string to CR and append the result to
-// the given buffer.
-PLATFORM_EXPORT void normalizeLineEndingsToCR(const CString& from,
-                                              Vector<char>& result);
+// Normalize all line-endings in the given string to CR and append the result to the given buffer.
+PLATFORM_EXPORT void normalizeLineEndingsToCR(const CString& from, Vector<char>& result);
 
-// Normalize all line-endings in the given string to LF and append the result to
-// the given buffer.
-PLATFORM_EXPORT void normalizeLineEndingsToLF(const CString& from,
-                                              Vector<char>& result);
+// Normalize all line-endings in the given string to LF and append the result to the given buffer.
+PLATFORM_EXPORT void normalizeLineEndingsToLF(const CString& from, Vector<char>& result);
 
-// Normalize all line-endings in the given string to the native line-endings and
-// append the result to the given buffer. (Normalize to CRLF on Windows and
-// normalize to LF on all other platforms.)
-PLATFORM_EXPORT void normalizeLineEndingsToNative(const CString& from,
-                                                  Vector<char>& result);
+// Normalize all line-endings in the given string to the native line-endings and append the result to the given buffer.
+// (Normalize to CRLF on Windows and normalize to LF on all other platforms.)
+PLATFORM_EXPORT void normalizeLineEndingsToNative(const CString& from, Vector<char>& result);
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_TEXT_LINEENDING_H_

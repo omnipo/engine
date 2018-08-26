@@ -28,10 +28,8 @@
 
 namespace blink {
 
-enum NonCJKGlyphOrientation {
-  NonCJKGlyphOrientationVerticalRight,
-  NonCJKGlyphOrientationUpright
-};
+enum NonCJKGlyphOrientation { NonCJKGlyphOrientationVerticalRight, NonCJKGlyphOrientationUpright };
+
 }
 
 #endif  // SKY_ENGINE_PLATFORM_TEXT_NONCJKGLYPHORIENTATION_H_

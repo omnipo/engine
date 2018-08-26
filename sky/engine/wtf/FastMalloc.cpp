@@ -1,7 +1,6 @@
 // Copyright (c) 2005, 2007, Google Inc.
 // All rights reserved.
-// Copyright (C) 2005, 2006, 2007, 2008, 2009, 2011 Apple Inc.
-// All rights reserved.
+// Copyright (C) 2005, 2006, 2007, 2008, 2009, 2011 Apple Inc. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -29,11 +28,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "flutter/sky/engine/wtf/FastMalloc.h"
+#include "sky/engine/wtf/FastMalloc.h"
 
 #include <string.h>
-#include "flutter/sky/engine/wtf/PartitionAlloc.h"
-#include "flutter/sky/engine/wtf/SpinLock.h"
+#include "sky/engine/wtf/PartitionAlloc.h"
+#include "sky/engine/wtf/SpinLock.h"
 
 namespace WTF {
 
@@ -41,41 +40,47 @@ static PartitionAllocatorGeneric gPartition;
 static int gLock = 0;
 static bool gInitialized = false;
 
-void* fastZeroedMalloc(size_t n) {
-  void* result = fastMalloc(n);
-  memset(result, 0, n);
-  return result;
+void* fastZeroedMalloc(size_t n)
+{
+    void* result = fastMalloc(n);
+    memset(result, 0, n);
+    return result;
 }
 
-char* fastStrDup(const char* src) {
-  size_t len = strlen(src) + 1;
-  char* dup = static_cast<char*>(fastMalloc(len));
-  memcpy(dup, src, len);
-  return dup;
+char* fastStrDup(const char* src)
+{
+    size_t len = strlen(src) + 1;
+    char* dup = static_cast<char*>(fastMalloc(len));
+    memcpy(dup, src, len);
+    return dup;
 }
 
-void fastMallocShutdown() {
-  gPartition.shutdown();
+void fastMallocShutdown()
+{
+    gPartition.shutdown();
 }
 
-void* fastMalloc(size_t n) {
-  if (UNLIKELY(!gInitialized)) {
-    spinLockLock(&gLock);
-    if (!gInitialized) {
-      gInitialized = true;
-      gPartition.init();
+void* fastMalloc(size_t n)
+{
+    if (UNLIKELY(!gInitialized)) {
+        spinLockLock(&gLock);
+        if (!gInitialized) {
+            gInitialized = true;
+            gPartition.init();
+        }
+        spinLockUnlock(&gLock);
     }
-    spinLockUnlock(&gLock);
-  }
-  return partitionAllocGeneric(gPartition.root(), n);
+    return partitionAllocGeneric(gPartition.root(), n);
 }
 
-void fastFree(void* p) {
-  partitionFreeGeneric(gPartition.root(), p);
+void fastFree(void* p)
+{
+    partitionFreeGeneric(gPartition.root(), p);
 }
 
-void* fastRealloc(void* p, size_t n) {
-  return partitionReallocGeneric(gPartition.root(), p, n);
+void* fastRealloc(void* p, size_t n)
+{
+    return partitionReallocGeneric(gPartition.root(), p, n);
 }
 
-}  // namespace WTF
+} // namespace WTF

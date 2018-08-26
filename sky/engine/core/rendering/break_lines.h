@@ -21,7 +21,7 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_BREAK_LINES_H_
 #define SKY_ENGINE_CORE_RENDERING_BREAK_LINES_H_
 
-#include "flutter/sky/engine/wtf/unicode/Unicode.h"
+#include "sky/engine/wtf/unicode/Unicode.h"
 
 namespace blink {
 
@@ -29,14 +29,13 @@ class LazyLineBreakIterator;
 
 int nextBreakablePositionIgnoringNBSP(LazyLineBreakIterator&, int pos);
 
-inline bool isBreakable(LazyLineBreakIterator& lazyBreakIterator,
-                        int pos,
-                        int& nextBreakable) {
-  if (pos > nextBreakable)
-    nextBreakable = nextBreakablePositionIgnoringNBSP(lazyBreakIterator, pos);
-  return pos == nextBreakable;
+inline bool isBreakable(LazyLineBreakIterator& lazyBreakIterator, int pos, int& nextBreakable)
+{
+    if (pos > nextBreakable)
+        nextBreakable = nextBreakablePositionIgnoringNBSP(lazyBreakIterator, pos);
+    return pos == nextBreakable;
 }
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_BREAK_LINES_H_

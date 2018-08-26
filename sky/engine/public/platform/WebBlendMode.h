@@ -31,29 +31,29 @@
 #ifndef SKY_ENGINE_PUBLIC_PLATFORM_WEBBLENDMODE_H_
 #define SKY_ENGINE_PUBLIC_PLATFORM_WEBBLENDMODE_H_
 
-#include "flutter/sky/engine/public/platform/WebCommon.h"
+#include "sky/engine/public/platform/WebCommon.h"
 
 namespace blink {
 
 enum WebBlendMode {
-  WebBlendModeNormal,
-  WebBlendModeMultiply,
-  WebBlendModeScreen,
-  WebBlendModeOverlay,
-  WebBlendModeDarken,
-  WebBlendModeLighten,
-  WebBlendModeColorDodge,
-  WebBlendModeColorBurn,
-  WebBlendModeHardLight,
-  WebBlendModeSofxlight,
-  WebBlendModeDifference,
-  WebBlendModeExclusion,
-  WebBlendModeHue,
-  WebBlendModeSaturation,
-  WebBlendModeColor,
-  WebBlendModeLuminosity
+    WebBlendModeNormal,
+    WebBlendModeMultiply,
+    WebBlendModeScreen,
+    WebBlendModeOverlay,
+    WebBlendModeDarken,
+    WebBlendModeLighten,
+    WebBlendModeColorDodge,
+    WebBlendModeColorBurn,
+    WebBlendModeHardLight,
+    WebBlendModeSoftLight,
+    WebBlendModeDifference,
+    WebBlendModeExclusion,
+    WebBlendModeHue,
+    WebBlendModeSaturation,
+    WebBlendModeColor,
+    WebBlendModeLuminosity
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PUBLIC_PLATFORM_WEBBLENDMODE_H_

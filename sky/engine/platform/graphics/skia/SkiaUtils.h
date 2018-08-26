@@ -28,87 +28,84 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// All of the functions in this file should move to new homes and this file
-// should be deleted.
+// All of the functions in this file should move to new homes and this file should be deleted.
 
 #ifndef SKY_ENGINE_PLATFORM_GRAPHICS_SKIA_SKIAUTILS_H_
 #define SKY_ENGINE_PLATFORM_GRAPHICS_SKIA_SKIAUTILS_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/platform/geometry/FloatRect.h"
-#include "flutter/sky/engine/platform/graphics/Color.h"
-#include "flutter/sky/engine/platform/graphics/GraphicsTypes.h"
-#include "flutter/sky/engine/platform/transforms/AffineTransform.h"
-#include "flutter/sky/engine/wtf/MathExtras.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/platform/geometry/FloatRect.h"
+#include "sky/engine/platform/graphics/Color.h"
+#include "sky/engine/platform/graphics/GraphicsTypes.h"
+#include "sky/engine/platform/transforms/AffineTransform.h"
+#include "sky/engine/wtf/MathExtras.h"
 #include "third_party/skia/include/core/SkMatrix.h"
 #include "third_party/skia/include/core/SkPaint.h"
 #include "third_party/skia/include/core/SkPath.h"
-#include "third_party/skia/include/core/SkRefCnt.h"
+#include "third_party/skia/include/core/SkXfermode.h"
 
 namespace blink {
 
 class GraphicsContext;
 
-SkBlendMode PLATFORM_EXPORT
-    WebCoreCompositeToSkiaComposite(CompositeOperator,
-                                    WebBlendMode = WebBlendModeNormal);
+SkXfermode::Mode PLATFORM_EXPORT WebCoreCompositeToSkiaComposite(CompositeOperator, WebBlendMode = WebBlendModeNormal);
 
 // move this guy into SkColor.h
 SkColor SkPMColorToColor(SkPMColor);
 
-inline SkFilterQuality WebCoreInterpolationQualityToSkFilterQuality(
-    InterpolationQuality quality) {
-  // FIXME: this reflects existing client mappings, but should probably
-  // be expanded to map higher level interpolations more accurately.
-  return quality != InterpolationNone ? kLow_SkFilterQuality
-                                      : kNone_SkFilterQuality;
+inline SkFilterQuality WebCoreInterpolationQualityToSkFilterQuality(InterpolationQuality quality)
+{
+    // FIXME: this reflects existing client mappings, but should probably
+    // be expanded to map higher level interpolations more accurately.
+    return quality != InterpolationNone ? kLow_SkFilterQuality : kNone_SkFilterQuality;
 }
 
 // Skia has problems when passed infinite, etc floats, filter them to 0.
-inline SkScalar WebCoreFloatToSkScalar(float f) {
-  return SkFloatToScalar(std::isfinite(f) ? f : 0);
+inline SkScalar WebCoreFloatToSkScalar(float f)
+{
+    return SkFloatToScalar(std::isfinite(f) ? f : 0);
 }
 
-inline SkScalar WebCoreDoubleToSkScalar(double d) {
-  return SkDoubleToScalar(std::isfinite(d) ? d : 0);
+inline SkScalar WebCoreDoubleToSkScalar(double d)
+{
+    return SkDoubleToScalar(std::isfinite(d) ? d : 0);
 }
 
-inline SkRect WebCoreFloatRectToSKRect(const FloatRect& rect) {
-  return SkRect::MakeLTRB(SkFloatToScalar(rect.x()), SkFloatToScalar(rect.y()),
-                          SkFloatToScalar(rect.maxX()),
-                          SkFloatToScalar(rect.maxY()));
+inline SkRect WebCoreFloatRectToSKRect(const FloatRect& rect)
+{
+    return SkRect::MakeLTRB(SkFloatToScalar(rect.x()), SkFloatToScalar(rect.y()),
+        SkFloatToScalar(rect.maxX()), SkFloatToScalar(rect.maxY()));
 }
 
-inline bool WebCoreFloatNearlyEqual(float a, float b) {
-  return SkScalarNearlyEqual(WebCoreFloatToSkScalar(a),
-                             WebCoreFloatToSkScalar(b));
+inline bool WebCoreFloatNearlyEqual(float a, float b)
+{
+    return SkScalarNearlyEqual(WebCoreFloatToSkScalar(a), WebCoreFloatToSkScalar(b));
 }
 
-inline SkPath::FillType WebCoreWindRuleToSkFillType(WindRule rule) {
-  return static_cast<SkPath::FillType>(rule);
+inline SkPath::FillType WebCoreWindRuleToSkFillType(WindRule rule)
+{
+    return static_cast<SkPath::FillType>(rule);
 }
 
 // Determine if a given WebKit point is contained in a path
-bool PLATFORM_EXPORT SkPathContainsPoint(const SkPath&,
-                                         const FloatPoint&,
-                                         SkPath::FillType);
+bool PLATFORM_EXPORT SkPathContainsPoint(const SkPath&, const FloatPoint&, SkPath::FillType);
 
 SkMatrix PLATFORM_EXPORT affineTransformToSkMatrix(const AffineTransform&);
 
 bool nearlyIntegral(float value);
 
-InterpolationQuality limitInterpolationQuality(const GraphicsContext*,
-                                               InterpolationQuality resampling);
+InterpolationQuality limitInterpolationQuality(const GraphicsContext*, InterpolationQuality resampling);
 
-InterpolationQuality computeInterpolationQuality(const SkMatrix&,
-                                                 float srcWidth,
-                                                 float srcHeight,
-                                                 float destWidth,
-                                                 float destHeight,
-                                                 bool isDataComplete = true);
+InterpolationQuality computeInterpolationQuality(
+    const SkMatrix&,
+    float srcWidth,
+    float srcHeight,
+    float destWidth,
+    float destHeight,
+    bool isDataComplete = true);
 
 bool shouldDrawAntiAliased(const GraphicsContext*, const SkRect& destRect);
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_GRAPHICS_SKIA_SKIAUTILS_H_

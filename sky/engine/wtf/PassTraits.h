@@ -29,8 +29,8 @@
 #ifndef SKY_ENGINE_WTF_PASSTRAITS_H_
 #define SKY_ENGINE_WTF_PASSTRAITS_H_
 
-#include "flutter/sky/engine/wtf/OwnPtr.h"
-#include "flutter/sky/engine/wtf/RefPtr.h"
+#include "sky/engine/wtf/OwnPtr.h"
+#include "sky/engine/wtf/RefPtr.h"
 
 // The PassTraits template exists to help optimize (or make possible) use
 // of WTF data structures with WTF smart pointers that have a Pass
@@ -38,28 +38,25 @@
 
 namespace WTF {
 
-template <typename T>
-struct PassTraits {
-  typedef T Type;
-  typedef T PassType;
-  static Type& transfer(Type& value) { return value; }
+template<typename T> struct PassTraits {
+    typedef T Type;
+    typedef T PassType;
+    static Type& transfer(Type& value) { return value; }
 };
 
-template <typename T>
-struct PassTraits<OwnPtr<T>> {
-  typedef OwnPtr<T> Type;
-  typedef PassOwnPtr<T> PassType;
-  static PassType transfer(Type& value) { return value.release(); }
+template<typename T> struct PassTraits<OwnPtr<T> > {
+    typedef OwnPtr<T> Type;
+    typedef PassOwnPtr<T> PassType;
+    static PassType transfer(Type& value) { return value.release(); }
 };
 
-template <typename T>
-struct PassTraits<RefPtr<T>> {
-  typedef RefPtr<T> Type;
-  typedef PassRefPtr<T> PassType;
-  static PassType transfer(Type& value) { return value.release(); }
+template<typename T> struct PassTraits<RefPtr<T> > {
+    typedef RefPtr<T> Type;
+    typedef PassRefPtr<T> PassType;
+    static PassType transfer(Type& value) { return value.release(); }
 };
 
-}  // namespace WTF
+} // namespace WTF
 
 using WTF::PassTraits;
 

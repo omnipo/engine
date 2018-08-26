@@ -25,35 +25,34 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_STYLE_STYLETRANSFORMDATA_H_
 #define SKY_ENGINE_CORE_RENDERING_STYLE_STYLETRANSFORMDATA_H_
 
-#include "flutter/sky/engine/platform/Length.h"
-#include "flutter/sky/engine/platform/transforms/TransformOperations.h"
-#include "flutter/sky/engine/wtf/PassRefPtr.h"
-#include "flutter/sky/engine/wtf/RefCounted.h"
+#include "sky/engine/platform/Length.h"
+#include "sky/engine/platform/transforms/TransformOperations.h"
+#include "sky/engine/wtf/PassRefPtr.h"
+#include "sky/engine/wtf/RefCounted.h"
 
 namespace blink {
 
 class StyleTransformData : public RefCounted<StyleTransformData> {
- public:
-  static PassRefPtr<StyleTransformData> create() {
-    return adoptRef(new StyleTransformData);
-  }
-  PassRefPtr<StyleTransformData> copy() const {
-    return adoptRef(new StyleTransformData(*this));
-  }
+public:
+    static PassRefPtr<StyleTransformData> create() { return adoptRef(new StyleTransformData); }
+    PassRefPtr<StyleTransformData> copy() const { return adoptRef(new StyleTransformData(*this)); }
 
-  bool operator==(const StyleTransformData& o) const;
-  bool operator!=(const StyleTransformData& o) const { return !(*this == o); }
+    bool operator==(const StyleTransformData& o) const;
+    bool operator!=(const StyleTransformData& o) const
+    {
+        return !(*this == o);
+    }
 
-  TransformOperations m_operations;
-  Length m_x;
-  Length m_y;
-  float m_z;
+    TransformOperations m_operations;
+    Length m_x;
+    Length m_y;
+    float m_z;
 
- private:
-  StyleTransformData();
-  StyleTransformData(const StyleTransformData&);
+private:
+    StyleTransformData();
+    StyleTransformData(const StyleTransformData&);
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_STYLE_STYLETRANSFORMDATA_H_

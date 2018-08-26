@@ -31,10 +31,10 @@
 #ifndef SKY_ENGINE_PLATFORM_GRAPHICS_DRAWLOOPERBUILDER_H_
 #define SKY_ENGINE_PLATFORM_GRAPHICS_DRAWLOOPERBUILDER_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
-#include "flutter/sky/engine/wtf/PassOwnPtr.h"
-#include "flutter/sky/engine/wtf/PassRefPtr.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/PassOwnPtr.h"
+#include "sky/engine/wtf/PassRefPtr.h"
 #include "third_party/skia/include/effects/SkLayerDrawLooper.h"
 
 class SkDrawLooper;
@@ -45,37 +45,38 @@ class Color;
 class FloatSize;
 
 class PLATFORM_EXPORT DrawLooperBuilder final {
-  // Implementing the copy constructor properly would require writing code to
-  // copy the underlying SkLayerDrawLooper::Builder.
-  WTF_MAKE_NONCOPYABLE(DrawLooperBuilder);
+    // Implementing the copy constructor properly would require writing code to
+    // copy the underlying SkLayerDrawLooper::Builder.
+    WTF_MAKE_NONCOPYABLE(DrawLooperBuilder);
 
- public:
-  enum ShadowTransformMode {
-    ShadowRespectsTransforms,
-    ShadowIgnoresTransforms
-  };
-  enum ShadowAlphaMode { ShadowRespectsAlpha, ShadowIgnoresAlpha };
+public:
+    enum ShadowTransformMode {
+        ShadowRespectsTransforms,
+        ShadowIgnoresTransforms
+    };
+    enum ShadowAlphaMode {
+        ShadowRespectsAlpha,
+        ShadowIgnoresAlpha
+    };
 
-  DrawLooperBuilder();
-  ~DrawLooperBuilder();
+    DrawLooperBuilder();
+    ~DrawLooperBuilder();
 
-  static PassOwnPtr<DrawLooperBuilder> create();
+    static PassOwnPtr<DrawLooperBuilder> create();
 
-  // Creates the SkDrawLooper and passes ownership to the caller. The builder
-  // should not be used any more after calling this method.
-  sk_sp<SkDrawLooper> detachDrawLooper();
+    // Creates the SkDrawLooper and passes ownership to the caller. The builder
+    // should not be used any more after calling this method.
+    PassRefPtr<SkDrawLooper> detachDrawLooper();
 
-  void addUnmodifiedContent();
-  void addShadow(const FloatSize& offset,
-                 float blur,
-                 const Color&,
-                 ShadowTransformMode = ShadowRespectsTransforms,
-                 ShadowAlphaMode = ShadowRespectsAlpha);
+    void addUnmodifiedContent();
+    void addShadow(const FloatSize& offset, float blur, const Color&,
+        ShadowTransformMode = ShadowRespectsTransforms,
+        ShadowAlphaMode = ShadowRespectsAlpha);
 
- private:
-  SkLayerDrawLooper::Builder m_skDrawLooperBuilder;
+private:
+    SkLayerDrawLooper::Builder m_skDrawLooperBuilder;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_GRAPHICS_DRAWLOOPERBUILDER_H_

@@ -36,10 +36,10 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_TEXTRUNCONSTRUCTOR_H_
 #define SKY_ENGINE_CORE_RENDERING_TEXTRUNCONSTRUCTOR_H_
 
-#include "flutter/sky/engine/platform/text/TextDirection.h"
-#include "flutter/sky/engine/platform/text/TextRun.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
-#include "flutter/sky/engine/wtf/unicode/Unicode.h"
+#include "sky/engine/platform/text/TextDirection.h"
+#include "sky/engine/platform/text/TextRun.h"
+#include "sky/engine/wtf/text/WTFString.h"
+#include "sky/engine/wtf/unicode/Unicode.h"
 
 namespace blink {
 
@@ -49,92 +49,38 @@ class RenderStyle;
 class RenderText;
 
 enum TextRunFlag {
-  DefaultTextRunFlags = 0,
-  RespectDirection = 1 << 0,
-  RespectDirectionOverride = 1 << 1
+    DefaultTextRunFlags = 0,
+    RespectDirection = 1 << 0,
+    RespectDirectionOverride = 1 << 1
 };
 
 typedef unsigned TextRunFlags;
 
 // Direction resolved from string value.
-TextRun constructTextRun(
-    RenderObject* context,
-    const Font&,
-    const String&,
-    RenderStyle*,
-    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion |
-                                 TextRun::ForbidLeadingExpansion,
-    TextRunFlags = DefaultTextRunFlags);
-TextRun constructTextRun(
-    RenderObject* context,
-    const Font&,
-    const RenderText*,
-    unsigned offset,
-    unsigned length,
-    RenderStyle*,
-    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion |
-                                 TextRun::ForbidLeadingExpansion);
+TextRun constructTextRun(RenderObject* context, const Font&, const String&, RenderStyle*,
+    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion | TextRun::ForbidLeadingExpansion, TextRunFlags = DefaultTextRunFlags);
+TextRun constructTextRun(RenderObject* context, const Font&, const RenderText*, unsigned offset, unsigned length, RenderStyle*,
+    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion | TextRun::ForbidLeadingExpansion);
 
 // Explicit direction.
-TextRun constructTextRun(
-    RenderObject* context,
-    const Font&,
-    const String&,
-    RenderStyle*,
-    TextDirection,
-    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion |
-                                 TextRun::ForbidLeadingExpansion,
-    TextRunFlags = DefaultTextRunFlags);
+TextRun constructTextRun(RenderObject* context, const Font&, const String&, RenderStyle*, TextDirection,
+    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion | TextRun::ForbidLeadingExpansion, TextRunFlags = DefaultTextRunFlags);
 
-TextRun constructTextRun(
-    RenderObject* context,
-    const Font&,
-    const RenderText*,
-    RenderStyle*,
-    TextDirection,
-    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion |
-                                 TextRun::ForbidLeadingExpansion);
+TextRun constructTextRun(RenderObject* context, const Font&, const RenderText*, RenderStyle*, TextDirection,
+    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion | TextRun::ForbidLeadingExpansion);
 
-TextRun constructTextRun(
-    RenderObject* context,
-    const Font&,
-    const RenderText*,
-    unsigned offset,
-    unsigned length,
-    RenderStyle*,
-    TextDirection,
-    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion |
-                                 TextRun::ForbidLeadingExpansion);
+TextRun constructTextRun(RenderObject* context, const Font&, const RenderText*, unsigned offset, unsigned length, RenderStyle*, TextDirection,
+    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion | TextRun::ForbidLeadingExpansion);
 
-TextRun constructTextRun(
-    RenderObject* context,
-    const Font&,
-    const RenderText*,
-    unsigned offset,
-    RenderStyle*,
-    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion |
-                                 TextRun::ForbidLeadingExpansion);
+TextRun constructTextRun(RenderObject* context, const Font&, const RenderText*, unsigned offset, RenderStyle*,
+    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion | TextRun::ForbidLeadingExpansion);
 
-TextRun constructTextRun(
-    RenderObject* context,
-    const Font&,
-    const LChar* characters,
-    int length,
-    RenderStyle*,
-    TextDirection,
-    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion |
-                                 TextRun::ForbidLeadingExpansion);
+TextRun constructTextRun(RenderObject* context, const Font&, const LChar* characters, int length, RenderStyle*, TextDirection,
+    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion | TextRun::ForbidLeadingExpansion);
 
-TextRun constructTextRun(
-    RenderObject* context,
-    const Font&,
-    const UChar* characters,
-    int length,
-    RenderStyle*,
-    TextDirection,
-    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion |
-                                 TextRun::ForbidLeadingExpansion);
+TextRun constructTextRun(RenderObject* context, const Font&, const UChar* characters, int length, RenderStyle*, TextDirection,
+    TextRun::ExpansionBehavior = TextRun::AllowTrailingExpansion | TextRun::ForbidLeadingExpansion);
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_TEXTRUNCONSTRUCTOR_H_

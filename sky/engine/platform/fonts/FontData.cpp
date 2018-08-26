@@ -23,10 +23,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/fonts/FontData.h"
+#include "sky/engine/platform/fonts/FontData.h"
 
 namespace blink {
 
-FontData::~FontData() {}
+FontData::~FontData()
+{
+}
 
-}  // namespace blink
+} // namespace blink

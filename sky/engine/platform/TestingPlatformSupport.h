@@ -31,48 +31,47 @@
 #ifndef SKY_ENGINE_PLATFORM_TESTINGPLATFORMSUPPORT_H_
 #define SKY_ENGINE_PLATFORM_TESTINGPLATFORMSUPPORT_H_
 
-#include "flutter/sky/engine/public/platform/Platform.h"
-#include "flutter/sky/engine/public/platform/WebDiscardableMemory.h"
-#include "flutter/sky/engine/wtf/Vector.h"
+#include "sky/engine/public/platform/Platform.h"
+#include "sky/engine/public/platform/WebDiscardableMemory.h"
+#include "sky/engine/wtf/Vector.h"
 
 namespace blink {
 
 class TestingDiscardableMemory : public WebDiscardableMemory {
- public:
-  explicit TestingDiscardableMemory(size_t);
-  virtual ~TestingDiscardableMemory();
+public:
+    explicit TestingDiscardableMemory(size_t);
+    virtual ~TestingDiscardableMemory();
 
-  // WebDiscardableMemory:
-  virtual bool lock() override;
-  virtual void* data() override;
-  virtual void unlock() override;
+    // WebDiscardableMemory:
+    virtual bool lock() override;
+    virtual void* data() override;
+    virtual void unlock() override;
 
- private:
-  Vector<char> m_data;
-  bool m_isLocked;
+private:
+    Vector<char> m_data;
+    bool m_isLocked;
 };
 
 class TestingPlatformSupport : public Platform {
- public:
-  struct Config {
-    Config() : hasDiscardableMemorySupport(false) {}
+public:
+    struct Config {
+        Config() : hasDiscardableMemorySupport(false) { }
 
-    bool hasDiscardableMemorySupport;
-  };
+        bool hasDiscardableMemorySupport;
+    };
 
-  explicit TestingPlatformSupport(const Config&);
+    explicit TestingPlatformSupport(const Config&);
 
-  virtual ~TestingPlatformSupport();
+    virtual ~TestingPlatformSupport();
 
-  // Platform:
-  virtual WebDiscardableMemory* allocateAndLockDiscardableMemory(
-      size_t bytes) override;
+    // Platform:
+    virtual WebDiscardableMemory* allocateAndLockDiscardableMemory(size_t bytes) override;
 
- private:
-  const Config m_config;
-  Platform* const m_oldPlatform;
+private:
+    const Config m_config;
+    Platform* const m_oldPlatform;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_TESTINGPLATFORMSUPPORT_H_

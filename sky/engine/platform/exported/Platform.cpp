@@ -28,22 +28,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/public/platform/Platform.h"
+#include "sky/engine/public/platform/Platform.h"
 
 namespace blink {
 
 static Platform* s_platform = 0;
 
-void Platform::initialize(Platform* platform) {
-  s_platform = platform;
+void Platform::initialize(Platform* platform)
+{
+    s_platform = platform;
 }
 
-void Platform::shutdown() {
-  s_platform = 0;
+void Platform::shutdown()
+{
+    s_platform = 0;
 }
 
-Platform* Platform::current() {
-  return s_platform;
+Platform* Platform::current()
+{
+    return s_platform;
 }
 
-}  // namespace blink
+} // namespace blink

@@ -32,9 +32,9 @@
 #define SKY_ENGINE_PLATFORM_DECIMAL_H_
 
 #include <stdint.h>
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/wtf/Assertions.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/text/WTFString.h"
 
 namespace blink {
 
@@ -46,145 +46,137 @@ class SpecialValueHandler;
 //
 // FIXME: Once all C++ compiler support decimal type, we should replace this
 // class to compiler supported one. See below URI for current status of decimal
-// type for C++: //
-// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1977.html
+// type for C++: // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1977.html
 class PLATFORM_EXPORT Decimal {
-  WTF_MAKE_FAST_ALLOCATED;
-
- public:
-  enum Sign {
-    Positive,
-    Negative,
-  };
-
-  // You should not use EncodedData other than unit testing.
-  class EncodedData {
-    // For accessing FormatClass.
-    friend class Decimal;
-    friend class DecimalPrivate::SpecialValueHandler;
-
-   public:
-    EncodedData(Sign, int exponent, uint64_t coefficient);
-
-    bool operator==(const EncodedData&) const;
-    bool operator!=(const EncodedData& another) const {
-      return !operator==(another);
-    }
-
-    uint64_t coefficient() const { return m_coefficient; }
-    int countDigits() const;
-    int exponent() const { return m_exponent; }
-    bool isFinite() const { return !isSpecial(); }
-    bool isInfinity() const { return m_formatClass == ClassInfinity; }
-    bool isNaN() const { return m_formatClass == ClassNaN; }
-    bool isSpecial() const {
-      return m_formatClass == ClassInfinity || m_formatClass == ClassNaN;
-    }
-    bool isZero() const { return m_formatClass == ClassZero; }
-    Sign sign() const { return m_sign; }
-    void setSign(Sign sign) { m_sign = sign; }
-
-   private:
-    enum FormatClass {
-      ClassInfinity,
-      ClassNormal,
-      ClassNaN,
-      ClassZero,
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    enum Sign {
+        Positive,
+        Negative,
     };
 
-    EncodedData(Sign, FormatClass);
-    FormatClass formatClass() const { return m_formatClass; }
+    // You should not use EncodedData other than unit testing.
+    class EncodedData {
+        // For accessing FormatClass.
+        friend class Decimal;
+        friend class DecimalPrivate::SpecialValueHandler;
+    public:
+        EncodedData(Sign, int exponent, uint64_t coefficient);
 
-    uint64_t m_coefficient;
-    int16_t m_exponent;
-    FormatClass m_formatClass;
-    Sign m_sign;
-  };
+        bool operator==(const EncodedData&) const;
+        bool operator!=(const EncodedData& another) const { return !operator==(another); }
 
-  Decimal(int32_t = 0);
-  Decimal(Sign, int exponent, uint64_t coefficient);
-  Decimal(const Decimal&);
+        uint64_t coefficient() const { return m_coefficient; }
+        int countDigits() const;
+        int exponent() const { return m_exponent; }
+        bool isFinite() const { return !isSpecial(); }
+        bool isInfinity() const { return m_formatClass == ClassInfinity; }
+        bool isNaN() const { return m_formatClass == ClassNaN; }
+        bool isSpecial() const { return m_formatClass == ClassInfinity || m_formatClass == ClassNaN; }
+        bool isZero() const { return m_formatClass == ClassZero; }
+        Sign sign() const { return m_sign; }
+        void setSign(Sign sign) { m_sign = sign; }
 
-  Decimal& operator=(const Decimal&);
-  Decimal& operator+=(const Decimal&);
-  Decimal& operator-=(const Decimal&);
-  Decimal& operator*=(const Decimal&);
-  Decimal& operator/=(const Decimal&);
+    private:
+        enum FormatClass {
+            ClassInfinity,
+            ClassNormal,
+            ClassNaN,
+            ClassZero,
+        };
 
-  Decimal operator-() const;
+        EncodedData(Sign, FormatClass);
+        FormatClass formatClass() const { return m_formatClass; }
 
-  bool operator==(const Decimal&) const;
-  bool operator!=(const Decimal&) const;
-  bool operator<(const Decimal&) const;
-  bool operator<=(const Decimal&) const;
-  bool operator>(const Decimal&) const;
-  bool operator>=(const Decimal&) const;
+        uint64_t m_coefficient;
+        int16_t m_exponent;
+        FormatClass m_formatClass;
+        Sign m_sign;
+    };
 
-  Decimal operator+(const Decimal&) const;
-  Decimal operator-(const Decimal&) const;
-  Decimal operator*(const Decimal&)const;
-  Decimal operator/(const Decimal&) const;
+    Decimal(int32_t = 0);
+    Decimal(Sign, int exponent, uint64_t coefficient);
+    Decimal(const Decimal&);
 
-  int exponent() const {
-    ASSERT(isFinite());
-    return m_data.exponent();
-  }
+    Decimal& operator=(const Decimal&);
+    Decimal& operator+=(const Decimal&);
+    Decimal& operator-=(const Decimal&);
+    Decimal& operator*=(const Decimal&);
+    Decimal& operator/=(const Decimal&);
 
-  bool isFinite() const { return m_data.isFinite(); }
-  bool isInfinity() const { return m_data.isInfinity(); }
-  bool isNaN() const { return m_data.isNaN(); }
-  bool isNegative() const { return sign() == Negative; }
-  bool isPositive() const { return sign() == Positive; }
-  bool isSpecial() const { return m_data.isSpecial(); }
-  bool isZero() const { return m_data.isZero(); }
+    Decimal operator-() const;
 
-  Decimal abs() const;
-  Decimal ceiling() const;
-  Decimal floor() const;
-  Decimal remainder(const Decimal&) const;
-  Decimal round() const;
+    bool operator==(const Decimal&) const;
+    bool operator!=(const Decimal&) const;
+    bool operator<(const Decimal&) const;
+    bool operator<=(const Decimal&) const;
+    bool operator>(const Decimal&) const;
+    bool operator>=(const Decimal&) const;
 
-  double toDouble() const;
-  // Note: toString method supports infinity and nan but fromString not.
-  String toString() const;
+    Decimal operator+(const Decimal&) const;
+    Decimal operator-(const Decimal&) const;
+    Decimal operator*(const Decimal&) const;
+    Decimal operator/(const Decimal&) const;
 
-  static Decimal fromDouble(double);
-  // fromString supports following syntax EBNF:
-  //  number ::= sign? digit+ ('.' digit*) (exponent-marker sign? digit+)?
-  //          | sign? '.' digit+ (exponent-marker sign? digit+)?
-  //  sign ::= '+' | '-'
-  //  exponent-marker ::= 'e' | 'E'
-  //  digit ::= '0' | '1' | ... | '9'
-  // Note: fromString doesn't support "infinity" and "nan".
-  static Decimal fromString(const String&);
-  static Decimal infinity(Sign);
-  static Decimal nan();
-  static Decimal zero(Sign);
+    int exponent() const
+    {
+        ASSERT(isFinite());
+        return m_data.exponent();
+    }
 
-  // You should not use below methods. We expose them for unit testing.
-  explicit Decimal(const EncodedData&);
-  const EncodedData& value() const { return m_data; }
+    bool isFinite() const { return m_data.isFinite(); }
+    bool isInfinity() const { return m_data.isInfinity(); }
+    bool isNaN() const { return m_data.isNaN(); }
+    bool isNegative() const { return sign() == Negative; }
+    bool isPositive() const { return sign() == Positive; }
+    bool isSpecial() const { return m_data.isSpecial(); }
+    bool isZero() const { return m_data.isZero(); }
 
- private:
-  struct AlignedOperands {
-    uint64_t lhsCoefficient;
-    uint64_t rhsCoefficient;
-    int exponent;
-  };
+    Decimal abs() const;
+    Decimal ceiling() const;
+    Decimal floor() const;
+    Decimal remainder(const Decimal&) const;
+    Decimal round() const;
 
-  Decimal(double);
-  Decimal compareTo(const Decimal&) const;
+    double toDouble() const;
+    // Note: toString method supports infinity and nan but fromString not.
+    String toString() const;
 
-  static AlignedOperands alignOperands(const Decimal& lhs, const Decimal& rhs);
-  static inline Sign invertSign(Sign sign) {
-    return sign == Negative ? Positive : Negative;
-  }
+    static Decimal fromDouble(double);
+    // fromString supports following syntax EBNF:
+    //  number ::= sign? digit+ ('.' digit*) (exponent-marker sign? digit+)?
+    //          | sign? '.' digit+ (exponent-marker sign? digit+)?
+    //  sign ::= '+' | '-'
+    //  exponent-marker ::= 'e' | 'E'
+    //  digit ::= '0' | '1' | ... | '9'
+    // Note: fromString doesn't support "infinity" and "nan".
+    static Decimal fromString(const String&);
+    static Decimal infinity(Sign);
+    static Decimal nan();
+    static Decimal zero(Sign);
 
-  Sign sign() const { return m_data.sign(); }
+    // You should not use below methods. We expose them for unit testing.
+    explicit Decimal(const EncodedData&);
+    const EncodedData& value() const { return m_data; }
 
-  EncodedData m_data;
+private:
+    struct AlignedOperands {
+        uint64_t lhsCoefficient;
+        uint64_t rhsCoefficient;
+        int exponent;
+    };
+
+    Decimal(double);
+    Decimal compareTo(const Decimal&) const;
+
+    static AlignedOperands alignOperands(const Decimal& lhs, const Decimal& rhs);
+    static inline Sign invertSign(Sign sign) { return sign == Negative ? Positive : Negative; }
+
+    Sign sign() const { return m_data.sign(); }
+
+    EncodedData m_data;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_DECIMAL_H_

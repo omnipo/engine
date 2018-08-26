@@ -21,31 +21,31 @@
  *
  */
 
-#include "flutter/sky/engine/platform/text/BidiCharacterRun.h"
+#include "sky/engine/platform/text/BidiCharacterRun.h"
 
-#include "flutter/sky/engine/platform/Partitions.h"
-#include "flutter/sky/engine/wtf/RefCountedLeakCounter.h"
+#include "sky/engine/platform/Partitions.h"
+#include "sky/engine/wtf/RefCountedLeakCounter.h"
 
 using namespace WTF;
 
 namespace blink {
 
-DEFINE_DEBUG_ONLY_GLOBAL(RefCountedLeakCounter,
-                         bidiRunCounter,
-                         ("BidiCharacterRun"));
+DEFINE_DEBUG_ONLY_GLOBAL(RefCountedLeakCounter, bidiRunCounter, ("BidiCharacterRun"));
 
-void* BidiCharacterRun::operator new(size_t sz) {
+void* BidiCharacterRun::operator new(size_t sz)
+{
 #ifndef NDEBUG
-  bidiRunCounter.increment();
+    bidiRunCounter.increment();
 #endif
-  return partitionAlloc(Partitions::getRenderingPartition(), sz);
+    return partitionAlloc(Partitions::getRenderingPartition(), sz);
 }
 
-void BidiCharacterRun::operator delete(void* ptr) {
+void BidiCharacterRun::operator delete(void* ptr)
+{
 #ifndef NDEBUG
-  bidiRunCounter.decrement();
+    bidiRunCounter.decrement();
 #endif
-  partitionFree(ptr);
+    partitionFree(ptr);
 }
 
-}  // namespace blink
+}

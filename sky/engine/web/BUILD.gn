@@ -3,28 +3,20 @@
 # found in the LICENSE file.
 
 source_set("web") {
-  sources = [
-    "Sky.cpp",
-  ]
-
   deps = [
-    "$flutter_root/sky/engine/core",
-    "$flutter_root/sky/engine/platform",
+    "//mojo/message_pump",
+    "//sky/engine/core",
+    "//sky/engine/platform",
   ]
 
   configs += [
-    "$flutter_root/sky/engine:config",
-    "$flutter_root/sky/engine:inside_blink",
-    "$flutter_root/sky/engine:non_test_config",
+    "//sky/engine:config",
+    "//sky/engine:inside_blink",
+    "//sky/engine:non_test_config",
   ]
 
-  public_configs = [
-    "$flutter_root:config",
+  sources = [
+    "Sky.cpp",
+    "WebRuntimeFeatures.cpp",
   ]
-
-  if (is_fuchsia) {
-    deps += [ "//garnet/public/lib/fsl" ]
-  } else {
-    deps += [ "$flutter_root/fml" ]
-  }
 }

@@ -33,12 +33,8 @@
 
 namespace blink {
 
-enum CodePath {
-  AutoPath,
-  SimplePath,
-  ComplexPath,
-  SimpleWithGlyphOverflowPath
-};
+enum CodePath { AutoPath, SimplePath, ComplexPath, SimpleWithGlyphOverflowPath };
+
 }
 
 #endif  // SKY_ENGINE_PLATFORM_TEXT_TEXTPATH_H_

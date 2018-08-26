@@ -26,40 +26,40 @@
 #ifndef SKY_ENGINE_CORE_EDITING_COMPOSITIONUNDERLINE_H_
 #define SKY_ENGINE_CORE_EDITING_COMPOSITIONUNDERLINE_H_
 
-#include "flutter/sky/engine/platform/graphics/Color.h"
+#include "sky/engine/platform/graphics/Color.h"
 
 namespace blink {
 
 struct CompositionUnderline {
-  CompositionUnderline()
-      : startOffset(0),
-        endOffset(0),
-        color(Color::transparent),
-        thick(false),
-        backgroundColor(Color::transparent) {}
+    CompositionUnderline()
+        : startOffset(0)
+        , endOffset(0)
+        , color(Color::transparent)
+        , thick(false)
+        , backgroundColor(Color::transparent) { }
 
-  // FIXME(huangs): remove this constructor.
-  CompositionUnderline(unsigned s, unsigned e, const Color& c, bool t)
-      : startOffset(s),
-        endOffset(e),
-        color(c),
-        thick(t),
-        backgroundColor(Color::transparent) {}
+    // FIXME(huangs): remove this constructor.
+    CompositionUnderline(unsigned s, unsigned e, const Color& c, bool t)
+        : startOffset(s)
+        , endOffset(e)
+        , color(c)
+        , thick(t)
+        , backgroundColor(Color::transparent) { }
 
-  CompositionUnderline(unsigned s,
-                       unsigned e,
-                       const Color& c,
-                       bool t,
-                       const Color& bc)
-      : startOffset(s), endOffset(e), color(c), thick(t), backgroundColor(bc) {}
+    CompositionUnderline(unsigned s, unsigned e, const Color& c, bool t, const Color& bc)
+        : startOffset(s)
+        , endOffset(e)
+        , color(c)
+        , thick(t)
+        , backgroundColor(bc) { }
 
-  unsigned startOffset;
-  unsigned endOffset;
-  Color color;
-  bool thick;
-  Color backgroundColor;
+    unsigned startOffset;
+    unsigned endOffset;
+    Color color;
+    bool thick;
+    Color backgroundColor;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_EDITING_COMPOSITIONUNDERLINE_H_

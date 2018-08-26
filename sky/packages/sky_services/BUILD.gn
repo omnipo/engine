@@ -2,19 +2,17 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("$flutter_root/build/dart/rules.gni")
+import("//mojo/public/dart/rules.gni")
 
-if (!is_fuchsia) {
-  copy("copy_sky_services_license") {
-    sources = [
-      "//AUTHORS",
-      "//LICENSE",
-    ]
+copy("copy_sky_services_license") {
+  sources = [
+    "//AUTHORS",
+    "//LICENSE",
+  ]
 
-    outputs = [
-      "$root_gen_dir/dart-pkg/sky_services/{{source_file_part}}",
-    ]
-  }
+  outputs = [
+    "$root_gen_dir/dart-pkg/sky_services/{{source_file_part}}",
+  ]
 }
 
 dart_pkg("sky_services") {
@@ -23,9 +21,11 @@ dart_pkg("sky_services") {
     "pubspec.yaml",
   ]
 
-  if (!is_fuchsia) {
-    deps = [
-      ":copy_sky_services_license",
-    ]
-  }
+  deps = [
+    ":copy_sky_services_license",
+    "//sky/services/activity:interfaces",
+    "//sky/services/media:interfaces",
+    "//sky/services/updater:interfaces",
+    "//sky/services/vsync:interfaces",
+  ]
 }

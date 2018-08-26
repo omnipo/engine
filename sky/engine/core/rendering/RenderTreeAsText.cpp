@@ -23,196 +23,168 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/core/rendering/RenderTreeAsText.h"
+#include "sky/engine/core/rendering/RenderTreeAsText.h"
 
-#include "flutter/sky/engine/core/rendering/InlineTextBox.h"
-#include "flutter/sky/engine/core/rendering/RenderInline.h"
-#include "flutter/sky/engine/core/rendering/RenderLayer.h"
-#include "flutter/sky/engine/core/rendering/RenderView.h"
-#include "flutter/sky/engine/wtf/HexNumber.h"
-#include "flutter/sky/engine/wtf/Vector.h"
-#include "flutter/sky/engine/wtf/unicode/CharacterNames.h"
+#include "sky/engine/core/rendering/InlineTextBox.h"
+#include "sky/engine/core/rendering/RenderInline.h"
+#include "sky/engine/core/rendering/RenderLayer.h"
+#include "sky/engine/core/rendering/RenderView.h"
+#include "sky/engine/wtf/HexNumber.h"
+#include "sky/engine/wtf/Vector.h"
+#include "sky/engine/wtf/unicode/CharacterNames.h"
 
 namespace blink {
 
-String quoteAndEscapeNonPrintables(const String& s) {
-  StringBuilder result;
-  result.append('"');
-  for (unsigned i = 0; i != s.length(); ++i) {
-    UChar c = s[i];
-    if (c == '\\') {
-      result.append('\\');
-      result.append('\\');
-    } else if (c == '"') {
-      result.append('\\');
-      result.append('"');
-    } else if (c == '\n' || c == noBreakSpace)
-      result.append(' ');
-    else {
-      if (c >= 0x20 && c < 0x7F)
-        result.append(c);
-      else {
-        result.append('\\');
-        result.append('x');
-        result.append('{');
-        appendUnsignedAsHex(c, result);
-        result.append('}');
-      }
+String quoteAndEscapeNonPrintables(const String& s)
+{
+    StringBuilder result;
+    result.append('"');
+    for (unsigned i = 0; i != s.length(); ++i) {
+        UChar c = s[i];
+        if (c == '\\') {
+            result.append('\\');
+            result.append('\\');
+        } else if (c == '"') {
+            result.append('\\');
+            result.append('"');
+        } else if (c == '\n' || c == noBreakSpace)
+            result.append(' ');
+        else {
+            if (c >= 0x20 && c < 0x7F)
+                result.append(c);
+            else {
+                result.append('\\');
+                result.append('x');
+                result.append('{');
+                appendUnsignedAsHex(c, result);
+                result.append('}');
+            }
+        }
     }
-  }
-  result.append('"');
-  return result.toString();
+    result.append('"');
+    return result.toString();
 }
 
-void RenderTreeAsText::writeRenderObject(TextStream& ts,
-                                         const RenderObject& o,
-                                         RenderAsTextBehavior behavior) {}
-
-static void writeTextRun(TextStream& ts,
-                         const RenderText& o,
-                         const InlineTextBox& run) {
-  // FIXME: For now use an "enclosingIntRect" model for x, y and logicalWidth,
-  // although this makes it harder to detect any changes caused by the
-  // conversion to floating point. :(
-  int x = run.x();
-  int y = run.y();
-  int logicalWidth = ceilf(run.left() + run.logicalWidth()) - x;
-
-  ts << "text run at (" << x << "," << y << ") width " << logicalWidth;
-  if (!run.isLeftToRightDirection() || run.dirOverride()) {
-    ts << (!run.isLeftToRightDirection() ? " RTL" : " LTR");
-    if (run.dirOverride())
-      ts << " override";
-  }
-  ts << ": "
-     << quoteAndEscapeNonPrintables(
-            String(o.text()).substring(run.start(), run.len()));
-  if (run.hasHyphen())
-    ts << " + hyphen string "
-       << quoteAndEscapeNonPrintables(o.style()->hyphenString());
-  ts << "\n";
+void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, RenderAsTextBehavior behavior)
+{
 }
 
-void write(TextStream& ts,
-           const RenderObject& o,
-           int indent,
-           RenderAsTextBehavior behavior) {
-  writeIndent(ts, indent);
+static void writeTextRun(TextStream& ts, const RenderText& o, const InlineTextBox& run)
+{
+    // FIXME: For now use an "enclosingIntRect" model for x, y and logicalWidth, although this makes it harder
+    // to detect any changes caused by the conversion to floating point. :(
+    int x = run.x();
+    int y = run.y();
+    int logicalWidth = ceilf(run.left() + run.logicalWidth()) - x;
 
-  RenderTreeAsText::writeRenderObject(ts, o, behavior);
-  ts << "\n";
-
-  if (o.isText()) {
-    const RenderText& text = toRenderText(o);
-    for (InlineTextBox* box = text.firstTextBox(); box;
-         box = box->nextTextBox()) {
-      writeIndent(ts, indent + 1);
-      writeTextRun(ts, text, *box);
+    ts << "text run at (" << x << "," << y << ") width " << logicalWidth;
+    if (!run.isLeftToRightDirection() || run.dirOverride()) {
+        ts << (!run.isLeftToRightDirection() ? " RTL" : " LTR");
+        if (run.dirOverride())
+            ts << " override";
     }
-  }
-
-  for (RenderObject* child = o.slowFirstChild(); child;
-       child = child->nextSibling()) {
-    if (child->hasLayer())
-      continue;
-    write(ts, *child, indent + 1, behavior);
-  }
+    ts << ": "
+        << quoteAndEscapeNonPrintables(String(o.text()).substring(run.start(), run.len()));
+    if (run.hasHyphen())
+        ts << " + hyphen string " << quoteAndEscapeNonPrintables(o.style()->hyphenString());
+    ts << "\n";
 }
 
-static void write(TextStream& ts,
-                  RenderLayer& l,
-                  const LayoutRect& layerBounds,
-                  const LayoutRect& backgroundClipRect,
-                  int indent = 0,
-                  RenderAsTextBehavior behavior = RenderAsTextBehaviorNormal) {
-  IntRect adjustedLayoutBounds = pixelSnappedIntRect(layerBounds);
-  IntRect adjustedBackgroundClipRect = pixelSnappedIntRect(backgroundClipRect);
+void write(TextStream& ts, const RenderObject& o, int indent, RenderAsTextBehavior behavior)
+{
+    writeIndent(ts, indent);
 
-  writeIndent(ts, indent);
+    RenderTreeAsText::writeRenderObject(ts, o, behavior);
+    ts << "\n";
 
-  ts << "layer ";
-
-  if (behavior & RenderAsTextShowAddresses)
-    ts << static_cast<const void*>(&l) << " ";
-
-  ts << adjustedLayoutBounds;
-
-  if (!adjustedLayoutBounds.isEmpty()) {
-    if (!adjustedBackgroundClipRect.contains(adjustedLayoutBounds))
-      ts << " backgroundClip " << adjustedBackgroundClipRect;
-  }
-
-  ts << "\n";
-  write(ts, *l.renderer(), indent + 1, behavior);
-}
-
-void RenderTreeAsText::writeLayers(TextStream& ts,
-                                   const RenderLayer* rootLayer,
-                                   RenderLayer* layer,
-                                   const LayoutRect& paintRect,
-                                   int indent,
-                                   RenderAsTextBehavior behavior) {
-  // FIXME: Apply overflow to the root layer to not break every test. Complete
-  // hack. Sigh.
-  LayoutRect paintDirtyRect(paintRect);
-  if (rootLayer == layer) {
-    paintDirtyRect.setWidth(
-        max<LayoutUnit>(paintDirtyRect.width(),
-                        rootLayer->renderer()->layoutOverflowRect().maxX()));
-    paintDirtyRect.setHeight(
-        max<LayoutUnit>(paintDirtyRect.height(),
-                        rootLayer->renderer()->layoutOverflowRect().maxY()));
-  }
-
-  // Calculate the clip rects we should use.
-  LayoutRect layerBounds;
-  ClipRect damageRect;
-  layer->clipper().calculateRects(
-      ClipRectsContext(rootLayer, UncachedClipRects), paintDirtyRect,
-      layerBounds, damageRect);
-
-  // FIXME: Apply overflow to the root layer to not break every test. Complete
-  // hack. Sigh.
-  if (rootLayer == layer)
-    layerBounds.setSize(layer->size().expandedTo(pixelSnappedIntSize(
-        layer->renderer()->maxLayoutOverflow(), LayoutPoint(0, 0))));
-
-  // Ensure our lists are up-to-date.
-  layer->stackingNode()->updateLayerListsIfNeeded();
-
-  bool shouldPaint = (behavior & RenderAsTextShowAllLayers)
-                         ? true
-                         : layer->intersectsDamageRect(
-                               layerBounds, damageRect.rect(), rootLayer);
-
-  if (shouldPaint)
-    write(ts, *layer, layerBounds, damageRect.rect(), indent, behavior);
-
-  if (Vector<RenderLayerStackingNode*>* normalFlowList =
-          layer->stackingNode()->normalFlowList()) {
-    int currIndent = indent;
-    if (behavior & RenderAsTextShowLayerNesting) {
-      writeIndent(ts, indent);
-      ts << " normal flow list(" << normalFlowList->size() << ")\n";
-      ++currIndent;
+    if (o.isText()) {
+        const RenderText& text = toRenderText(o);
+        for (InlineTextBox* box = text.firstTextBox(); box; box = box->nextTextBox()) {
+            writeIndent(ts, indent + 1);
+            writeTextRun(ts, text, *box);
+        }
     }
-    for (unsigned i = 0; i != normalFlowList->size(); ++i)
-      writeLayers(ts, rootLayer, normalFlowList->at(i)->layer(), paintDirtyRect,
-                  currIndent, behavior);
-  }
 
-  if (Vector<RenderLayerStackingNode*>* posList =
-          layer->stackingNode()->zOrderList()) {
-    int currIndent = indent;
-    if (behavior & RenderAsTextShowLayerNesting) {
-      writeIndent(ts, indent);
-      ts << " positive z-order list(" << posList->size() << ")\n";
-      ++currIndent;
+    for (RenderObject* child = o.slowFirstChild(); child; child = child->nextSibling()) {
+        if (child->hasLayer())
+            continue;
+        write(ts, *child, indent + 1, behavior);
     }
-    for (unsigned i = 0; i != posList->size(); ++i)
-      writeLayers(ts, rootLayer, posList->at(i)->layer(), paintDirtyRect,
-                  currIndent, behavior);
-  }
 }
 
-}  // namespace blink
+static void write(TextStream& ts, RenderLayer& l,
+                  const LayoutRect& layerBounds, const LayoutRect& backgroundClipRect,
+                  int indent = 0, RenderAsTextBehavior behavior = RenderAsTextBehaviorNormal)
+{
+    IntRect adjustedLayoutBounds = pixelSnappedIntRect(layerBounds);
+    IntRect adjustedBackgroundClipRect = pixelSnappedIntRect(backgroundClipRect);
+
+    writeIndent(ts, indent);
+
+    ts << "layer ";
+
+    if (behavior & RenderAsTextShowAddresses)
+        ts << static_cast<const void*>(&l) << " ";
+
+    ts << adjustedLayoutBounds;
+
+    if (!adjustedLayoutBounds.isEmpty()) {
+        if (!adjustedBackgroundClipRect.contains(adjustedLayoutBounds))
+            ts << " backgroundClip " << adjustedBackgroundClipRect;
+    }
+
+    ts << "\n";
+    write(ts, *l.renderer(), indent + 1, behavior);
+}
+
+void RenderTreeAsText::writeLayers(TextStream& ts, const RenderLayer* rootLayer, RenderLayer* layer,
+    const LayoutRect& paintRect, int indent, RenderAsTextBehavior behavior)
+{
+    // FIXME: Apply overflow to the root layer to not break every test. Complete hack. Sigh.
+    LayoutRect paintDirtyRect(paintRect);
+    if (rootLayer == layer) {
+        paintDirtyRect.setWidth(max<LayoutUnit>(paintDirtyRect.width(), rootLayer->renderer()->layoutOverflowRect().maxX()));
+        paintDirtyRect.setHeight(max<LayoutUnit>(paintDirtyRect.height(), rootLayer->renderer()->layoutOverflowRect().maxY()));
+    }
+
+    // Calculate the clip rects we should use.
+    LayoutRect layerBounds;
+    ClipRect damageRect;
+    layer->clipper().calculateRects(ClipRectsContext(rootLayer, UncachedClipRects), paintDirtyRect, layerBounds, damageRect);
+
+    // FIXME: Apply overflow to the root layer to not break every test. Complete hack. Sigh.
+    if (rootLayer == layer)
+        layerBounds.setSize(layer->size().expandedTo(pixelSnappedIntSize(layer->renderer()->maxLayoutOverflow(), LayoutPoint(0, 0))));
+
+    // Ensure our lists are up-to-date.
+    layer->stackingNode()->updateLayerListsIfNeeded();
+
+    bool shouldPaint = (behavior & RenderAsTextShowAllLayers) ? true : layer->intersectsDamageRect(layerBounds, damageRect.rect(), rootLayer);
+
+    if (shouldPaint)
+        write(ts, *layer, layerBounds, damageRect.rect(), indent, behavior);
+
+    if (Vector<RenderLayerStackingNode*>* normalFlowList = layer->stackingNode()->normalFlowList()) {
+        int currIndent = indent;
+        if (behavior & RenderAsTextShowLayerNesting) {
+            writeIndent(ts, indent);
+            ts << " normal flow list(" << normalFlowList->size() << ")\n";
+            ++currIndent;
+        }
+        for (unsigned i = 0; i != normalFlowList->size(); ++i)
+            writeLayers(ts, rootLayer, normalFlowList->at(i)->layer(), paintDirtyRect, currIndent, behavior);
+    }
+
+    if (Vector<RenderLayerStackingNode*>* posList = layer->stackingNode()->zOrderList()) {
+        int currIndent = indent;
+        if (behavior & RenderAsTextShowLayerNesting) {
+            writeIndent(ts, indent);
+            ts << " positive z-order list(" << posList->size() << ")\n";
+            ++currIndent;
+        }
+        for (unsigned i = 0; i != posList->size(); ++i)
+            writeLayers(ts, rootLayer, posList->at(i)->layer(), paintDirtyRect, currIndent, behavior);
+    }
+}
+
+} // namespace blink

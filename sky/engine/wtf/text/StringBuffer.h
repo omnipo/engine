@@ -29,66 +29,64 @@
 #ifndef SKY_ENGINE_WTF_TEXT_STRINGBUFFER_H_
 #define SKY_ENGINE_WTF_TEXT_STRINGBUFFER_H_
 
-#include "flutter/sky/engine/wtf/Assertions.h"
-#include "flutter/sky/engine/wtf/text/StringImpl.h"
-#include "flutter/sky/engine/wtf/unicode/Unicode.h"
+#include "sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/text/StringImpl.h"
+#include "sky/engine/wtf/unicode/Unicode.h"
 
 namespace WTF {
 
 template <typename CharType>
 class StringBuffer {
-  WTF_MAKE_NONCOPYABLE(StringBuffer);
+    WTF_MAKE_NONCOPYABLE(StringBuffer);
+public:
+    StringBuffer() { }
 
- public:
-  StringBuffer() {}
-
-  explicit StringBuffer(unsigned length) {
-    CharType* characters;
-    m_data = StringImpl::createUninitialized(length, characters);
-  }
-
-  ~StringBuffer() {}
-
-  void shrink(unsigned newLength);
-  void resize(unsigned newLength) {
-    if (!m_data) {
-      CharType* characters;
-      m_data = StringImpl::createUninitialized(newLength, characters);
-      return;
+    explicit StringBuffer(unsigned length)
+    {
+        CharType* characters;
+        m_data = StringImpl::createUninitialized(length, characters);
     }
-    if (newLength > m_data->length()) {
-      m_data = StringImpl::reallocate(m_data.release(), newLength);
-      return;
+
+    ~StringBuffer()
+    {
     }
-    shrink(newLength);
-  }
 
-  unsigned length() const { return m_data ? m_data->length() : 0; }
-  CharType* characters() {
-    return length() ? const_cast<CharType*>(m_data->getCharacters<CharType>())
-                    : 0;
-  }
+    void shrink(unsigned newLength);
+    void resize(unsigned newLength)
+    {
+        if (!m_data) {
+            CharType* characters;
+            m_data = StringImpl::createUninitialized(newLength, characters);
+            return;
+        }
+        if (newLength > m_data->length()) {
+            m_data = StringImpl::reallocate(m_data.release(), newLength);
+            return;
+        }
+        shrink(newLength);
+    }
 
-  CharType& operator[](unsigned i) {
-    ASSERT_WITH_SECURITY_IMPLICATION(i < length());
-    return characters()[i];
-  }
+    unsigned length() const { return m_data ? m_data->length() : 0; }
+    CharType* characters() { return length() ? const_cast<CharType*>(m_data->getCharacters<CharType>()) : 0; }
 
-  PassRefPtr<StringImpl> release() { return m_data.release(); }
+    CharType& operator[](unsigned i) { ASSERT_WITH_SECURITY_IMPLICATION(i < length()); return characters()[i]; }
 
- private:
-  RefPtr<StringImpl> m_data;
+    PassRefPtr<StringImpl> release() { return m_data.release(); }
+
+private:
+    RefPtr<StringImpl> m_data;
 };
 
 template <typename CharType>
-void StringBuffer<CharType>::shrink(unsigned newLength) {
-  ASSERT(m_data);
-  if (m_data->length() == newLength)
-    return;
-  m_data->truncateAssumingIsolated(newLength);
+void StringBuffer<CharType>::shrink(unsigned newLength)
+{
+    ASSERT(m_data);
+    if (m_data->length() == newLength)
+        return;
+    m_data->truncateAssumingIsolated(newLength);
 }
 
-}  // namespace WTF
+} // namespace WTF
 
 using WTF::StringBuffer;
 

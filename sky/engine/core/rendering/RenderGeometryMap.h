@@ -26,13 +26,13 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_RENDERGEOMETRYMAP_H_
 #define SKY_ENGINE_CORE_RENDERING_RENDERGEOMETRYMAP_H_
 
-#include "flutter/sky/engine/core/rendering/RenderGeometryMapStep.h"
-#include "flutter/sky/engine/core/rendering/RenderObject.h"
-#include "flutter/sky/engine/platform/geometry/FloatPoint.h"
-#include "flutter/sky/engine/platform/geometry/FloatQuad.h"
-#include "flutter/sky/engine/platform/geometry/IntSize.h"
-#include "flutter/sky/engine/platform/geometry/LayoutSize.h"
-#include "flutter/sky/engine/wtf/OwnPtr.h"
+#include "sky/engine/core/rendering/RenderGeometryMapStep.h"
+#include "sky/engine/core/rendering/RenderObject.h"
+#include "sky/engine/platform/geometry/FloatPoint.h"
+#include "sky/engine/platform/geometry/FloatQuad.h"
+#include "sky/engine/platform/geometry/IntSize.h"
+#include "sky/engine/platform/geometry/LayoutSize.h"
+#include "sky/engine/wtf/OwnPtr.h"
 
 namespace blink {
 
@@ -41,82 +41,66 @@ class RenderBox;
 class TransformationMatrix;
 class TransformState;
 
-// Can be used while walking the Renderer tree to cache data about offsets and
-// transforms.
+// Can be used while walking the Renderer tree to cache data about offsets and transforms.
 class RenderGeometryMap {
-  WTF_MAKE_NONCOPYABLE(RenderGeometryMap);
+    WTF_MAKE_NONCOPYABLE(RenderGeometryMap);
+public:
+    RenderGeometryMap(MapCoordinatesFlags = UseTransforms);
+    ~RenderGeometryMap();
 
- public:
-  RenderGeometryMap(MapCoordinatesFlags = UseTransforms);
-  ~RenderGeometryMap();
+    MapCoordinatesFlags mapCoordinatesFlags() const { return m_mapCoordinatesFlags; }
 
-  MapCoordinatesFlags mapCoordinatesFlags() const {
-    return m_mapCoordinatesFlags;
-  }
+    FloatRect absoluteRect(const FloatRect& rect) const
+    {
+        return mapToContainer(rect, 0).boundingBox();
+    }
 
-  FloatRect absoluteRect(const FloatRect& rect) const {
-    return mapToContainer(rect, 0).boundingBox();
-  }
+    // Map to a container. Will assert that the container has been pushed onto this map.
+    // A null container maps through the RenderView (including its scale transform, if any).
+    // If the container is the RenderView, the scroll offset is applied, but not the scale.
+    FloatPoint mapToContainer(const FloatPoint&, const RenderBox*) const;
+    FloatQuad mapToContainer(const FloatRect&, const RenderBox*) const;
 
-  // Map to a container. Will assert that the container has been pushed onto
-  // this map. A null container maps through the RenderView (including its scale
-  // transform, if any). If the container is the RenderView, the scroll offset
-  // is applied, but not the scale.
-  FloatPoint mapToContainer(const FloatPoint&, const RenderBox*) const;
-  FloatQuad mapToContainer(const FloatRect&, const RenderBox*) const;
+    // Called by code walking the renderer or layer trees.
+    void pushMappingsToAncestor(const RenderLayer*, const RenderLayer* ancestorLayer);
+    void popMappingsToAncestor(const RenderLayer*);
+    void pushMappingsToAncestor(const RenderObject*, const RenderBox* ancestorRenderer);
+    void popMappingsToAncestor(const RenderBox*);
 
-  // Called by code walking the renderer or layer trees.
-  void pushMappingsToAncestor(const RenderLayer*,
-                              const RenderLayer* ancestorLayer);
-  void popMappingsToAncestor(const RenderLayer*);
-  void pushMappingsToAncestor(const RenderObject*,
-                              const RenderBox* ancestorRenderer);
-  void popMappingsToAncestor(const RenderBox*);
+    // The following methods should only be called by renderers inside a call to pushMappingsToAncestor().
 
-  // The following methods should only be called by renderers inside a call to
-  // pushMappingsToAncestor().
+    // Push geometry info between this renderer and some ancestor. The ancestor must be its container() or some
+    // stacking context between the renderer and its container.
+    void push(const RenderObject*, const LayoutSize&, bool accumulatingTransform = false, bool isNonUniform = false, bool hasTransform = false);
+    void push(const RenderObject*, const TransformationMatrix&, bool accumulatingTransform = false, bool isNonUniform = false, bool hasTransform = false);
 
-  // Push geometry info between this renderer and some ancestor. The ancestor
-  // must be its container() or some stacking context between the renderer and
-  // its container.
-  void push(const RenderObject*,
-            const LayoutSize&,
-            bool accumulatingTransform = false,
-            bool isNonUniform = false,
-            bool hasTransform = false);
-  void push(const RenderObject*,
-            const TransformationMatrix&,
-            bool accumulatingTransform = false,
-            bool isNonUniform = false,
-            bool hasTransform = false);
+private:
+    void mapToContainer(TransformState&, const RenderBox* container = 0) const;
 
- private:
-  void mapToContainer(TransformState&, const RenderBox* container = 0) const;
+    void stepInserted(const RenderGeometryMapStep&);
+    void stepRemoved(const RenderGeometryMapStep&);
 
-  void stepInserted(const RenderGeometryMapStep&);
-  void stepRemoved(const RenderGeometryMapStep&);
-
-  bool hasNonUniformStep() const { return m_nonUniformStepsCount; }
-  bool hasTransformStep() const { return m_transformedStepsCount; }
+    bool hasNonUniformStep() const { return m_nonUniformStepsCount; }
+    bool hasTransformStep() const { return m_transformedStepsCount; }
 
 #ifndef NDEBUG
-  void dumpSteps() const;
+    void dumpSteps() const;
 #endif
 
 #if ENABLE(ASSERT)
-  bool isTopmostRenderView(const RenderObject* renderer) const;
+    bool isTopmostRenderView(const RenderObject* renderer) const;
 #endif
 
-  typedef Vector<RenderGeometryMapStep, 32> RenderGeometryMapSteps;
+    typedef Vector<RenderGeometryMapStep, 32> RenderGeometryMapSteps;
 
-  size_t m_insertionPosition;
-  int m_nonUniformStepsCount;
-  int m_transformedStepsCount;
-  RenderGeometryMapSteps m_mapping;
-  LayoutSize m_accumulatedOffset;
-  MapCoordinatesFlags m_mapCoordinatesFlags;
+    size_t m_insertionPosition;
+    int m_nonUniformStepsCount;
+    int m_transformedStepsCount;
+    RenderGeometryMapSteps m_mapping;
+    LayoutSize m_accumulatedOffset;
+    MapCoordinatesFlags m_mapCoordinatesFlags;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_RENDERGEOMETRYMAP_H_

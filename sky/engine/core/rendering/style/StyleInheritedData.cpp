@@ -19,32 +19,41 @@
  *
  */
 
-#include "flutter/sky/engine/core/rendering/style/StyleInheritedData.h"
+#include "sky/engine/core/rendering/style/StyleInheritedData.h"
 
-#include "flutter/sky/engine/core/rendering/style/RenderStyle.h"
+#include "sky/engine/core/rendering/style/RenderStyle.h"
 
 namespace blink {
 
 StyleInheritedData::StyleInheritedData()
-    : horizontal_border_spacing(RenderStyle::initialHorizontalBorderSpacing()),
-      vertical_border_spacing(RenderStyle::initialVerticalBorderSpacing()),
-      line_height(RenderStyle::initialLineHeight()),
-      color(RenderStyle::initialColor()) {}
-
-StyleInheritedData::~StyleInheritedData() {}
-
-StyleInheritedData::StyleInheritedData(const StyleInheritedData& o)
-    : RefCounted<StyleInheritedData>(),
-      horizontal_border_spacing(o.horizontal_border_spacing),
-      vertical_border_spacing(o.vertical_border_spacing),
-      line_height(o.line_height),
-      font(o.font),
-      color(o.color) {}
-
-bool StyleInheritedData::operator==(const StyleInheritedData& o) const {
-  return line_height == o.line_height && font == o.font && color == o.color &&
-         horizontal_border_spacing == o.horizontal_border_spacing &&
-         vertical_border_spacing == o.vertical_border_spacing;
+    : horizontal_border_spacing(RenderStyle::initialHorizontalBorderSpacing())
+    , vertical_border_spacing(RenderStyle::initialVerticalBorderSpacing())
+    , line_height(RenderStyle::initialLineHeight())
+    , color(RenderStyle::initialColor())
+{
 }
 
-}  // namespace blink
+StyleInheritedData::~StyleInheritedData()
+{
+}
+
+StyleInheritedData::StyleInheritedData(const StyleInheritedData& o)
+    : RefCounted<StyleInheritedData>()
+    , horizontal_border_spacing(o.horizontal_border_spacing)
+    , vertical_border_spacing(o.vertical_border_spacing)
+    , line_height(o.line_height)
+    , font(o.font)
+    , color(o.color)
+{
+}
+
+bool StyleInheritedData::operator==(const StyleInheritedData& o) const
+{
+    return line_height == o.line_height
+        && font == o.font
+        && color == o.color
+        && horizontal_border_spacing == o.horizontal_border_spacing
+        && vertical_border_spacing == o.vertical_border_spacing;
+}
+
+} // namespace blink

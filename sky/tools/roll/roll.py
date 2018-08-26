@@ -19,6 +19,8 @@ _base_deps = [
     'testing',
     'third_party/ashmem',
     'third_party/libevent',
+    'third_party/libxml', # via //base/test
+    'third_party/modp_b64',
     'third_party/tcmalloc',
 ]
 
@@ -36,9 +38,14 @@ _build_deps = [
     'tools/valgrind',
 ]
 
+_chromium_libs = [
+    'url',
+]
+
 _third_party_deps = [
     'third_party/android_platform',
     'third_party/apple_apsl',
+    'third_party/brotli',
     'third_party/expat',
     'third_party/freetype-android',
     'third_party/harfbuzz-ng',
@@ -48,30 +55,36 @@ _third_party_deps = [
     'third_party/junit',
     'third_party/libjpeg',
     'third_party/libpng',
+    'third_party/libXNVCtrl',
     'third_party/markupsafe',
     'third_party/mesa',
     'third_party/mockito',
+    'third_party/ots',
     'third_party/ply',
     'third_party/qcms',
+    'third_party/re2',
     'third_party/robolectric',
     'third_party/zlib',
 ]
 
-dirs_from_chromium = _base_deps + _build_deps + _third_party_deps
+dirs_from_chromium = _base_deps + _build_deps + _chromium_libs + _third_party_deps
 
 dirs_from_mojo = [
     'mojo/android',
     'mojo/application',
     'mojo/common',
+    'mojo/converters',
     ('mojo/dart/embedder', ['embedder.gni']),
-    'mojo/dart/packages/mojo',
+    'mojo/dart/observatory',
     'mojo/data_pipe_utils',
     'mojo/edk',
     'mojo/environment',
+    'mojo/icu',
     'mojo/java',
     'mojo/message_pump',
     'mojo/services',
-    'mojo/skia',
+    'services/asset_bundle',
+    'services/keyboard',
     'services/sensors',
 ]
 
@@ -89,7 +102,7 @@ files_not_to_roll = [
 ]
 
 
-def rev(source_dir, dest_dir, dirs_to_rev, name, revision_file=None):
+def rev(source_dir, dest_dir, dirs_to_rev, name):
     for dir_to_rev in dirs_to_rev:
       if type(dir_to_rev) is tuple:
           d, file_subset = dir_to_rev
@@ -120,13 +133,8 @@ def rev(source_dir, dest_dir, dirs_to_rev, name, revision_file=None):
     for f in files_not_to_roll:
         system(["git", "checkout", "HEAD", f], cwd=dest_dir)
 
-    src_commit = system(["git", "rev-parse", "HEAD"], cwd=source_dir).strip()
-
-    if revision_file:
-      with open(revision_file, 'w') as f:
-        f.write(src_commit)
-
     system(["git", "add", "."], cwd=dest_dir)
+    src_commit = system(["git", "rev-parse", "HEAD"], cwd=source_dir).strip()
     commit("Update to %s %s" % (name, src_commit), cwd=dest_dir)
 
 
@@ -142,8 +150,14 @@ def main():
   dest_dir = os.path.abspath(args.dest_dir)
 
   if args.mojo_dir:
-      rev(os.path.abspath(args.mojo_dir), dest_dir, dirs_from_mojo, 'mojo',
-          revision_file='mojo/VERSION')
+      rev(os.path.abspath(args.mojo_dir), dest_dir, dirs_from_mojo, 'mojo')
+
+      try:
+          patch.patch_and_filter(dest_dir, os.path.join('patches', 'mojo'))
+      except subprocess.CalledProcessError:
+          print "ERROR: Roll failed due to a patch not applying"
+          print "Fix the patch to apply, commit the result, and re-run this script"
+          return 1
 
   if args.chromium_dir:
       rev(os.path.abspath(args.chromium_dir), dest_dir, dirs_from_chromium, 'chromium')

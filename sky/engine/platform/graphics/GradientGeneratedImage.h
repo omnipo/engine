@@ -26,47 +26,42 @@
 #ifndef SKY_ENGINE_PLATFORM_GRAPHICS_GRADIENTGENERATEDIMAGE_H_
 #define SKY_ENGINE_PLATFORM_GRAPHICS_GRADIENTGENERATEDIMAGE_H_
 
-#include "flutter/sky/engine/platform/geometry/IntSize.h"
-#include "flutter/sky/engine/platform/graphics/GeneratedImage.h"
-#include "flutter/sky/engine/platform/graphics/Gradient.h"
-#include "flutter/sky/engine/platform/graphics/Image.h"
-#include "flutter/sky/engine/wtf/RefPtr.h"
+#include "sky/engine/platform/geometry/IntSize.h"
+#include "sky/engine/platform/graphics/GeneratedImage.h"
+#include "sky/engine/platform/graphics/Gradient.h"
+#include "sky/engine/platform/graphics/Image.h"
+#include "sky/engine/platform/graphics/ImageBuffer.h"
+#include "sky/engine/wtf/RefPtr.h"
 
 namespace blink {
 
 class PLATFORM_EXPORT GradientGeneratedImage : public GeneratedImage {
- public:
-  static PassRefPtr<GradientGeneratedImage> create(
-      PassRefPtr<Gradient> generator,
-      const IntSize& size) {
-    return adoptRef(new GradientGeneratedImage(generator, size));
-  }
+public:
+    static PassRefPtr<GradientGeneratedImage> create(PassRefPtr<Gradient> generator, const IntSize& size)
+    {
+        return adoptRef(new GradientGeneratedImage(generator, size));
+    }
 
-  virtual ~GradientGeneratedImage() {}
+    virtual ~GradientGeneratedImage()
+    {
+    }
 
- protected:
-  virtual void draw(GraphicsContext*,
-                    const FloatRect&,
-                    const FloatRect&,
-                    CompositeOperator,
-                    WebBlendMode) override;
-  virtual void drawPattern(GraphicsContext*,
-                           const FloatRect&,
-                           const FloatSize&,
-                           const FloatPoint&,
-                           CompositeOperator,
-                           const FloatRect&,
-                           WebBlendMode,
-                           const IntSize& repeatSpacing) override;
+protected:
+    virtual void draw(GraphicsContext*, const FloatRect&, const FloatRect&,
+        CompositeOperator, WebBlendMode) override;
+    virtual void drawPattern(GraphicsContext*, const FloatRect&,
+        const FloatSize&, const FloatPoint&, CompositeOperator,
+        const FloatRect&, WebBlendMode, const IntSize& repeatSpacing) override;
 
-  GradientGeneratedImage(PassRefPtr<Gradient> generator, const IntSize& size)
-      : m_gradient(generator) {
-    m_size = size;
-  }
+    GradientGeneratedImage(PassRefPtr<Gradient> generator, const IntSize& size)
+        : m_gradient(generator)
+    {
+        m_size = size;
+    }
 
-  RefPtr<Gradient> m_gradient;
+    RefPtr<Gradient> m_gradient;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_GRAPHICS_GRADIENTGENERATEDIMAGE_H_

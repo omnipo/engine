@@ -25,7 +25,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Alternatively, the contents of this file may be used under the terms
  * of either the Mozilla Public License Version 1.1, found at
@@ -45,10 +45,10 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_RENDERLAYERSTACKINGNODE_H_
 #define SKY_ENGINE_CORE_RENDERING_RENDERLAYERSTACKINGNODE_H_
 
-#include "flutter/sky/engine/core/rendering/RenderBox.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
-#include "flutter/sky/engine/wtf/OwnPtr.h"
-#include "flutter/sky/engine/wtf/Vector.h"
+#include "sky/engine/core/rendering/RenderBox.h"
+#include "sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/OwnPtr.h"
+#include "sky/engine/wtf/Vector.h"
 
 namespace blink {
 
@@ -56,161 +56,151 @@ class RenderLayer;
 class RenderStyle;
 
 class RenderLayerStackingNode {
-  WTF_MAKE_NONCOPYABLE(RenderLayerStackingNode);
+    WTF_MAKE_NONCOPYABLE(RenderLayerStackingNode);
+public:
+    explicit RenderLayerStackingNode(RenderLayer*);
+    ~RenderLayerStackingNode();
 
- public:
-  explicit RenderLayerStackingNode(RenderLayer*);
-  ~RenderLayerStackingNode();
+    unsigned zIndex() const { return renderer()->style()->zIndex(); }
 
-  unsigned zIndex() const { return renderer()->style()->zIndex(); }
+    // A stacking context is a layer that has a non-auto z-index.
+    bool isStackingContext() const { return !renderer()->style()->hasAutoZIndex(); }
 
-  // A stacking context is a layer that has a non-auto z-index.
-  bool isStackingContext() const {
-    return !renderer()->style()->hasAutoZIndex();
-  }
+    // Update our normal and z-index lists.
+    void updateLayerListsIfNeeded();
 
-  // Update our normal and z-index lists.
-  void updateLayerListsIfNeeded();
+    bool zOrderListsDirty() const { return m_zOrderListsDirty; }
+    void dirtyZOrderLists();
+    void updateZOrderLists();
+    void clearZOrderLists();
+    void dirtyStackingContextZOrderLists();
 
-  bool zOrderListsDirty() const { return m_zOrderListsDirty; }
-  void dirtyZOrderLists();
-  void updateZOrderLists();
-  void clearZOrderLists();
-  void dirtyStackingContextZOrderLists();
+    bool hasPositiveZOrderList() const { return zOrderList() && zOrderList()->size(); }
 
-  bool hasPositiveZOrderList() const {
-    return zOrderList() && zOrderList()->size();
-  }
+    // FIXME: should check for dirtiness here?
+    bool isNormalFlowOnly() const { return m_isNormalFlowOnly; }
+    void updateIsNormalFlowOnly();
+    bool normalFlowListDirty() const { return m_normalFlowListDirty; }
+    void dirtyNormalFlowList();
 
-  // FIXME: should check for dirtiness here?
-  bool isNormalFlowOnly() const { return m_isNormalFlowOnly; }
-  void updateIsNormalFlowOnly();
-  bool normalFlowListDirty() const { return m_normalFlowListDirty; }
-  void dirtyNormalFlowList();
+    void updateStackingNodesAfterStyleChange(const RenderStyle* oldStyle);
 
-  void updateStackingNodesAfterStyleChange(const RenderStyle* oldStyle);
+    RenderLayerStackingNode* ancestorStackingContextNode() const;
 
-  RenderLayerStackingNode* ancestorStackingContextNode() const;
+    // Gets the enclosing stacking context for this node, possibly the node
+    // itself, if it is a stacking context.
+    RenderLayerStackingNode* enclosingStackingContextNode() { return isStackingContext() ? this : ancestorStackingContextNode(); }
 
-  // Gets the enclosing stacking context for this node, possibly the node
-  // itself, if it is a stacking context.
-  RenderLayerStackingNode* enclosingStackingContextNode() {
-    return isStackingContext() ? this : ancestorStackingContextNode();
-  }
-
-  RenderLayer* layer() const { return m_layer; }
+    RenderLayer* layer() const { return m_layer; }
 
 #if ENABLE(ASSERT)
-  bool layerListMutationAllowed() const { return m_layerListMutationAllowed; }
-  void setLayerListMutationAllowed(bool flag) {
-    m_layerListMutationAllowed = flag;
-  }
+    bool layerListMutationAllowed() const { return m_layerListMutationAllowed; }
+    void setLayerListMutationAllowed(bool flag) { m_layerListMutationAllowed = flag; }
 #endif
 
- private:
-  friend class RenderLayerStackingNodeIterator;
-  friend class RenderLayerStackingNodeReverseIterator;
-  friend class RenderTreeAsText;
+private:
+    friend class RenderLayerStackingNodeIterator;
+    friend class RenderLayerStackingNodeReverseIterator;
+    friend class RenderTreeAsText;
 
-  Vector<RenderLayerStackingNode*>* zOrderList() const {
-    ASSERT(!m_zOrderListsDirty);
-    ASSERT(isStackingContext() || !m_zOrderList);
-    return m_zOrderList.get();
-  }
+    Vector<RenderLayerStackingNode*>* zOrderList() const
+    {
+        ASSERT(!m_zOrderListsDirty);
+        ASSERT(isStackingContext() || !m_zOrderList);
+        return m_zOrderList.get();
+    }
 
-  Vector<RenderLayerStackingNode*>* normalFlowList() const {
-    ASSERT(!m_normalFlowListDirty);
-    return m_normalFlowList.get();
-  }
+    Vector<RenderLayerStackingNode*>* normalFlowList() const
+    {
+        ASSERT(!m_normalFlowListDirty);
+        return m_normalFlowList.get();
+    }
 
-  void rebuildZOrderLists();
-  void collectLayers(OwnPtr<Vector<RenderLayerStackingNode*>>& zOrderList);
+    void rebuildZOrderLists();
+    void collectLayers(OwnPtr<Vector<RenderLayerStackingNode*> >& zOrderList);
 
 #if ENABLE(ASSERT)
-  bool isInStackingParentZOrderLists() const;
-  bool isInStackingParentNormalFlowList() const;
-  void updateStackingParentForZOrderLists(
-      RenderLayerStackingNode* stackingParent);
-  void updateStackingParentForNormalFlowList(
-      RenderLayerStackingNode* stackingParent);
-  void setStackingParent(RenderLayerStackingNode* stackingParent) {
-    m_stackingParent = stackingParent;
-  }
+    bool isInStackingParentZOrderLists() const;
+    bool isInStackingParentNormalFlowList() const;
+    void updateStackingParentForZOrderLists(RenderLayerStackingNode* stackingParent);
+    void updateStackingParentForNormalFlowList(RenderLayerStackingNode* stackingParent);
+    void setStackingParent(RenderLayerStackingNode* stackingParent) { m_stackingParent = stackingParent; }
 #endif
 
-  bool shouldBeNormalFlowOnly() const;
+    bool shouldBeNormalFlowOnly() const;
 
-  void updateNormalFlowList();
+    void updateNormalFlowList();
 
-  bool isDirtyStackingContext() const {
-    return m_zOrderListsDirty && isStackingContext();
-  }
+    bool isDirtyStackingContext() const { return m_zOrderListsDirty && isStackingContext(); }
 
-  // FIXME: Investigate changing this to Renderbox.
-  RenderBox* renderer() const;
+    // FIXME: Investigate changing this to Renderbox.
+    RenderBox* renderer() const;
 
-  RenderLayer* m_layer;
+    RenderLayer* m_layer;
 
-  // m_zOrderList holds a sorted list of all the descendant nodes within
-  // that have z-indices of 0 or greater (auto will count as 0).
-  OwnPtr<Vector<RenderLayerStackingNode*>> m_zOrderList;
+    // m_zOrderList holds a sorted list of all the descendant nodes within
+    // that have z-indices of 0 or greater (auto will count as 0).
+    OwnPtr<Vector<RenderLayerStackingNode*> > m_zOrderList;
 
-  // This list contains child nodes that cannot create stacking contexts.
-  OwnPtr<Vector<RenderLayerStackingNode*>> m_normalFlowList;
+    // This list contains child nodes that cannot create stacking contexts.
+    OwnPtr<Vector<RenderLayerStackingNode*> > m_normalFlowList;
 
-  unsigned m_zOrderListsDirty : 1;
-  unsigned m_normalFlowListDirty : 1;
-  unsigned m_isNormalFlowOnly : 1;
+    unsigned m_zOrderListsDirty : 1;
+    unsigned m_normalFlowListDirty: 1;
+    unsigned m_isNormalFlowOnly : 1;
 
 #if ENABLE(ASSERT)
-  unsigned m_layerListMutationAllowed : 1;
-  RenderLayerStackingNode* m_stackingParent;
+    unsigned m_layerListMutationAllowed : 1;
+    RenderLayerStackingNode* m_stackingParent;
 #endif
 };
 
-inline void RenderLayerStackingNode::clearZOrderLists() {
-  ASSERT(!isStackingContext());
+inline void RenderLayerStackingNode::clearZOrderLists()
+{
+    ASSERT(!isStackingContext());
 
 #if ENABLE(ASSERT)
-  updateStackingParentForZOrderLists(0);
+    updateStackingParentForZOrderLists(0);
 #endif
 
-  m_zOrderList.clear();
+    m_zOrderList.clear();
 }
 
-inline void RenderLayerStackingNode::updateZOrderLists() {
-  if (!m_zOrderListsDirty)
-    return;
+inline void RenderLayerStackingNode::updateZOrderLists()
+{
+    if (!m_zOrderListsDirty)
+        return;
 
-  if (!isStackingContext()) {
-    clearZOrderLists();
-    m_zOrderListsDirty = false;
-    return;
-  }
+    if (!isStackingContext()) {
+        clearZOrderLists();
+        m_zOrderListsDirty = false;
+        return;
+    }
 
-  rebuildZOrderLists();
+    rebuildZOrderLists();
 }
 
 #if ENABLE(ASSERT)
 class LayerListMutationDetector {
- public:
-  explicit LayerListMutationDetector(RenderLayerStackingNode* stackingNode)
-      : m_stackingNode(stackingNode),
-        m_previousMutationAllowedState(
-            stackingNode->layerListMutationAllowed()) {
-    m_stackingNode->setLayerListMutationAllowed(false);
-  }
+public:
+    explicit LayerListMutationDetector(RenderLayerStackingNode* stackingNode)
+        : m_stackingNode(stackingNode)
+        , m_previousMutationAllowedState(stackingNode->layerListMutationAllowed())
+    {
+        m_stackingNode->setLayerListMutationAllowed(false);
+    }
 
-  ~LayerListMutationDetector() {
-    m_stackingNode->setLayerListMutationAllowed(m_previousMutationAllowedState);
-  }
+    ~LayerListMutationDetector()
+    {
+        m_stackingNode->setLayerListMutationAllowed(m_previousMutationAllowedState);
+    }
 
- private:
-  RenderLayerStackingNode* m_stackingNode;
-  bool m_previousMutationAllowedState;
+private:
+    RenderLayerStackingNode* m_stackingNode;
+    bool m_previousMutationAllowedState;
 };
 #endif
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_RENDERLAYERSTACKINGNODE_H_

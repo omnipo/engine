@@ -24,87 +24,85 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/text/TextBoundaries.h"
+#include "sky/engine/platform/text/TextBoundaries.h"
 
-#include "flutter/sky/engine/platform/text/TextBreakIterator.h"
-#include "flutter/sky/engine/wtf/text/StringImpl.h"
+#include "sky/engine/platform/text/TextBreakIterator.h"
+#include "sky/engine/wtf/text/StringImpl.h"
 
 using namespace WTF;
 using namespace Unicode;
 
 namespace blink {
 
-int endOfFirstWordBoundaryContext(const UChar* characters, int length) {
-  for (int i = 0; i < length;) {
-    int first = i;
-    UChar32 ch;
-    U16_NEXT(characters, i, length, ch);
-    if (!requiresContextForWordBoundary(ch))
-      return first;
-  }
-  return length;
+int endOfFirstWordBoundaryContext(const UChar* characters, int length)
+{
+    for (int i = 0; i < length; ) {
+        int first = i;
+        UChar32 ch;
+        U16_NEXT(characters, i, length, ch);
+        if (!requiresContextForWordBoundary(ch))
+            return first;
+    }
+    return length;
 }
 
-int startOfLastWordBoundaryContext(const UChar* characters, int length) {
-  for (int i = length; i > 0;) {
-    int last = i;
-    UChar32 ch;
-    U16_PREV(characters, 0, i, ch);
-    if (!requiresContextForWordBoundary(ch))
-      return last;
-  }
-  return 0;
-}
-
-int findNextWordFromIndex(const UChar* chars,
-                          int len,
-                          int position,
-                          bool forward) {
-  TextBreakIterator* it = wordBreakIterator(chars, len);
-
-  if (forward) {
-    position = it->following(position);
-    while (position != TextBreakDone) {
-      // We stop searching when the character preceeding the break
-      // is alphanumeric.
-      if (position < len && isAlphanumeric(chars[position - 1]))
-        return position;
-
-      position = it->following(position);
+int startOfLastWordBoundaryContext(const UChar* characters, int length)
+{
+    for (int i = length; i > 0; ) {
+        int last = i;
+        UChar32 ch;
+        U16_PREV(characters, 0, i, ch);
+        if (!requiresContextForWordBoundary(ch))
+            return last;
     }
-
-    return len;
-  } else {
-    position = it->preceding(position);
-    while (position != TextBreakDone) {
-      // We stop searching when the character following the break
-      // is alphanumeric.
-      if (position > 0 && isAlphanumeric(chars[position]))
-        return position;
-
-      position = it->preceding(position);
-    }
-
     return 0;
-  }
 }
 
-void findWordBoundary(const UChar* chars,
-                      int len,
-                      int position,
-                      int* start,
-                      int* end) {
-  TextBreakIterator* it = wordBreakIterator(chars, len);
-  *end = it->following(position);
-  if (*end < 0)
-    *end = it->last();
-  *start = it->previous();
+int findNextWordFromIndex(const UChar* chars, int len, int position, bool forward)
+{
+    TextBreakIterator* it = wordBreakIterator(chars, len);
+
+    if (forward) {
+        position = it->following(position);
+        while (position != TextBreakDone) {
+            // We stop searching when the character preceeding the break
+            // is alphanumeric.
+            if (position < len && isAlphanumeric(chars[position - 1]))
+                return position;
+
+            position = it->following(position);
+        }
+
+        return len;
+    } else {
+        position = it->preceding(position);
+        while (position != TextBreakDone) {
+            // We stop searching when the character following the break
+            // is alphanumeric.
+            if (position > 0 && isAlphanumeric(chars[position]))
+                return position;
+
+            position = it->preceding(position);
+        }
+
+        return 0;
+    }
 }
 
-int findWordEndBoundary(const UChar* chars, int len, int position) {
-  TextBreakIterator* it = wordBreakIterator(chars, len);
-  int end = it->following(position);
-  return end < 0 ? it->last() : end;
+void findWordBoundary(const UChar* chars, int len, int position, int* start, int* end)
+{
+    TextBreakIterator* it = wordBreakIterator(chars, len);
+    *end = it->following(position);
+    if (*end < 0)
+        *end = it->last();
+    *start = it->previous();
 }
 
-}  // namespace blink
+int findWordEndBoundary(const UChar* chars, int len, int position)
+{
+    TextBreakIterator* it = wordBreakIterator(chars, len);
+    int end = it->following(position);
+    return end < 0 ? it->last() : end;
+}
+
+} // namespace blink

@@ -26,10 +26,10 @@
 #ifndef SKY_ENGINE_WTF_TEXT_TEXTENCODINGREGISTRY_H_
 #define SKY_ENGINE_WTF_TEXT_TEXTENCODINGREGISTRY_H_
 
-#include "flutter/sky/engine/wtf/PassOwnPtr.h"
-#include "flutter/sky/engine/wtf/WTFExport.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
-#include "flutter/sky/engine/wtf/unicode/Unicode.h"
+#include "sky/engine/wtf/PassOwnPtr.h"
+#include "sky/engine/wtf/WTFExport.h"
+#include "sky/engine/wtf/text/WTFString.h"
+#include "sky/engine/wtf/unicode/Unicode.h"
 
 namespace WTF {
 
@@ -53,10 +53,10 @@ bool isReplacementEncoding(const String& alias);
 void dumpTextEncodingNameMap();
 #endif
 
-}  // namespace WTF
+} // namespace WTF
 
-using WTF::atomicCanonicalTextEncodingName;
 using WTF::newTextCodec;
+using WTF::atomicCanonicalTextEncodingName;
 using WTF::noExtendedTextEncodingNameUsed;
 #ifndef NDEBUG
 using WTF::dumpTextEncodingNameMap;

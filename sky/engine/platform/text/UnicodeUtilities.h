@@ -26,30 +26,22 @@
 #ifndef SKY_ENGINE_PLATFORM_TEXT_UNICODEUTILITIES_H_
 #define SKY_ENGINE_PLATFORM_TEXT_UNICODEUTILITIES_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/wtf/Vector.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
-#include "flutter/sky/engine/wtf/unicode/Unicode.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/wtf/Vector.h"
+#include "sky/engine/wtf/text/WTFString.h"
+#include "sky/engine/wtf/unicode/Unicode.h"
 
 namespace blink {
 
 PLATFORM_EXPORT bool isSeparator(UChar32);
 PLATFORM_EXPORT bool isKanaLetter(UChar character);
 PLATFORM_EXPORT bool containsKanaLetters(const String&);
-PLATFORM_EXPORT void normalizeCharactersIntoNFCForm(const UChar* characters,
-                                                    unsigned length,
-                                                    Vector<UChar>& buffer);
+PLATFORM_EXPORT void normalizeCharactersIntoNFCForm(const UChar* characters, unsigned length, Vector<UChar>& buffer);
 PLATFORM_EXPORT void foldQuoteMarksAndSoftHyphens(UChar* data, size_t length);
 PLATFORM_EXPORT void foldQuoteMarksAndSoftHyphens(String&);
-PLATFORM_EXPORT bool checkOnlyKanaLettersInStrings(const UChar* firstData,
-                                                   unsigned firstLength,
-                                                   const UChar* secondData,
-                                                   unsigned secondLength);
-PLATFORM_EXPORT bool checkKanaStringsEqual(const UChar* firstData,
-                                           unsigned firstLength,
-                                           const UChar* secondData,
-                                           unsigned secondLength);
+PLATFORM_EXPORT bool checkOnlyKanaLettersInStrings(const UChar* firstData, unsigned firstLength, const UChar* secondData, unsigned secondLength);
+PLATFORM_EXPORT bool checkKanaStringsEqual(const UChar* firstData, unsigned firstLength, const UChar* secondData, unsigned secondLength);
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_TEXT_UNICODEUTILITIES_H_

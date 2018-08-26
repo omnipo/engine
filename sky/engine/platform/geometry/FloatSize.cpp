@@ -24,35 +24,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/geometry/FloatSize.h"
+#include "sky/engine/platform/geometry/FloatSize.h"
 
 #include <math.h>
 #include <limits>
-#include "flutter/sky/engine/platform/FloatConversion.h"
-#include "flutter/sky/engine/platform/geometry/IntSize.h"
-#include "flutter/sky/engine/platform/geometry/LayoutSize.h"
+#include "sky/engine/platform/FloatConversion.h"
+#include "sky/engine/platform/geometry/IntSize.h"
+#include "sky/engine/platform/geometry/LayoutSize.h"
 
 namespace blink {
 
 FloatSize::FloatSize(const LayoutSize& size)
-    : m_width(size.width().toFloat()), m_height(size.height().toFloat()) {}
-
-float FloatSize::diagonalLength() const {
-  return sqrtf(diagonalLengthSquared());
+    : m_width(size.width().toFloat())
+    , m_height(size.height().toFloat())
+{
 }
 
-bool FloatSize::isZero() const {
-  return fabs(m_width) < std::numeric_limits<float>::epsilon() &&
-         fabs(m_height) < std::numeric_limits<float>::epsilon();
+float FloatSize::diagonalLength() const
+{
+    return sqrtf(diagonalLengthSquared());
 }
 
-bool FloatSize::isExpressibleAsIntSize() const {
-  return isWithinIntRange(m_width) && isWithinIntRange(m_height);
+bool FloatSize::isZero() const
+{
+    return fabs(m_width) < std::numeric_limits<float>::epsilon() && fabs(m_height) < std::numeric_limits<float>::epsilon();
 }
 
-FloatSize FloatSize::narrowPrecision(double width, double height) {
-  return FloatSize(narrowPrecisionToFloat(width),
-                   narrowPrecisionToFloat(height));
+bool FloatSize::isExpressibleAsIntSize() const
+{
+    return isWithinIntRange(m_width) && isWithinIntRange(m_height);
 }
 
-}  // namespace blink
+FloatSize FloatSize::narrowPrecision(double width, double height)
+{
+    return FloatSize(narrowPrecisionToFloat(width), narrowPrecisionToFloat(height));
+}
+
+}

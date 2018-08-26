@@ -7,8 +7,11 @@
 
 namespace blink {
 
-enum FixedPitchFontType { FixedPitchFont, NonFixedPitchFont };
+enum FixedPitchFontType {
+    FixedPitchFont,
+    NonFixedPitchFont
+};
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_FONTS_FIXEDPITCHFONTTYPE_H_

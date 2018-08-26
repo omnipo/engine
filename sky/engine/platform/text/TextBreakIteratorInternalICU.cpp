@@ -19,28 +19,31 @@
  *
  */
 
-#include "flutter/sky/engine/platform/text/TextBreakIteratorInternalICU.h"
+#include "sky/engine/platform/text/TextBreakIteratorInternalICU.h"
 
-#include "flutter/sky/engine/platform/Language.h"
-#include "flutter/sky/engine/wtf/StdLibExtras.h"
-#include "flutter/sky/engine/wtf/text/CString.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
+#include "sky/engine/platform/Language.h"
+#include "sky/engine/wtf/StdLibExtras.h"
+#include "sky/engine/wtf/text/CString.h"
+#include "sky/engine/wtf/text/WTFString.h"
 
 namespace blink {
 
-static const char* UILanguage() {
-  // Chrome's UI language can be different from the OS UI language on Windows.
-  // We want to return Chrome's UI language here.
-  DEFINE_STATIC_LOCAL(const CString, locale, (defaultLanguage().latin1()));
-  return locale.data();
+static const char* UILanguage()
+{
+    // Chrome's UI language can be different from the OS UI language on Windows.
+    // We want to return Chrome's UI language here.
+    DEFINE_STATIC_LOCAL(const CString, locale, (defaultLanguage().latin1()));
+    return locale.data();
 }
 
-const char* currentSearchLocaleID() {
-  return UILanguage();
+const char* currentSearchLocaleID()
+{
+    return UILanguage();
 }
 
-const char* currentTextBreakLocaleID() {
-  return UILanguage();
+const char* currentTextBreakLocaleID()
+{
+    return UILanguage();
 }
 
-}  // namespace blink
+} // namespace blink

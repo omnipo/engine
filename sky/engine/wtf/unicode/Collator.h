@@ -29,41 +29,37 @@
 #ifndef SKY_ENGINE_WTF_UNICODE_COLLATOR_H_
 #define SKY_ENGINE_WTF_UNICODE_COLLATOR_H_
 
-#include "flutter/sky/engine/wtf/FastAllocBase.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
-#include "flutter/sky/engine/wtf/PassOwnPtr.h"
-#include "flutter/sky/engine/wtf/WTFExport.h"
-#include "flutter/sky/engine/wtf/unicode/Unicode.h"
+#include "sky/engine/wtf/FastAllocBase.h"
+#include "sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/PassOwnPtr.h"
+#include "sky/engine/wtf/WTFExport.h"
+#include "sky/engine/wtf/unicode/Unicode.h"
 
 struct UCollator;
 
 namespace WTF {
 
-class WTF_EXPORT Collator {
-  WTF_MAKE_NONCOPYABLE(Collator);
-  WTF_MAKE_FAST_ALLOCATED;
+    class WTF_EXPORT Collator {
+        WTF_MAKE_NONCOPYABLE(Collator); WTF_MAKE_FAST_ALLOCATED;
+    public:
+        enum Result { Equal = 0, Greater = 1, Less = -1 };
 
- public:
-  enum Result { Equal = 0, Greater = 1, Less = -1 };
+        Collator(const char* locale); // Parsing is lenient; e.g. language identifiers (such as "en-US") are accepted, too.
+        ~Collator();
+        void setOrderLowerFirst(bool);
 
-  Collator(const char* locale);  // Parsing is lenient; e.g. language
-                                 // identifiers (such as "en-US") are accepted,
-                                 // too.
-  ~Collator();
-  void setOrderLowerFirst(bool);
+        static PassOwnPtr<Collator> userDefault();
 
-  static PassOwnPtr<Collator> userDefault();
+        Result collate(const ::UChar*, size_t, const ::UChar*, size_t) const;
 
-  Result collate(const ::UChar*, size_t, const ::UChar*, size_t) const;
-
- private:
-  void createCollator() const;
-  void releaseCollator();
-  mutable UCollator* m_collator;
-  char* m_locale;
-  bool m_lowerFirst;
-};
-}  // namespace WTF
+    private:
+        void createCollator() const;
+        void releaseCollator();
+        mutable UCollator* m_collator;
+        char* m_locale;
+        bool m_lowerFirst;
+    };
+}
 
 using WTF::Collator;
 

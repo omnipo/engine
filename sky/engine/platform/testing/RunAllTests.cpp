@@ -28,22 +28,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #include <string.h>
 #include "base/test/test_suite.h"
-#include "flutter/sky/engine/platform/Partitions.h"
-#include "flutter/sky/engine/platform/TestingPlatformSupport.h"
-#include "flutter/sky/engine/wtf/MainThread.h"
-#include "flutter/sky/engine/wtf/WTF.h"
+#include "sky/engine/platform/Partitions.h"
+#include "sky/engine/platform/TestingPlatformSupport.h"
+#include "sky/engine/wtf/CryptographicallyRandomNumber.h"
+#include "sky/engine/wtf/MainThread.h"
+#include "sky/engine/wtf/WTF.h"
 
-int main(int argc, char** argv) {
-  WTF::initialize();
-  WTF::initializeMainThread();
+static void AlwaysZeroNumberSource(unsigned char* buf, size_t len)
+{
+    memset(buf, '\0', len);
+}
 
-  blink::TestingPlatformSupport::Config platformConfig;
-  blink::TestingPlatformSupport platform(platformConfig);
+int main(int argc, char** argv)
+{
+    WTF::setRandomSource(AlwaysZeroNumberSource);
+    WTF::initialize();
+    WTF::initializeMainThread();
 
-  blink::Partitions::init();
-  int result = base::RunUnitTestsUsingBaseTestSuite(argc, argv);
-  blink::Partitions::shutdown();
-  return result;
+    blink::TestingPlatformSupport::Config platformConfig;
+    blink::TestingPlatformSupport platform(platformConfig);
+
+    blink::Partitions::init();
+    int result = base::RunUnitTestsUsingBaseTestSuite(argc, argv);
+    blink::Partitions::shutdown();
+    return result;
 }

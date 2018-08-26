@@ -30,56 +30,69 @@
 #ifndef SKY_ENGINE_WTF_THREADSAFEREFCOUNTED_H_
 #define SKY_ENGINE_WTF_THREADSAFEREFCOUNTED_H_
 
-#include "flutter/sky/engine/wtf/Atomics.h"
-#include "flutter/sky/engine/wtf/DynamicAnnotations.h"
-#include "flutter/sky/engine/wtf/FastAllocBase.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
-#include "flutter/sky/engine/wtf/WTFExport.h"
+#include "sky/engine/wtf/Atomics.h"
+#include "sky/engine/wtf/DynamicAnnotations.h"
+#include "sky/engine/wtf/FastAllocBase.h"
+#include "sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/WTFExport.h"
 
 namespace WTF {
 
 class WTF_EXPORT ThreadSafeRefCountedBase {
-  WTF_MAKE_NONCOPYABLE(ThreadSafeRefCountedBase);
-  WTF_MAKE_FAST_ALLOCATED;
-
- public:
-  ThreadSafeRefCountedBase(int initialRefCount = 1)
-      : m_refCount(initialRefCount) {}
-
-  void ref() { atomicIncrement(&m_refCount); }
-
-  bool hasOneRef() { return refCount() == 1; }
-
-  int refCount() const { return static_cast<int const volatile&>(m_refCount); }
-
- protected:
-  // Returns whether the pointer should be freed or not.
-  bool derefBase() {
-    WTF_ANNOTATE_HAPPENS_BEFORE(&m_refCount);
-    if (atomicDecrement(&m_refCount) <= 0) {
-      WTF_ANNOTATE_HAPPENS_AFTER(&m_refCount);
-      return true;
+    WTF_MAKE_NONCOPYABLE(ThreadSafeRefCountedBase);
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    ThreadSafeRefCountedBase(int initialRefCount = 1)
+        : m_refCount(initialRefCount)
+    {
     }
-    return false;
-  }
 
- private:
-  int m_refCount;
+    void ref()
+    {
+        atomicIncrement(&m_refCount);
+    }
+
+    bool hasOneRef()
+    {
+        return refCount() == 1;
+    }
+
+    int refCount() const
+    {
+        return static_cast<int const volatile &>(m_refCount);
+    }
+
+protected:
+    // Returns whether the pointer should be freed or not.
+    bool derefBase()
+    {
+        WTF_ANNOTATE_HAPPENS_BEFORE(&m_refCount);
+        if (atomicDecrement(&m_refCount) <= 0) {
+            WTF_ANNOTATE_HAPPENS_AFTER(&m_refCount);
+            return true;
+        }
+        return false;
+    }
+
+private:
+    int m_refCount;
 };
 
-template <class T>
-class ThreadSafeRefCounted : public ThreadSafeRefCountedBase {
- public:
-  void deref() {
-    if (derefBase())
-      delete static_cast<T*>(this);
-  }
+template<class T> class ThreadSafeRefCounted : public ThreadSafeRefCountedBase {
+public:
+    void deref()
+    {
+        if (derefBase())
+            delete static_cast<T*>(this);
+    }
 
- protected:
-  ThreadSafeRefCounted() {}
+protected:
+    ThreadSafeRefCounted()
+    {
+    }
 };
 
-}  // namespace WTF
+} // namespace WTF
 
 using WTF::ThreadSafeRefCounted;
 

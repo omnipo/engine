@@ -28,29 +28,42 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/core/Init.h"
+#include "sky/engine/core/Init.h"
 
-#include "flutter/sky/engine/platform/Partitions.h"
-#include "flutter/sky/engine/wtf/text/StringImpl.h"
-#include "flutter/sky/engine/wtf/text/StringStatics.h"
+#include "gen/sky/core/EventNames.h"
+#include "gen/sky/core/EventTypeNames.h"
+#include "gen/sky/platform/FontFamilyNames.h"
+#include "sky/engine/platform/Partitions.h"
+#include "sky/engine/platform/PlatformThreadData.h"
+#include "sky/engine/wtf/text/StringStatics.h"
 
 namespace blink {
 
-void CoreInitializer::init() {
-  ASSERT(!m_isInited);
-  m_isInited = true;
+void CoreInitializer::init()
+{
+    ASSERT(!m_isInited);
+    m_isInited = true;
 
-  // It would make logical sense to do this in WTF::initialize() but there are
-  // ordering dependencies, e.g. about "xmlns".
-  WTF::StringStatics::init();
+    EventNames::init();
+    EventTypeNames::init();
+    FontFamilyNames::init();
 
-  Partitions::init();
+    // It would make logical sense to do this in WTF::initialize() but there are
+    // ordering dependencies, e.g. about "xmlns".
+    WTF::StringStatics::init();
 
-  StringImpl::freezeStaticStrings();
+    Partitions::init();
+
+    // Ensure that the main thread's thread-local data is initialized before
+    // starting any worker threads.
+    PlatformThreadData::current();
+
+    StringImpl::freezeStaticStrings();
 }
 
-void CoreInitializer::shutdown() {
-  Partitions::shutdown();
+void CoreInitializer::shutdown()
+{
+    Partitions::shutdown();
 }
 
-}  // namespace blink
+} // namespace blink

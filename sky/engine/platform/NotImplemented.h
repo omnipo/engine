@@ -26,9 +26,25 @@
 #ifndef SKY_ENGINE_PLATFORM_NOTIMPLEMENTED_H_
 #define SKY_ENGINE_PLATFORM_NOTIMPLEMENTED_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/wtf/Assertions.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/wtf/Assertions.h"
 
-#define notImplemented() ((void)0)
+#if LOG_DISABLED
+    #define notImplemented() ((void)0)
+#else
+
+namespace blink {
+PLATFORM_EXPORT WTFLogChannel* notImplementedLoggingChannel();
+} // namespace blink
+
+#define notImplemented() do { \
+        static bool havePrinted = false; \
+        if (!havePrinted) { \
+            WTFLogVerbose(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, blink::notImplementedLoggingChannel(), "UNIMPLEMENTED: "); \
+            havePrinted = true; \
+        } \
+    } while (0)
+
+#endif // NDEBUG
 
 #endif  // SKY_ENGINE_PLATFORM_NOTIMPLEMENTED_H_

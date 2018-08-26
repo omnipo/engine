@@ -32,23 +32,20 @@
 #define SKY_ENGINE_WTF_PAGEALLOCATOR_H_
 
 #include <stdint.h>
-#include "flutter/sky/engine/wtf/Assertions.h"
-#include "flutter/sky/engine/wtf/CPU.h"
-#include "flutter/sky/engine/wtf/WTFExport.h"
+#include "sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/CPU.h"
+#include "sky/engine/wtf/WTFExport.h"
 
 namespace WTF {
 
 #if OS(WIN)
-static const size_t kPageAllocationGranularityShift = 16;  // 64KB
+static const size_t kPageAllocationGranularityShift = 16; // 64KB
 #else
-static const size_t kPageAllocationGranularityShift = 12;  // 4KB
+static const size_t kPageAllocationGranularityShift = 12; // 4KB
 #endif
-static const size_t kPageAllocationGranularity =
-    1 << kPageAllocationGranularityShift;
-static const size_t kPageAllocationGranularityOffsetMask =
-    kPageAllocationGranularity - 1;
-static const size_t kPageAllocationGranularityBaseMask =
-    ~kPageAllocationGranularityOffsetMask;
+static const size_t kPageAllocationGranularity = 1 << kPageAllocationGranularityShift;
+static const size_t kPageAllocationGranularityOffsetMask = kPageAllocationGranularity - 1;
+static const size_t kPageAllocationGranularityBaseMask = ~kPageAllocationGranularityOffsetMask;
 
 // All Blink-supported systems have 4096 sized system pages and can handle
 // permissions and commit / decommit at this granularity.
@@ -90,9 +87,8 @@ WTF_EXPORT void setSystemPagesAccessible(void* addr, size_t len);
 // Clients should not make any assumptions about the contents of decommitted
 // system pages, before or after they write to the page. The only guarantee
 // provided is that the contents of the system page will be deterministic again
-// after recommitting and writing to it. In particlar note that system pages
-// are// not guaranteed to be zero-filled upon re-commit. len must be a multiple
-// of kSystemPageSize bytes.
+// after recommitting and writing to it. In particlar note that system pages are// not guaranteed to be zero-filled upon re-commit.
+// len must be a multiple of kSystemPageSize bytes.
 WTF_EXPORT void decommitSystemPages(void* addr, size_t len);
 
 // Recommit one or more system pages. Decommitted system pages must be
@@ -101,6 +97,6 @@ WTF_EXPORT void decommitSystemPages(void* addr, size_t len);
 // len must be a multiple of kSystemPageSize bytes.
 WTF_EXPORT void recommitSystemPages(void* addr, size_t len);
 
-}  // namespace WTF
+} // namespace WTF
 
 #endif  // SKY_ENGINE_WTF_PAGEALLOCATOR_H_

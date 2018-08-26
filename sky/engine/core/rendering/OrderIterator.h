@@ -32,51 +32,51 @@
 #define SKY_ENGINE_CORE_RENDERING_ORDERITERATOR_H_
 
 #include <set>
-#include "flutter/sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/Noncopyable.h"
 
 namespace blink {
 
 class RenderBox;
 
 class OrderIterator {
-  WTF_MAKE_NONCOPYABLE(OrderIterator);
+    WTF_MAKE_NONCOPYABLE(OrderIterator);
+public:
+    friend class OrderIteratorPopulator;
 
- public:
-  friend class OrderIteratorPopulator;
+    OrderIterator(const RenderBox*);
 
-  OrderIterator(const RenderBox*);
+    RenderBox* currentChild() const { return m_currentChild; }
+    RenderBox* first();
+    RenderBox* next();
+    void reset();
 
-  RenderBox* currentChild() const { return m_currentChild; }
-  RenderBox* first();
-  RenderBox* next();
-  void reset();
+private:
+    const RenderBox* m_containerBox;
 
- private:
-  const RenderBox* m_containerBox;
+    RenderBox* m_currentChild;
 
-  RenderBox* m_currentChild;
-
-  typedef std::set<int> OrderValues;
-  OrderValues m_orderValues;
-  OrderValues::const_iterator m_orderValuesIterator;
-  bool m_isReset;
+    typedef std::set<int> OrderValues;
+    OrderValues m_orderValues;
+    OrderValues::const_iterator m_orderValuesIterator;
+    bool m_isReset;
 };
 
 class OrderIteratorPopulator {
- public:
-  explicit OrderIteratorPopulator(OrderIterator& iterator)
-      : m_iterator(iterator) {
-    m_iterator.m_orderValues.clear();
-  }
+public:
+    explicit OrderIteratorPopulator(OrderIterator& iterator)
+        : m_iterator(iterator)
+    {
+        m_iterator.m_orderValues.clear();
+    }
 
-  ~OrderIteratorPopulator();
+    ~OrderIteratorPopulator();
 
-  void collectChild(const RenderBox*);
+    void collectChild(const RenderBox*);
 
- private:
-  OrderIterator& m_iterator;
+private:
+    OrderIterator& m_iterator;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_ORDERITERATOR_H_

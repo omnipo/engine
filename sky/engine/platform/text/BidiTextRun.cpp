@@ -28,35 +28,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/text/BidiTextRun.h"
+#include "sky/engine/platform/text/BidiTextRun.h"
 
-#include "flutter/sky/engine/platform/text/BidiResolver.h"
-#include "flutter/sky/engine/platform/text/TextRunIterator.h"
+#include "sky/engine/platform/text/BidiResolver.h"
+#include "sky/engine/platform/text/TextRunIterator.h"
 
 namespace blink {
 
-TextDirection directionForRun(TextRun& run, bool& hasStrongDirectionality) {
-  BidiResolver<TextRunIterator, BidiCharacterRun> bidiResolver;
-  bidiResolver.setStatus(
-      BidiStatus(run.direction(), run.directionalOverride()));
-  bidiResolver.setPositionIgnoringNestedIsolates(TextRunIterator(&run, 0));
-  return bidiResolver.determineParagraphDirectionality(
-      &hasStrongDirectionality);
+TextDirection directionForRun(TextRun& run, bool& hasStrongDirectionality)
+{
+    BidiResolver<TextRunIterator, BidiCharacterRun> bidiResolver;
+    bidiResolver.setStatus(BidiStatus(run.direction(), run.directionalOverride()));
+    bidiResolver.setPositionIgnoringNestedIsolates(TextRunIterator(&run, 0));
+    return bidiResolver.determineParagraphDirectionality(&hasStrongDirectionality);
 }
 
-TextDirection determineDirectionality(const String& value,
-                                      bool& hasStrongDirectionality) {
-  TextRun run(value);
-  return directionForRun(run, hasStrongDirectionality);
+TextDirection determineDirectionality(const String& value, bool& hasStrongDirectionality)
+{
+    TextRun run(value);
+    return directionForRun(run, hasStrongDirectionality);
 }
 
-TextRun textRunWithDirectionality(const String& value,
-                                  bool& hasStrongDirectionality) {
-  TextRun run(value);
-  TextDirection direction = directionForRun(run, hasStrongDirectionality);
-  if (hasStrongDirectionality)
-    run.setDirection(direction);
-  return run;
+TextRun textRunWithDirectionality(const String& value, bool& hasStrongDirectionality)
+{
+    TextRun run(value);
+    TextDirection direction = directionForRun(run, hasStrongDirectionality);
+    if (hasStrongDirectionality)
+        run.setDirection(direction);
+    return run;
 }
 
-}  // namespace blink
+} // namespace blink
+

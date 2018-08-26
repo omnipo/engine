@@ -26,12 +26,16 @@
 #ifndef SKY_ENGINE_PLATFORM_GRAPHICS_COLORSPACE_H_
 #define SKY_ENGINE_PLATFORM_GRAPHICS_COLORSPACE_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/platform/graphics/Color.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/platform/graphics/Color.h"
 
 namespace blink {
 
-enum ColorSpace { ColorSpaceDeviceRGB, ColorSpaceSRGB, ColorSpaceLinearRGB };
+enum ColorSpace {
+    ColorSpaceDeviceRGB,
+    ColorSpaceSRGB,
+    ColorSpaceLinearRGB
+};
 
 namespace ColorSpaceUtilities {
 
@@ -40,17 +44,13 @@ namespace ColorSpaceUtilities {
 // If the conversion cannot be performed, or is a no-op (identity transform),
 // then 0 is returned.
 // (Note that a round-trip - f(B,A)[f(A,B)[x]] - is not lossless in general.)
-const uint8_t* getConversionLUT(ColorSpace dstColorSpace,
-                                ColorSpace srcColorSpace = ColorSpaceDeviceRGB);
+const uint8_t* getConversionLUT(ColorSpace dstColorSpace, ColorSpace srcColorSpace = ColorSpaceDeviceRGB);
 
-// Convert a Color assumed to be in the |srcColorSpace| into the
-// |dstColorSpace|.
-Color convertColor(const Color& srcColor,
-                   ColorSpace dstColorSpace,
-                   ColorSpace srcColorSpace = ColorSpaceDeviceRGB);
+// Convert a Color assumed to be in the |srcColorSpace| into the |dstColorSpace|.
+Color convertColor(const Color& srcColor, ColorSpace dstColorSpace, ColorSpace srcColorSpace = ColorSpaceDeviceRGB);
 
-}  // namespace ColorSpaceUtilities
+} // namespace ColorSpaceUtilities
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_GRAPHICS_COLORSPACE_H_

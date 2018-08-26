@@ -28,41 +28,40 @@
 #ifndef SKY_ENGINE_PLATFORM_GRAPHICS_FRAMEDATA_H_
 #define SKY_ENGINE_PLATFORM_GRAPHICS_FRAMEDATA_H_
 
-#include "flutter/sky/engine/platform/graphics/ImageOrientation.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
-#include "flutter/sky/engine/wtf/RefPtr.h"
-#include "flutter/sky/engine/wtf/VectorTraits.h"
+#include "sky/engine/platform/graphics/ImageOrientation.h"
+#include "sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/RefPtr.h"
+#include "sky/engine/wtf/VectorTraits.h"
 
 namespace blink {
 
+class NativeImageSkia;
+
 struct FrameData {
-  WTF_MAKE_NONCOPYABLE(FrameData);
+    WTF_MAKE_NONCOPYABLE(FrameData);
+public:
+    FrameData();
+    ~FrameData();
 
- public:
-  FrameData();
-  ~FrameData();
+    // Clear the cached image data on the frame, and (optionally) the metadata.
+    // Returns whether there was cached image data to clear.
+    bool clear(bool clearMetadata);
 
-  // Clear the cached image data on the frame, and (optionally) the metadata.
-  // Returns whether there was cached image data to clear.
-  bool clear(bool clearMetadata);
-
-  ImageOrientation m_orientation;
-  float m_duration;
-  bool m_haveMetadata : 1;
-  bool m_isComplete : 1;
-  bool m_hasAlpha : 1;
-  unsigned m_frameBytes;
+    RefPtr<NativeImageSkia> m_frame;
+    ImageOrientation m_orientation;
+    float m_duration;
+    bool m_haveMetadata : 1;
+    bool m_isComplete : 1;
+    bool m_hasAlpha : 1;
+    unsigned m_frameBytes;
 };
 
-}  // namespace blink
+} // namespace blink
 
 namespace WTF {
-template <>
-struct VectorTraits<blink::FrameData>
-    : public SimpleClassVectorTraits<blink::FrameData> {
-  static const bool canInitializeWithMemset =
-      false;  // Not all FrameData members initialize to 0.
+template<> struct VectorTraits<blink::FrameData> : public SimpleClassVectorTraits<blink::FrameData> {
+    static const bool canInitializeWithMemset = false; // Not all FrameData members initialize to 0.
 };
-}  // namespace WTF
+}
 
 #endif  // SKY_ENGINE_PLATFORM_GRAPHICS_FRAMEDATA_H_

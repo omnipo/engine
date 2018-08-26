@@ -25,39 +25,37 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_STYLE_STYLEVISUALDATA_H_
 #define SKY_ENGINE_CORE_RENDERING_STYLE_STYLEVISUALDATA_H_
 
-#include "flutter/sky/engine/core/rendering/style/RenderStyleConstants.h"
-#include "flutter/sky/engine/platform/LengthBox.h"
-#include "flutter/sky/engine/wtf/PassRefPtr.h"
-#include "flutter/sky/engine/wtf/RefCounted.h"
+#include "sky/engine/core/rendering/style/RenderStyleConstants.h"
+#include "sky/engine/platform/LengthBox.h"
+#include "sky/engine/wtf/PassRefPtr.h"
+#include "sky/engine/wtf/RefCounted.h"
 
 namespace blink {
 
 class StyleVisualData : public RefCounted<StyleVisualData> {
- public:
-  static PassRefPtr<StyleVisualData> create() {
-    return adoptRef(new StyleVisualData);
-  }
-  PassRefPtr<StyleVisualData> copy() const {
-    return adoptRef(new StyleVisualData(*this));
-  }
-  ~StyleVisualData();
+public:
+    static PassRefPtr<StyleVisualData> create() { return adoptRef(new StyleVisualData); }
+    PassRefPtr<StyleVisualData> copy() const { return adoptRef(new StyleVisualData(*this)); }
+    ~StyleVisualData();
 
-  bool operator==(const StyleVisualData& o) const {
-    return clip == o.clip && hasAutoClip == o.hasAutoClip &&
-           textDecoration == o.textDecoration;
-  }
-  bool operator!=(const StyleVisualData& o) const { return !(*this == o); }
+    bool operator==(const StyleVisualData& o) const
+    {
+        return clip == o.clip
+            && hasAutoClip == o.hasAutoClip
+            && textDecoration == o.textDecoration;
+    }
+    bool operator!=(const StyleVisualData& o) const { return !(*this == o); }
 
-  LengthBox clip;
-  bool hasAutoClip : 1;
-  unsigned textDecoration
-      : TextDecorationBits;  // Text decorations defined *only* by this element.
+    LengthBox clip;
+    bool hasAutoClip : 1;
+    unsigned textDecoration : TextDecorationBits; // Text decorations defined *only* by this element.
 
- private:
-  StyleVisualData();
-  StyleVisualData(const StyleVisualData&);
+
+private:
+    StyleVisualData();
+    StyleVisualData(const StyleVisualData&);
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_STYLE_STYLEVISUALDATA_H_

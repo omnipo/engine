@@ -25,35 +25,34 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_STYLE_STYLESURROUNDDATA_H_
 #define SKY_ENGINE_CORE_RENDERING_STYLE_STYLESURROUNDDATA_H_
 
-#include "flutter/sky/engine/core/rendering/style/BorderData.h"
-#include "flutter/sky/engine/platform/LengthBox.h"
-#include "flutter/sky/engine/wtf/PassRefPtr.h"
-#include "flutter/sky/engine/wtf/RefCounted.h"
+#include "sky/engine/core/rendering/style/BorderData.h"
+#include "sky/engine/platform/LengthBox.h"
+#include "sky/engine/wtf/PassRefPtr.h"
+#include "sky/engine/wtf/RefCounted.h"
 
 namespace blink {
 
 class StyleSurroundData : public RefCounted<StyleSurroundData> {
- public:
-  static PassRefPtr<StyleSurroundData> create() {
-    return adoptRef(new StyleSurroundData);
-  }
-  PassRefPtr<StyleSurroundData> copy() const {
-    return adoptRef(new StyleSurroundData(*this));
-  }
+public:
+    static PassRefPtr<StyleSurroundData> create() { return adoptRef(new StyleSurroundData); }
+    PassRefPtr<StyleSurroundData> copy() const { return adoptRef(new StyleSurroundData(*this)); }
 
-  bool operator==(const StyleSurroundData& o) const;
-  bool operator!=(const StyleSurroundData& o) const { return !(*this == o); }
+    bool operator==(const StyleSurroundData& o) const;
+    bool operator!=(const StyleSurroundData& o) const
+    {
+        return !(*this == o);
+    }
 
-  LengthBox offset;
-  LengthBox margin;
-  LengthBox padding;
-  BorderData border;
+    LengthBox offset;
+    LengthBox margin;
+    LengthBox padding;
+    BorderData border;
 
- private:
-  StyleSurroundData();
-  StyleSurroundData(const StyleSurroundData&);
+private:
+    StyleSurroundData();
+    StyleSurroundData(const StyleSurroundData&);
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_STYLE_STYLESURROUNDDATA_H_

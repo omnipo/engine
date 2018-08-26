@@ -28,18 +28,20 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/wtf/DefaultAllocator.h"
+#include "sky/engine/wtf/DefaultAllocator.h"
 
-#include "flutter/sky/engine/wtf/PartitionAlloc.h"
+#include "sky/engine/wtf/PartitionAlloc.h"
 
 namespace WTF {
 
-void* DefaultAllocator::backingAllocate(size_t size) {
-  return partitionAllocGeneric(Partitions::getBufferPartition(), size);
+void* DefaultAllocator::backingAllocate(size_t size)
+{
+    return partitionAllocGeneric(Partitions::getBufferPartition(), size);
 }
 
-void DefaultAllocator::backingFree(void* address) {
-  partitionFreeGeneric(Partitions::getBufferPartition(), address);
+void DefaultAllocator::backingFree(void* address)
+{
+    partitionFreeGeneric(Partitions::getBufferPartition(), address);
 }
 
-}  // namespace WTF
+} // namespace WTF

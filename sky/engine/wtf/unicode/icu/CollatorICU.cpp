@@ -26,106 +26,104 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/wtf/unicode/Collator.h"
+#include "sky/engine/wtf/unicode/Collator.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <unicode/ucol.h>
-#include "flutter/sky/engine/wtf/Assertions.h"
-#include "flutter/sky/engine/wtf/StringExtras.h"
-#include "flutter/sky/engine/wtf/Threading.h"
-#include "flutter/sky/engine/wtf/ThreadingPrimitives.h"
+#include "sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/StringExtras.h"
+#include "sky/engine/wtf/Threading.h"
+#include "sky/engine/wtf/ThreadingPrimitives.h"
 
 namespace WTF {
 
 static UCollator* cachedCollator;
-static Mutex& cachedCollatorMutex() {
-  AtomicallyInitializedStatic(Mutex&, mutex = *new Mutex);
-  return mutex;
+static Mutex& cachedCollatorMutex()
+{
+    AtomicallyInitializedStatic(Mutex&, mutex = *new Mutex);
+    return mutex;
 }
 
 Collator::Collator(const char* locale)
-    : m_collator(0),
-      m_locale(locale ? strdup(locale) : 0),
-      m_lowerFirst(false) {}
-
-PassOwnPtr<Collator> Collator::userDefault() {
-  return adoptPtr(new Collator(0));
+    : m_collator(0)
+    , m_locale(locale ? strdup(locale) : 0)
+    , m_lowerFirst(false)
+{
 }
 
-Collator::~Collator() {
-  releaseCollator();
-  free(m_locale);
+PassOwnPtr<Collator> Collator::userDefault()
+{
+    return adoptPtr(new Collator(0));
 }
 
-void Collator::setOrderLowerFirst(bool lowerFirst) {
-  m_lowerFirst = lowerFirst;
+Collator::~Collator()
+{
+    releaseCollator();
+    free(m_locale);
 }
 
-Collator::Result Collator::collate(const UChar* lhs,
-                                   size_t lhsLength,
-                                   const UChar* rhs,
-                                   size_t rhsLength) const {
-  if (!m_collator)
-    createCollator();
-
-  return static_cast<Result>(
-      ucol_strcoll(m_collator, lhs, lhsLength, rhs, rhsLength));
+void Collator::setOrderLowerFirst(bool lowerFirst)
+{
+    m_lowerFirst = lowerFirst;
 }
 
-void Collator::createCollator() const {
-  ASSERT(!m_collator);
-  UErrorCode status = U_ZERO_ERROR;
+Collator::Result Collator::collate(const UChar* lhs, size_t lhsLength, const UChar* rhs, size_t rhsLength) const
+{
+    if (!m_collator)
+        createCollator();
 
-  {
-    Locker<Mutex> lock(cachedCollatorMutex());
-    if (cachedCollator) {
-      const char* cachedCollatorLocale =
-          ucol_getLocaleByType(cachedCollator, ULOC_REQUESTED_LOCALE, &status);
-      ASSERT(U_SUCCESS(status));
-      ASSERT(cachedCollatorLocale);
+    return static_cast<Result>(ucol_strcoll(m_collator, lhs, lhsLength, rhs, rhsLength));
+}
 
-      UColAttributeValue cachedCollatorLowerFirst =
-          ucol_getAttribute(cachedCollator, UCOL_CASE_FIRST, &status);
-      ASSERT(U_SUCCESS(status));
+void Collator::createCollator() const
+{
+    ASSERT(!m_collator);
+    UErrorCode status = U_ZERO_ERROR;
 
-      // FIXME: default locale is never matched, because ucol_getLocaleByType
-      // returns the actual one used, not 0.
-      if (m_locale && 0 == strcmp(cachedCollatorLocale, m_locale) &&
-          ((UCOL_LOWER_FIRST == cachedCollatorLowerFirst && m_lowerFirst) ||
-           (UCOL_UPPER_FIRST == cachedCollatorLowerFirst && !m_lowerFirst))) {
-        m_collator = cachedCollator;
-        cachedCollator = 0;
-        return;
-      }
+    {
+        Locker<Mutex> lock(cachedCollatorMutex());
+        if (cachedCollator) {
+            const char* cachedCollatorLocale = ucol_getLocaleByType(cachedCollator, ULOC_REQUESTED_LOCALE, &status);
+            ASSERT(U_SUCCESS(status));
+            ASSERT(cachedCollatorLocale);
+
+            UColAttributeValue cachedCollatorLowerFirst = ucol_getAttribute(cachedCollator, UCOL_CASE_FIRST, &status);
+            ASSERT(U_SUCCESS(status));
+
+            // FIXME: default locale is never matched, because ucol_getLocaleByType returns the actual one used, not 0.
+            if (m_locale && 0 == strcmp(cachedCollatorLocale, m_locale)
+                && ((UCOL_LOWER_FIRST == cachedCollatorLowerFirst && m_lowerFirst) || (UCOL_UPPER_FIRST == cachedCollatorLowerFirst && !m_lowerFirst))) {
+                m_collator = cachedCollator;
+                cachedCollator = 0;
+                return;
+            }
+        }
     }
-  }
 
-  m_collator = ucol_open(m_locale, &status);
-  if (U_FAILURE(status)) {
-    status = U_ZERO_ERROR;
-    m_collator =
-        ucol_open("", &status);  // Fallback to Unicode Collation Algorithm.
-  }
-  ASSERT(U_SUCCESS(status));
+    m_collator = ucol_open(m_locale, &status);
+    if (U_FAILURE(status)) {
+        status = U_ZERO_ERROR;
+        m_collator = ucol_open("", &status); // Fallback to Unicode Collation Algorithm.
+    }
+    ASSERT(U_SUCCESS(status));
 
-  ucol_setAttribute(m_collator, UCOL_CASE_FIRST,
-                    m_lowerFirst ? UCOL_LOWER_FIRST : UCOL_UPPER_FIRST,
-                    &status);
-  ASSERT(U_SUCCESS(status));
+    ucol_setAttribute(m_collator, UCOL_CASE_FIRST, m_lowerFirst ? UCOL_LOWER_FIRST : UCOL_UPPER_FIRST, &status);
+    ASSERT(U_SUCCESS(status));
 
-  ucol_setAttribute(m_collator, UCOL_NORMALIZATION_MODE, UCOL_ON, &status);
-  ASSERT(U_SUCCESS(status));
+    ucol_setAttribute(m_collator, UCOL_NORMALIZATION_MODE, UCOL_ON, &status);
+    ASSERT(U_SUCCESS(status));
 }
 
-void Collator::releaseCollator() {
-  {
-    Locker<Mutex> lock(cachedCollatorMutex());
-    if (cachedCollator)
-      ucol_close(cachedCollator);
-    cachedCollator = m_collator;
-    m_collator = 0;
-  }
+void Collator::releaseCollator()
+{
+    {
+        Locker<Mutex> lock(cachedCollatorMutex());
+        if (cachedCollator)
+            ucol_close(cachedCollator);
+        cachedCollator = m_collator;
+        m_collator  = 0;
+    }
 }
 
-}  // namespace WTF
+} // namespace WTF

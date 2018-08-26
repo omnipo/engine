@@ -31,18 +31,18 @@
 #ifndef SKY_ENGINE_WTF_TEXT_STRINGSTATICS_H_
 #define SKY_ENGINE_WTF_TEXT_STRINGSTATICS_H_
 
-#include "flutter/sky/engine/wtf/WTFExport.h"
+#include "sky/engine/wtf/WTFExport.h"
 
 namespace WTF {
 
 class StringStatics {
- public:
-  WTF_EXPORT static void init();
+public:
+    WTF_EXPORT static void init();
 
- private:
-  StringStatics();
+private:
+    StringStatics();
 };
 
-}  // namespace WTF
+}
 
 #endif  // SKY_ENGINE_WTF_TEXT_STRINGSTATICS_H_

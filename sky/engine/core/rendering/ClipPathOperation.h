@@ -30,34 +30,38 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_CLIPPATHOPERATION_H_
 #define SKY_ENGINE_CORE_RENDERING_CLIPPATHOPERATION_H_
 
-#include "flutter/sky/engine/platform/graphics/Path.h"
-#include "flutter/sky/engine/wtf/OwnPtr.h"
-#include "flutter/sky/engine/wtf/PassOwnPtr.h"
-#include "flutter/sky/engine/wtf/RefCounted.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
+#include "sky/engine/platform/graphics/Path.h"
+#include "sky/engine/wtf/OwnPtr.h"
+#include "sky/engine/wtf/PassOwnPtr.h"
+#include "sky/engine/wtf/RefCounted.h"
+#include "sky/engine/wtf/text/WTFString.h"
 
 namespace blink {
 
 class ClipPathOperation : public RefCounted<ClipPathOperation> {
- public:
-  enum OperationType { REFERENCE, SHAPE };
+public:
+    enum OperationType {
+        REFERENCE,
+        SHAPE
+    };
 
-  virtual ~ClipPathOperation() {}
+    virtual ~ClipPathOperation() { }
 
-  virtual bool operator==(const ClipPathOperation&) const = 0;
-  bool operator!=(const ClipPathOperation& o) const { return !(*this == o); }
+    virtual bool operator==(const ClipPathOperation&) const = 0;
+    bool operator!=(const ClipPathOperation& o) const { return !(*this == o); }
 
-  OperationType type() const { return m_type; }
-  bool isSameType(const ClipPathOperation& o) const {
-    return o.type() == m_type;
-  }
+    OperationType type() const { return m_type; }
+    bool isSameType(const ClipPathOperation& o) const { return o.type() == m_type; }
 
- protected:
-  ClipPathOperation(OperationType type) : m_type(type) {}
+protected:
+    ClipPathOperation(OperationType type)
+        : m_type(type)
+    {
+    }
 
-  OperationType m_type;
+    OperationType m_type;
 };
 
-}  // namespace blink
+}
 
 #endif  // SKY_ENGINE_CORE_RENDERING_CLIPPATHOPERATION_H_

@@ -31,14 +31,15 @@
 #ifndef SKY_ENGINE_WTF_TESTING_WTFTESTHELPERS_H_
 #define SKY_ENGINE_WTF_TESTING_WTFTESTHELPERS_H_
 
-#include <iosfwd>  // NOLINT
-#include "flutter/sky/engine/wtf/text/WTFString.h"
+#include <iosfwd> // NOLINT
+#include "sky/engine/wtf/text/WTFString.h"
+#include "wtf/testing/WTFUnitTestHelpersExport.h"
 
 namespace WTF {
 
 // Output stream operator so gTest's macros work with WebCore strings.
-std::ostream& operator<<(std::ostream&, const String&);
+WTF_UNITTEST_HELPERS_EXPORT std::ostream& operator<<(std::ostream&, const String&);
 
-}  // namespace WTF
+} // namespace WTF
 
 #endif  // SKY_ENGINE_WTF_TESTING_WTFTESTHELPERS_H_

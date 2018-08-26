@@ -28,18 +28,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/public/platform/WebCommon.h"
+#include "sky/engine/public/platform/WebCommon.h"
 
-#include "flutter/sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/Assertions.h"
 
 namespace blink {
 
-void failedAssertion(const char* file,
-                     int line,
-                     const char* function,
-                     const char* assertion) {
-  WTFReportAssertionFailure(file, line, function, assertion);
-  CRASH();
+void failedAssertion(const char* file, int line, const char* function, const char* assertion)
+{
+    WTFReportAssertionFailure(file, line, function, assertion);
+    CRASH();
 }
 
-}  // namespace blink
+} // namespace blink

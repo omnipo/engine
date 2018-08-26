@@ -23,23 +23,25 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #include <gtest/gtest.h>
-#include "flutter/sky/engine/wtf/TemporaryChange.h"
+#include "sky/engine/wtf/TemporaryChange.h"
 
 namespace {
 
-TEST(TemporaryChangeTest, Nested) {
-  bool originallyFalse = false;
-  {
-    TemporaryChange<bool> change1OriginallyFalse(originallyFalse, true);
-    EXPECT_TRUE(originallyFalse);
+TEST(TemporaryChangeTest, Nested)
+{
+    bool originallyFalse = false;
     {
-      TemporaryChange<bool> change2OriginallyFalse(originallyFalse, false);
-      EXPECT_FALSE(originallyFalse);
+        TemporaryChange<bool> change1OriginallyFalse(originallyFalse, true);
+        EXPECT_TRUE(originallyFalse);
+        {
+            TemporaryChange<bool> change2OriginallyFalse(originallyFalse, false);
+            EXPECT_FALSE(originallyFalse);
+        }
+        EXPECT_TRUE(originallyFalse);
     }
-    EXPECT_TRUE(originallyFalse);
-  }
-  EXPECT_FALSE(originallyFalse);
+    EXPECT_FALSE(originallyFalse);
 }
 
-}  // namespace
+} // namespace

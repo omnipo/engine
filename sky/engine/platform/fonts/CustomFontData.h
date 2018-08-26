@@ -22,10 +22,10 @@
 #define SKY_ENGINE_PLATFORM_FONTS_CUSTOMFONTDATA_H_
 
 #include <unicode/uchar.h>
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/platform/fonts/Glyph.h"
-#include "flutter/sky/engine/wtf/PassRefPtr.h"
-#include "flutter/sky/engine/wtf/RefCounted.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/platform/fonts/Glyph.h"
+#include "sky/engine/wtf/PassRefPtr.h"
+#include "sky/engine/wtf/RefCounted.h"
 
 namespace blink {
 
@@ -35,34 +35,28 @@ class SimpleFontData;
 struct WidthIterator;
 
 class PLATFORM_EXPORT CustomFontData : public RefCounted<CustomFontData> {
- public:
-  static PassRefPtr<CustomFontData> create() {
-    return adoptRef(new CustomFontData());
-  }
+public:
+    static PassRefPtr<CustomFontData> create() { return adoptRef(new CustomFontData()); }
 
-  virtual ~CustomFontData() {}
+    virtual ~CustomFontData() { }
 
-  virtual void beginLoadIfNeeded() const {};
-  virtual bool isLoading() const { return false; }
-  virtual bool isLoadingFallback() const { return false; }
-  virtual bool shouldSkipDrawing() const { return false; }
-  virtual void clearFontFaceSource() {}
+    virtual void beginLoadIfNeeded() const { };
+    virtual bool isLoading() const { return false; }
+    virtual bool isLoadingFallback() const { return false; }
+    virtual bool shouldSkipDrawing() const { return false; }
+    virtual void clearFontFaceSource() { }
 
-  virtual bool isSVGFont() const { return false; }
-  virtual void initializeFontData(SimpleFontData*, float) {}
+    virtual bool isSVGFont() const { return false; }
+    virtual void initializeFontData(SimpleFontData*, float) { }
 
- protected:
-  CustomFontData() {}
+protected:
+    CustomFontData() { }
 };
 
-#define DEFINE_CUSTOM_FONT_DATA_TYPE_CASTS(thisType, predicate)    \
-  template <typename T>                                            \
-  inline thisType* to##thisType(const RefPtr<T>& customFontData) { \
-    return to##thisType(customFontData.get());                     \
-  }                                                                \
-  DEFINE_TYPE_CASTS(thisType, CustomFontData, customFontData,      \
-                    customFontData->predicate, customFontData.predicate)
+#define DEFINE_CUSTOM_FONT_DATA_TYPE_CASTS(thisType, predicate) \
+    template<typename T> inline thisType* to##thisType(const RefPtr<T>& customFontData) { return to##thisType(customFontData.get()); } \
+    DEFINE_TYPE_CASTS(thisType, CustomFontData, customFontData, customFontData->predicate, customFontData.predicate)
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_FONTS_CUSTOMFONTDATA_H_

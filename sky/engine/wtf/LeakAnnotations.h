@@ -47,7 +47,7 @@
 // annotated with ANNOTATE_LEAKING_OBJECT_PTR is later deleted (but
 // LeakSanitizer won't).
 
-#include "flutter/sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/Noncopyable.h"
 
 namespace WTF {
 
@@ -55,32 +55,37 @@ namespace WTF {
 extern "C" {
 void __lsan_disable();
 void __lsan_enable();
-void __lsan_ignore_object(const void* p);
-}  // extern "C"
+void __lsan_ignore_object(const void *p);
+} // extern "C"
 
 class LeakSanitizerDisabler {
-  WTF_MAKE_NONCOPYABLE(LeakSanitizerDisabler);
+    WTF_MAKE_NONCOPYABLE(LeakSanitizerDisabler);
+public:
+    LeakSanitizerDisabler()
+    {
+        __lsan_disable();
+    }
 
- public:
-  LeakSanitizerDisabler() { __lsan_disable(); }
-
-  ~LeakSanitizerDisabler() { __lsan_enable(); }
+    ~LeakSanitizerDisabler()
+    {
+        __lsan_enable();
+    }
 };
 
-#define WTF_ANNOTATE_SCOPED_MEMORY_LEAK             \
-  WTF::LeakSanitizerDisabler leakSanitizerDisabler; \
-  static_cast<void>(0)
+#define WTF_ANNOTATE_SCOPED_MEMORY_LEAK \
+        WTF::LeakSanitizerDisabler leakSanitizerDisabler; static_cast<void>(0)
 
-#define WTF_ANNOTATE_LEAKING_OBJECT_PTR(X) WTF::__lsan_ignore_object(X)
+#define WTF_ANNOTATE_LEAKING_OBJECT_PTR(X) \
+    WTF::__lsan_ignore_object(X)
 
-#else  // USE(LEAK_SANITIZER)
+#else // USE(LEAK_SANITIZER)
 
 // If Leak Sanitizer is not being used, the annotations should be no-ops.
 #define WTF_ANNOTATE_SCOPED_MEMORY_LEAK
 #define WTF_ANNOTATE_LEAKING_OBJECT_PTR(X)
 
-#endif  // USE(LEAK_SANITIZER)
+#endif // USE(LEAK_SANITIZER)
 
-}  // namespace WTF
+} // namespace WTF
 
 #endif  // SKY_ENGINE_WTF_LEAKANNOTATIONS_H_

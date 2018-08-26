@@ -23,17 +23,23 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/fonts/FontFeatureSettings.h"
+#include "sky/engine/platform/fonts/FontFeatureSettings.h"
 
 namespace blink {
 
 FontFeature::FontFeature(const AtomicString& tag, int value)
-    : m_tag(tag), m_value(value) {}
-
-bool FontFeature::operator==(const FontFeature& other) {
-  return m_tag == other.m_tag && m_value == other.m_value;
+    : m_tag(tag)
+    , m_value(value)
+{
 }
 
-FontFeatureSettings::FontFeatureSettings() {}
+bool FontFeature::operator==(const FontFeature& other)
+{
+    return m_tag == other.m_tag && m_value == other.m_value;
+}
 
-}  // namespace blink
+FontFeatureSettings::FontFeatureSettings()
+{
+}
+
+} // namespace blink

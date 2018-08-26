@@ -24,22 +24,25 @@
  *
  */
 
-#include "flutter/sky/engine/wtf/WTFThreadData.h"
+#include "sky/engine/wtf/WTFThreadData.h"
 
-#include "flutter/sky/engine/wtf/text/TextCodecICU.h"
+#include "sky/engine/wtf/text/TextCodecICU.h"
 
 namespace WTF {
 
 ThreadSpecific<WTFThreadData>* WTFThreadData::staticData;
 
 WTFThreadData::WTFThreadData()
-    : m_atomicStringTable(0),
-      m_atomicStringTableDestructor(0),
-      m_cachedConverterICU(adoptPtr(new ICUConverterWrapper)) {}
-
-WTFThreadData::~WTFThreadData() {
-  if (m_atomicStringTableDestructor)
-    m_atomicStringTableDestructor(m_atomicStringTable);
+    : m_atomicStringTable(0)
+    , m_atomicStringTableDestructor(0)
+    , m_cachedConverterICU(adoptPtr(new ICUConverterWrapper))
+{
 }
 
-}  // namespace WTF
+WTFThreadData::~WTFThreadData()
+{
+    if (m_atomicStringTableDestructor)
+        m_atomicStringTableDestructor(m_atomicStringTable);
+}
+
+} // namespace WTF

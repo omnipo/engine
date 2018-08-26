@@ -23,33 +23,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/transforms/Matrix3DTransformOperation.h"
+#include "sky/engine/platform/transforms/Matrix3DTransformOperation.h"
 
 #include <algorithm>
 
 namespace blink {
 
-PassRefPtr<TransformOperation> Matrix3DTransformOperation::blend(
-    const TransformOperation* from,
-    double progress,
-    bool blendToIdentity) {
-  if (from && !from->isSameType(*this))
-    return this;
+PassRefPtr<TransformOperation> Matrix3DTransformOperation::blend(const TransformOperation* from, double progress, bool blendToIdentity)
+{
+    if (from && !from->isSameType(*this))
+        return this;
 
-  // Convert the TransformOperations into matrices
-  FloatSize size;
-  TransformationMatrix fromT;
-  TransformationMatrix toT;
-  if (from)
-    from->apply(fromT, size);
+    // Convert the TransformOperations into matrices
+    FloatSize size;
+    TransformationMatrix fromT;
+    TransformationMatrix toT;
+    if (from)
+        from->apply(fromT, size);
 
-  apply(toT, size);
+    apply(toT, size);
 
-  if (blendToIdentity)
-    std::swap(fromT, toT);
+    if (blendToIdentity)
+        std::swap(fromT, toT);
 
-  toT.blend(fromT, progress);
-  return Matrix3DTransformOperation::create(toT);
+    toT.blend(fromT, progress);
+    return Matrix3DTransformOperation::create(toT);
 }
 
-}  // namespace blink
+} // namespace blink

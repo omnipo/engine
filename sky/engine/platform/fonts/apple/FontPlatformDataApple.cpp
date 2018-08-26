@@ -28,8 +28,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/fonts/FontPlatformData.h"
-#include "third_party/skia/include/core/SkTypeface.h"
+#include "base/logging.h"
+#include "sky/engine/platform/fonts/FontPlatformData.h"
+#include "sky/engine/platform/fonts/FontCache.h"
 
 namespace blink {
 
@@ -42,10 +43,10 @@ void FontPlatformData::setupPaint(SkPaint* paint,
   paint->setEmbeddedBitmapText(false);
   const float ts = m_textSize >= 0 ? m_textSize : 12;
   paint->setTextSize(SkFloatToScalar(ts));
-  paint->setTypeface(m_typeface);
+  paint->setTypeface(typeface());
   paint->setFakeBoldText(m_syntheticBold);
   paint->setTextSkewX(m_syntheticItalic ? -SK_Scalar1 / 4 : 0);
-  paint->setAutohinted(false);  // freetype specific
+  paint->setAutohinted(false); // freetype specific
   paint->setLCDRenderText(shouldSmoothFonts);
   paint->setSubpixelText(useSubpixelText);
   paint->setHinting(SkPaint::kNo_Hinting);
@@ -73,4 +74,11 @@ bool FontPlatformData::defaultUseSubpixelPositioning() {
   return false;
 }
 
-}  // namespace  blink
+void FontCache::getFontForCharacter(
+    UChar32 c,
+    const char* preferredLocale,
+    FontCache::PlatformFallbackFont* fallbackFont) {
+  DCHECK(false);
+}
+
+}  // namespace blink

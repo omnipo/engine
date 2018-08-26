@@ -5,7 +5,7 @@
 #ifndef SKY_ENGINE_WTF_ADDRESSSPACERANDOMIZATION_H_
 #define SKY_ENGINE_WTF_ADDRESSSPACERANDOMIZATION_H_
 
-#include "flutter/sky/engine/wtf/WTFExport.h"
+#include "sky/engine/wtf/WTFExport.h"
 
 namespace WTF {
 
@@ -14,6 +14,6 @@ namespace WTF {
 // space too badly.
 WTF_EXPORT void* getRandomPageBase();
 
-}  // namespace WTF
+}
 
 #endif  // SKY_ENGINE_WTF_ADDRESSSPACERANDOMIZATION_H_

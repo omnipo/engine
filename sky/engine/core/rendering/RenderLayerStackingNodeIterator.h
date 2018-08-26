@@ -31,14 +31,14 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_RENDERLAYERSTACKINGNODEITERATOR_H_
 #define SKY_ENGINE_CORE_RENDERING_RENDERLAYERSTACKINGNODEITERATOR_H_
 
-#include "flutter/sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/Noncopyable.h"
 
 namespace blink {
 
 enum ChildrenIteration {
-  NormalFlowChildren = 1,
-  PositiveZOrderChildren = 1 << 1,
-  AllChildren = NormalFlowChildren | PositiveZOrderChildren
+    NormalFlowChildren = 1,
+    PositiveZOrderChildren = 1 << 1,
+    AllChildren = NormalFlowChildren | PositiveZOrderChildren
 };
 
 class RenderLayerStackingNode;
@@ -46,43 +46,45 @@ class RenderLayerStackingNode;
 // This iterator walks the RenderLayerStackingNode lists in the following order:
 // NormalFlowChildren -> PositiveZOrderChildren.
 class RenderLayerStackingNodeIterator {
-  WTF_MAKE_NONCOPYABLE(RenderLayerStackingNodeIterator);
+    WTF_MAKE_NONCOPYABLE(RenderLayerStackingNodeIterator);
+public:
+    RenderLayerStackingNodeIterator(const RenderLayerStackingNode& root, unsigned whichChildren)
+        : m_root(root)
+        , m_remainingChildren(whichChildren)
+        , m_index(0)
+    {
+    }
 
- public:
-  RenderLayerStackingNodeIterator(const RenderLayerStackingNode& root,
-                                  unsigned whichChildren)
-      : m_root(root), m_remainingChildren(whichChildren), m_index(0) {}
+    RenderLayerStackingNode* next();
 
-  RenderLayerStackingNode* next();
-
- private:
-  const RenderLayerStackingNode& m_root;
-  unsigned m_remainingChildren;
-  unsigned m_index;
+private:
+    const RenderLayerStackingNode& m_root;
+    unsigned m_remainingChildren;
+    unsigned m_index;
 };
 
-// This iterator is similar to RenderLayerStackingNodeIterator but it walks the
-// lists in reverse order (from the last item to the first one).
+// This iterator is similar to RenderLayerStackingNodeIterator but it walks the lists in reverse order
+// (from the last item to the first one).
 class RenderLayerStackingNodeReverseIterator {
-  WTF_MAKE_NONCOPYABLE(RenderLayerStackingNodeReverseIterator);
+    WTF_MAKE_NONCOPYABLE(RenderLayerStackingNodeReverseIterator);
+public:
+    RenderLayerStackingNodeReverseIterator(const RenderLayerStackingNode& root, unsigned whichChildren)
+        : m_root(root)
+        , m_remainingChildren(whichChildren)
+    {
+        setIndexToLastItem();
+    }
 
- public:
-  RenderLayerStackingNodeReverseIterator(const RenderLayerStackingNode& root,
-                                         unsigned whichChildren)
-      : m_root(root), m_remainingChildren(whichChildren) {
-    setIndexToLastItem();
-  }
+    RenderLayerStackingNode* next();
 
-  RenderLayerStackingNode* next();
+private:
+    void setIndexToLastItem();
 
- private:
-  void setIndexToLastItem();
-
-  const RenderLayerStackingNode& m_root;
-  unsigned m_remainingChildren;
-  int m_index;
+    const RenderLayerStackingNode& m_root;
+    unsigned m_remainingChildren;
+    int m_index;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_CORE_RENDERING_RENDERLAYERSTACKINGNODEITERATOR_H_

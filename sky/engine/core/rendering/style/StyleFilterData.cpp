@@ -23,16 +23,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/core/rendering/style/StyleFilterData.h"
+#include "sky/engine/core/rendering/style/StyleFilterData.h"
 
 namespace blink {
 
-StyleFilterData::StyleFilterData() {}
-
-StyleFilterData::StyleFilterData(const StyleFilterData& o) {}
-
-bool StyleFilterData::operator==(const StyleFilterData& o) const {
-  return true;
+StyleFilterData::StyleFilterData()
+    : m_operations()
+{
 }
 
-}  // namespace blink
+StyleFilterData::StyleFilterData(const StyleFilterData& o)
+    : RefCounted<StyleFilterData>()
+    , m_operations(o.m_operations)
+{
+}
+
+bool StyleFilterData::operator==(const StyleFilterData& o) const
+{
+    return m_operations == o.m_operations;
+}
+
+} // namespace blink
+

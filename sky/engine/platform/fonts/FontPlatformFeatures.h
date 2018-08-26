@@ -31,18 +31,18 @@
 #ifndef SKY_ENGINE_PLATFORM_FONTS_FONTPLATFORMFEATURES_H_
 #define SKY_ENGINE_PLATFORM_FONTS_FONTPLATFORMFEATURES_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
+#include "sky/engine/platform/PlatformExport.h"
 
 namespace blink {
 
 class FontPlatformFeatures {
- public:
-  static bool canExpandAroundIdeographsInComplexText();
+public:
+    static bool canExpandAroundIdeographsInComplexText();
 
- private:
-  FontPlatformFeatures();
+private:
+    FontPlatformFeatures();
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_FONTS_FONTPLATFORMFEATURES_H_

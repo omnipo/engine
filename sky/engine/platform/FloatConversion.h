@@ -31,14 +31,15 @@
 
 namespace blink {
 
-template <typename T>
+template<typename T>
 float narrowPrecisionToFloat(T);
 
-template <>
-inline float narrowPrecisionToFloat(double number) {
-  return static_cast<float>(number);
+template<>
+inline float narrowPrecisionToFloat(double number)
+{
+    return static_cast<float>(number);
 }
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_FLOATCONVERSION_H_

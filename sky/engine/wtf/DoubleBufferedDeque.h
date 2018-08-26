@@ -5,37 +5,42 @@
 #ifndef SKY_ENGINE_WTF_DOUBLEBUFFEREDDEQUE_H_
 #define SKY_ENGINE_WTF_DOUBLEBUFFEREDDEQUE_H_
 
-#include "flutter/sky/engine/wtf/Deque.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/Deque.h"
+#include "sky/engine/wtf/Noncopyable.h"
 
 namespace WTF {
 
-// A helper class for managing double buffered deques, typically where the
-// client locks when appending or swapping.
-template <typename T>
-class DoubleBufferedDeque {
-  WTF_MAKE_NONCOPYABLE(DoubleBufferedDeque);
+// A helper class for managing double buffered deques, typically where the client locks when appending or swapping.
+template <typename T> class DoubleBufferedDeque {
+    WTF_MAKE_NONCOPYABLE(DoubleBufferedDeque);
+public:
+    DoubleBufferedDeque()
+        : m_activeIndex(0) { }
 
- public:
-  DoubleBufferedDeque() : m_activeIndex(0) {}
+    void append(const T& value)
+    {
+        m_queue[m_activeIndex].append(value);
+    }
 
-  void append(const T& value) { m_queue[m_activeIndex].append(value); }
+    bool isEmpty() const
+    {
+        return m_queue[m_activeIndex].isEmpty();
+    }
 
-  bool isEmpty() const { return m_queue[m_activeIndex].isEmpty(); }
+    Deque<T>& swapBuffers()
+    {
+        int oldIndex = m_activeIndex;
+        m_activeIndex ^= 1;
+        ASSERT(m_queue[m_activeIndex].isEmpty());
+        return m_queue[oldIndex];
+    }
 
-  Deque<T>& swapBuffers() {
-    int oldIndex = m_activeIndex;
-    m_activeIndex ^= 1;
-    ASSERT(m_queue[m_activeIndex].isEmpty());
-    return m_queue[oldIndex];
-  }
-
- private:
-  Deque<T> m_queue[2];
-  int m_activeIndex;
+private:
+    Deque<T> m_queue[2];
+    int m_activeIndex;
 };
 
-}  // namespace WTF
+} // namespace WTF
 
 using WTF::DoubleBufferedDeque;
 

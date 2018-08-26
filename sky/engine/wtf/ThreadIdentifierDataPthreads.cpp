@@ -28,22 +28,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/wtf/OperatingSystem.h"
+#include "sky/engine/wtf/ThreadIdentifierDataPthreads.h"
 
-#if USE(PTHREADS)
-
-#include "flutter/sky/engine/wtf/ThreadIdentifierDataPthreads.h"
-
-#include "flutter/sky/engine/wtf/Assertions.h"
-#include "flutter/sky/engine/wtf/WTF.h"
+#include "sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/WTF.h"
 
 #include <limits.h>
 
-// PTHREAD_KEYS_MAX might be not defined (e.g. in certain bionic versions), so
-// explicitly define it here.
+#if USE(PTHREADS)
+
+// PTHREAD_KEYS_MAX might be not defined (e.g. in certain bionic versions), so explicitly define it here.
 #ifndef PTHREAD_KEYS_MAX
 #define PTHREAD_KEYS_MAX 1024
-#endif  // PTHREAD_KEYS_MAX
+#endif // PTHREAD_KEYS_MAX
 
 namespace WTF {
 
@@ -51,47 +48,49 @@ pthread_key_t ThreadIdentifierData::m_key = PTHREAD_KEYS_MAX;
 
 void threadDidExit(ThreadIdentifier);
 
-ThreadIdentifierData::~ThreadIdentifierData() {
-  threadDidExit(m_identifier);
+ThreadIdentifierData::~ThreadIdentifierData()
+{
+    threadDidExit(m_identifier);
 }
 
-void ThreadIdentifierData::initializeOnce() {
-  if (pthread_key_create(&m_key, destruct))
-    CRASH();
+void ThreadIdentifierData::initializeOnce()
+{
+    if (pthread_key_create(&m_key, destruct))
+        CRASH();
 }
 
-ThreadIdentifier ThreadIdentifierData::identifier() {
-  ASSERT(m_key != PTHREAD_KEYS_MAX);
-  ThreadIdentifierData* threadIdentifierData =
-      static_cast<ThreadIdentifierData*>(pthread_getspecific(m_key));
+ThreadIdentifier ThreadIdentifierData::identifier()
+{
+    ASSERT(m_key != PTHREAD_KEYS_MAX);
+    ThreadIdentifierData* threadIdentifierData = static_cast<ThreadIdentifierData*>(pthread_getspecific(m_key));
 
-  return threadIdentifierData ? threadIdentifierData->m_identifier : 0;
+    return threadIdentifierData ? threadIdentifierData->m_identifier : 0;
 }
 
-void ThreadIdentifierData::initialize(ThreadIdentifier id) {
-  ASSERT(!identifier());
-  pthread_setspecific(m_key, new ThreadIdentifierData(id));
+void ThreadIdentifierData::initialize(ThreadIdentifier id)
+{
+    ASSERT(!identifier());
+    pthread_setspecific(m_key, new ThreadIdentifierData(id));
 }
 
-void ThreadIdentifierData::destruct(void* data) {
-  if (isShutdown())
-    return;
+void ThreadIdentifierData::destruct(void* data)
+{
+    if (isShutdown())
+        return;
 
-  ThreadIdentifierData* threadIdentifierData =
-      static_cast<ThreadIdentifierData*>(data);
-  ASSERT(threadIdentifierData);
+    ThreadIdentifierData* threadIdentifierData = static_cast<ThreadIdentifierData*>(data);
+    ASSERT(threadIdentifierData);
 
-  if (threadIdentifierData->m_isDestroyedOnce) {
-    delete threadIdentifierData;
-    return;
-  }
+    if (threadIdentifierData->m_isDestroyedOnce) {
+        delete threadIdentifierData;
+        return;
+    }
 
-  threadIdentifierData->m_isDestroyedOnce = true;
-  // Re-setting the value for key causes another destruct() call after all other
-  // thread-specific destructors were called.
-  pthread_setspecific(m_key, threadIdentifierData);
+    threadIdentifierData->m_isDestroyedOnce = true;
+    // Re-setting the value for key causes another destruct() call after all other thread-specific destructors were called.
+    pthread_setspecific(m_key, threadIdentifierData);
 }
 
-}  // namespace WTF
+} // namespace WTF
 
-#endif  // USE(PTHREADS)
+#endif // USE(PTHREADS)

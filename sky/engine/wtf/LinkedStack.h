@@ -31,77 +31,83 @@
 #ifndef SKY_ENGINE_WTF_LINKEDSTACK_H_
 #define SKY_ENGINE_WTF_LINKEDSTACK_H_
 
-#include "flutter/sky/engine/wtf/FastAllocBase.h"
-#include "flutter/sky/engine/wtf/OwnPtr.h"
+#include "sky/engine/wtf/FastAllocBase.h"
+#include "sky/engine/wtf/OwnPtr.h"
 
 namespace WTF {
 
 template <typename T>
 class LinkedStack {
-  WTF_MAKE_FAST_ALLOCATED;
-
- public:
-  LinkedStack() : m_size(0) {}
-
-  bool isEmpty();
-
-  void push(const T&);
-  const T& peek();
-  void pop();
-
-  size_t size();
-
-  // This inner class used to be private but is now public on account of a
-  // possible MSVC bug. It can be made private again if we get rid of
-  // WTF_MAKE_FAST_ALLOCATED ever.
-  class Node {
     WTF_MAKE_FAST_ALLOCATED;
+public:
+    LinkedStack() : m_size(0) { }
 
-   public:
-    Node(const T&, PassOwnPtr<Node> next);
+    bool isEmpty();
 
-    T m_data;
-    OwnPtr<Node> m_next;
-  };
+    void push(const T&);
+    const T& peek();
+    void pop();
 
- private:
-  OwnPtr<Node> m_head;
-  size_t m_size;
+    size_t size();
+
+    // This inner class used to be private but is now public on account of a
+    // possible MSVC bug. It can be made private again if we get rid of
+    // WTF_MAKE_FAST_ALLOCATED ever.
+    class Node {
+        WTF_MAKE_FAST_ALLOCATED;
+    public:
+        Node(const T&, PassOwnPtr<Node> next);
+
+        T m_data;
+        OwnPtr<Node> m_next;
+    };
+
+private:
+    OwnPtr<Node> m_head;
+    size_t m_size;
 };
 
 template <typename T>
 LinkedStack<T>::Node::Node(const T& data, PassOwnPtr<Node> next)
-    : m_data(data), m_next(next) {}
-
-template <typename T>
-inline bool LinkedStack<T>::isEmpty() {
-  return !m_head;
+    : m_data(data)
+    , m_next(next)
+{
 }
 
 template <typename T>
-inline void LinkedStack<T>::push(const T& data) {
-  m_head = adoptPtr(new Node(data, m_head.release()));
-  ++m_size;
+inline bool LinkedStack<T>::isEmpty()
+{
+    return !m_head;
 }
 
 template <typename T>
-inline const T& LinkedStack<T>::peek() {
-  return m_head->m_data;
+inline void LinkedStack<T>::push(const T& data)
+{
+    m_head = adoptPtr(new Node(data, m_head.release()));
+    ++m_size;
 }
 
 template <typename T>
-inline void LinkedStack<T>::pop() {
-  ASSERT(m_head && m_size);
-  m_head = m_head->m_next.release();
-  --m_size;
+inline const T& LinkedStack<T>::peek()
+{
+    return m_head->m_data;
 }
 
 template <typename T>
-inline size_t LinkedStack<T>::size() {
-  return m_size;
+inline void LinkedStack<T>::pop()
+{
+    ASSERT(m_head && m_size);
+    m_head = m_head->m_next.release();
+    --m_size;
 }
 
-}  // namespace WTF
+template <typename T>
+inline size_t LinkedStack<T>::size()
+{
+    return m_size;
+}
+
+}
 
 using WTF::LinkedStack;
 

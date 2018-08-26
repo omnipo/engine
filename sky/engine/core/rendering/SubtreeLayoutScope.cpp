@@ -28,38 +28,44 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/core/rendering/SubtreeLayoutScope.h"
+#include "sky/engine/core/rendering/SubtreeLayoutScope.h"
 
-#include "flutter/sky/engine/core/rendering/RenderObject.h"
+#include "sky/engine/core/rendering/RenderObject.h"
 
 namespace blink {
 
-SubtreeLayoutScope::SubtreeLayoutScope(RenderObject& root) : m_root(root) {}
+SubtreeLayoutScope::SubtreeLayoutScope(RenderObject& root)
+    : m_root(root)
+{
+}
 
-SubtreeLayoutScope::~SubtreeLayoutScope() {
-  RELEASE_ASSERT(!m_root.needsLayout());
+SubtreeLayoutScope::~SubtreeLayoutScope()
+{
+    RELEASE_ASSERT(!m_root.needsLayout());
 
 #if ENABLE(ASSERT)
-  for (HashSet<RenderObject*>::iterator it = m_renderersToLayout.begin();
-       it != m_renderersToLayout.end(); ++it)
-    (*it)->assertRendererLaidOut();
+    for (HashSet<RenderObject*>::iterator it = m_renderersToLayout.begin(); it != m_renderersToLayout.end(); ++it)
+        (*it)->assertRendererLaidOut();
 #endif
 }
 
-void SubtreeLayoutScope::setNeedsLayout(RenderObject* descendant) {
-  ASSERT(descendant->isDescendantOf(&m_root));
-  descendant->setNeedsLayout(MarkContainingBlockChain, this);
+void SubtreeLayoutScope::setNeedsLayout(RenderObject* descendant)
+{
+    ASSERT(descendant->isDescendantOf(&m_root));
+    descendant->setNeedsLayout(MarkContainingBlockChain, this);
 }
 
-void SubtreeLayoutScope::setChildNeedsLayout(RenderObject* descendant) {
-  ASSERT(descendant->isDescendantOf(&m_root));
-  descendant->setChildNeedsLayout(MarkContainingBlockChain, this);
+void SubtreeLayoutScope::setChildNeedsLayout(RenderObject* descendant)
+{
+    ASSERT(descendant->isDescendantOf(&m_root));
+    descendant->setChildNeedsLayout(MarkContainingBlockChain, this);
 }
 
-void SubtreeLayoutScope::addRendererToLayout(RenderObject* renderer) {
+void SubtreeLayoutScope::addRendererToLayout(RenderObject* renderer)
+{
 #if ENABLE(ASSERT)
-  m_renderersToLayout.add(renderer);
+    m_renderersToLayout.add(renderer);
 #endif
 }
 
-}  // namespace blink
+}

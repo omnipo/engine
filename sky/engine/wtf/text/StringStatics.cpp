@@ -23,57 +23,50 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/wtf/text/StringStatics.h"
+#include "sky/engine/wtf/text/StringStatics.h"
 
-#include "flutter/sky/engine/wtf/DynamicAnnotations.h"
-#include "flutter/sky/engine/wtf/MainThread.h"
-#include "flutter/sky/engine/wtf/StaticConstructors.h"
-#include "flutter/sky/engine/wtf/text/AtomicString.h"
-#include "flutter/sky/engine/wtf/text/StringImpl.h"
+#include "sky/engine/wtf/DynamicAnnotations.h"
+#include "sky/engine/wtf/MainThread.h"
+#include "sky/engine/wtf/StaticConstructors.h"
+#include "sky/engine/wtf/text/AtomicString.h"
+#include "sky/engine/wtf/text/StringImpl.h"
 
 namespace WTF {
 
-StringImpl* StringImpl::empty() {
-  DEFINE_STATIC_LOCAL(StringImpl, emptyString, (ConstructEmptyString));
-  WTF_ANNOTATE_BENIGN_RACE(
-      &emptyString, "Benign race on StringImpl::emptyString reference counter");
-  return &emptyString;
+StringImpl* StringImpl::empty()
+{
+    DEFINE_STATIC_LOCAL(StringImpl, emptyString, (ConstructEmptyString));
+    WTF_ANNOTATE_BENIGN_RACE(&emptyString, "Benign race on StringImpl::emptyString reference counter");
+    return &emptyString;
 }
 
-StringImpl* StringImpl::empty16Bit() {
-  DEFINE_STATIC_LOCAL(StringImpl, emptyString, (ConstructEmptyString16Bit));
-  WTF_ANNOTATE_BENIGN_RACE(
-      &emptyString,
-      "Benign race on the reference counter of a static string created by"
-      "StringImpl::empty16Bit");
-  return &emptyString;
+WTF_EXPORT DEFINE_GLOBAL(AtomicString, nullAtom)
+WTF_EXPORT DEFINE_GLOBAL(AtomicString, emptyAtom)
+WTF_EXPORT DEFINE_GLOBAL(AtomicString, starAtom)
+
+NEVER_INLINE unsigned StringImpl::hashSlowCase() const
+{
+    if (is8Bit())
+        setHash(StringHasher::computeHashAndMaskTop8Bits(characters8(), m_length));
+    else
+        setHash(StringHasher::computeHashAndMaskTop8Bits(characters16(), m_length));
+    return existingHash();
 }
 
-WTF_EXPORT DEFINE_GLOBAL(AtomicString, nullAtom) WTF_EXPORT
-    DEFINE_GLOBAL(AtomicString, emptyAtom) WTF_EXPORT
-    DEFINE_GLOBAL(AtomicString, starAtom)
+void AtomicString::init()
+{
+    ASSERT(isMainThread());
 
-        NEVER_INLINE unsigned StringImpl::hashSlowCase() const {
-  if (is8Bit())
-    setHash(StringHasher::computeHashAndMaskTop8Bits(characters8(), m_length));
-  else
-    setHash(StringHasher::computeHashAndMaskTop8Bits(characters16(), m_length));
-  return existingHash();
+    new (NotNull, (void*)&nullAtom) AtomicString;
+    new (NotNull, (void*)&emptyAtom) AtomicString("");
 }
 
-void AtomicString::init() {
-  ASSERT(isMainThread());
+void StringStatics::init()
+{
+    ASSERT(isMainThread());
 
-  new (NotNull, (void*)&nullAtom) AtomicString;
-  new (NotNull, (void*)&emptyAtom) AtomicString("");
+    // FIXME: These should be allocated at compile time.
+    new (NotNull, (void*)&starAtom) AtomicString("*", AtomicString::ConstructFromLiteral);
 }
 
-void StringStatics::init() {
-  ASSERT(isMainThread());
-
-  // FIXME: These should be allocated at compile time.
-  new (NotNull, (void*)&starAtom)
-      AtomicString("*", AtomicString::ConstructFromLiteral);
 }
-
-}  // namespace WTF

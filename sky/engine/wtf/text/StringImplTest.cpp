@@ -23,15 +23,17 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #include <gtest/gtest.h>
-#include "flutter/sky/engine/wtf/text/StringImpl.h"
-#include "flutter/sky/engine/wtf/text/WTFString.h"
+#include "sky/engine/wtf/text/StringImpl.h"
+#include "sky/engine/wtf/text/WTFString.h"
 
 namespace {
 
-TEST(WTF, StringImplCreate8Bit) {
-  RefPtr<StringImpl> testStringImpl = StringImpl::create("1224");
-  ASSERT_TRUE(testStringImpl->is8Bit());
+TEST(WTF, StringImplCreate8Bit)
+{
+    RefPtr<StringImpl> testStringImpl = StringImpl::create("1224");
+    ASSERT_TRUE(testStringImpl->is8Bit());
 }
 
-}  // namespace
+} // namespace

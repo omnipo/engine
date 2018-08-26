@@ -23,221 +23,231 @@
 #ifndef SKY_ENGINE_PLATFORM_TEXT_BIDIRUNLIST_H_
 #define SKY_ENGINE_PLATFORM_TEXT_BIDIRUNLIST_H_
 
-#include "flutter/sky/engine/wtf/Assertions.h"
-#include "flutter/sky/engine/wtf/Noncopyable.h"
+#include "sky/engine/wtf/Assertions.h"
+#include "sky/engine/wtf/Noncopyable.h"
 
 namespace blink {
 
 template <class Run>
 class BidiRunList {
-  WTF_MAKE_NONCOPYABLE(BidiRunList);
+    WTF_MAKE_NONCOPYABLE(BidiRunList);
+public:
+    BidiRunList()
+        : m_firstRun(0)
+        , m_lastRun(0)
+        , m_logicallyLastRun(0)
+        , m_runCount(0)
+    {
+    }
 
- public:
-  BidiRunList()
-      : m_firstRun(0), m_lastRun(0), m_logicallyLastRun(0), m_runCount(0) {}
+    // FIXME: Once BidiResolver no longer owns the BidiRunList,
+    // then ~BidiRunList should call deleteRuns() automatically.
 
-  // FIXME: Once BidiResolver no longer owns the BidiRunList,
-  // then ~BidiRunList should call deleteRuns() automatically.
+    Run* firstRun() const { return m_firstRun; }
+    Run* lastRun() const { return m_lastRun; }
+    Run* logicallyLastRun() const { return m_logicallyLastRun; }
+    unsigned runCount() const { return m_runCount; }
 
-  Run* firstRun() const { return m_firstRun; }
-  Run* lastRun() const { return m_lastRun; }
-  Run* logicallyLastRun() const { return m_logicallyLastRun; }
-  unsigned runCount() const { return m_runCount; }
+    void addRun(Run*);
+    void prependRun(Run*);
 
-  void addRun(Run*);
-  void prependRun(Run*);
+    void moveRunToEnd(Run*);
+    void moveRunToBeginning(Run*);
 
-  void moveRunToEnd(Run*);
-  void moveRunToBeginning(Run*);
+    void deleteRuns();
+    void reverseRuns(unsigned start, unsigned end);
+    void reorderRunsFromLevels();
 
-  void deleteRuns();
-  void reverseRuns(unsigned start, unsigned end);
-  void reorderRunsFromLevels();
+    void setLogicallyLastRun(Run* run) { m_logicallyLastRun = run; }
 
-  void setLogicallyLastRun(Run* run) { m_logicallyLastRun = run; }
+    void replaceRunWithRuns(Run* toReplace, BidiRunList<Run>& newRuns);
 
-  void replaceRunWithRuns(Run* toReplace, BidiRunList<Run>& newRuns);
+private:
+    void clearWithoutDestroyingRuns();
 
- private:
-  void clearWithoutDestroyingRuns();
-
-  Run* m_firstRun;
-  Run* m_lastRun;
-  Run* m_logicallyLastRun;
-  unsigned m_runCount;
+    Run* m_firstRun;
+    Run* m_lastRun;
+    Run* m_logicallyLastRun;
+    unsigned m_runCount;
 };
 
 template <class Run>
-inline void BidiRunList<Run>::addRun(Run* run) {
-  if (!m_firstRun)
-    m_firstRun = run;
-  else
-    m_lastRun->m_next = run;
-  m_lastRun = run;
-  m_runCount++;
-}
-
-template <class Run>
-inline void BidiRunList<Run>::prependRun(Run* run) {
-  ASSERT(!run->m_next);
-
-  if (!m_lastRun)
+inline void BidiRunList<Run>::addRun(Run* run)
+{
+    if (!m_firstRun)
+        m_firstRun = run;
+    else
+        m_lastRun->m_next = run;
     m_lastRun = run;
-  else
-    run->m_next = m_firstRun;
-  m_firstRun = run;
-  m_runCount++;
+    m_runCount++;
 }
 
 template <class Run>
-inline void BidiRunList<Run>::moveRunToEnd(Run* run) {
-  ASSERT(m_firstRun);
-  ASSERT(m_lastRun);
-  ASSERT(run->m_next);
+inline void BidiRunList<Run>::prependRun(Run* run)
+{
+    ASSERT(!run->m_next);
 
-  Run* current = 0;
-  Run* next = m_firstRun;
-  while (next != run) {
-    current = next;
-    next = current->next();
-  }
+    if (!m_lastRun)
+        m_lastRun = run;
+    else
+        run->m_next = m_firstRun;
+    m_firstRun = run;
+    m_runCount++;
+}
 
-  if (!current)
-    m_firstRun = run->next();
-  else
+template <class Run>
+inline void BidiRunList<Run>::moveRunToEnd(Run* run)
+{
+    ASSERT(m_firstRun);
+    ASSERT(m_lastRun);
+    ASSERT(run->m_next);
+
+    Run* current = 0;
+    Run* next = m_firstRun;
+    while (next != run) {
+        current = next;
+        next = current->next();
+    }
+
+    if (!current)
+        m_firstRun = run->next();
+    else
+        current->m_next = run->m_next;
+
+    run->m_next = 0;
+    m_lastRun->m_next = run;
+    m_lastRun = run;
+}
+
+template <class Run>
+inline void BidiRunList<Run>::moveRunToBeginning(Run* run)
+{
+    ASSERT(m_firstRun);
+    ASSERT(m_lastRun);
+    ASSERT(run != m_firstRun);
+
+    Run* current = m_firstRun;
+    Run* next = current->next();
+    while (next != run) {
+        current = next;
+        next = current->next();
+    }
+
     current->m_next = run->m_next;
+    if (run == m_lastRun)
+        m_lastRun = current;
 
-  run->m_next = 0;
-  m_lastRun->m_next = run;
-  m_lastRun = run;
+    run->m_next = m_firstRun;
+    m_firstRun = run;
 }
 
 template <class Run>
-inline void BidiRunList<Run>::moveRunToBeginning(Run* run) {
-  ASSERT(m_firstRun);
-  ASSERT(m_lastRun);
-  ASSERT(run != m_firstRun);
+void BidiRunList<Run>::replaceRunWithRuns(Run* toReplace, BidiRunList<Run>& newRuns)
+{
+    ASSERT(newRuns.runCount());
+    ASSERT(m_firstRun);
+    ASSERT(toReplace);
 
-  Run* current = m_firstRun;
-  Run* next = current->next();
-  while (next != run) {
-    current = next;
-    next = current->next();
-  }
+    if (m_firstRun == toReplace) {
+        m_firstRun = newRuns.firstRun();
+    } else {
+        // Find the run just before "toReplace" in the list of runs.
+        Run* previousRun = m_firstRun;
+        while (previousRun->next() != toReplace)
+            previousRun = previousRun->next();
+        ASSERT(previousRun);
+        previousRun->setNext(newRuns.firstRun());
+    }
 
-  current->m_next = run->m_next;
-  if (run == m_lastRun)
-    m_lastRun = current;
+    newRuns.lastRun()->setNext(toReplace->next());
 
-  run->m_next = m_firstRun;
-  m_firstRun = run;
+    // Fix up any of other pointers which may now be stale.
+    if (m_lastRun == toReplace)
+        m_lastRun = newRuns.lastRun();
+    if (m_logicallyLastRun == toReplace)
+        m_logicallyLastRun = newRuns.logicallyLastRun();
+    m_runCount += newRuns.runCount() - 1; // We added the new runs and removed toReplace.
+
+    delete toReplace;
+    newRuns.clearWithoutDestroyingRuns();
 }
 
 template <class Run>
-void BidiRunList<Run>::replaceRunWithRuns(Run* toReplace,
-                                          BidiRunList<Run>& newRuns) {
-  ASSERT(newRuns.runCount());
-  ASSERT(m_firstRun);
-  ASSERT(toReplace);
-
-  if (m_firstRun == toReplace) {
-    m_firstRun = newRuns.firstRun();
-  } else {
-    // Find the run just before "toReplace" in the list of runs.
-    Run* previousRun = m_firstRun;
-    while (previousRun->next() != toReplace)
-      previousRun = previousRun->next();
-    ASSERT(previousRun);
-    previousRun->setNext(newRuns.firstRun());
-  }
-
-  newRuns.lastRun()->setNext(toReplace->next());
-
-  // Fix up any of other pointers which may now be stale.
-  if (m_lastRun == toReplace)
-    m_lastRun = newRuns.lastRun();
-  if (m_logicallyLastRun == toReplace)
-    m_logicallyLastRun = newRuns.logicallyLastRun();
-  m_runCount +=
-      newRuns.runCount() - 1;  // We added the new runs and removed toReplace.
-
-  delete toReplace;
-  newRuns.clearWithoutDestroyingRuns();
+void BidiRunList<Run>::clearWithoutDestroyingRuns()
+{
+    m_firstRun = 0;
+    m_lastRun = 0;
+    m_logicallyLastRun = 0;
+    m_runCount = 0;
 }
 
 template <class Run>
-void BidiRunList<Run>::clearWithoutDestroyingRuns() {
-  m_firstRun = 0;
-  m_lastRun = 0;
-  m_logicallyLastRun = 0;
-  m_runCount = 0;
+void BidiRunList<Run>::deleteRuns()
+{
+    if (!m_firstRun)
+        return;
+
+    Run* curr = m_firstRun;
+    while (curr) {
+        Run* s = curr->next();
+        delete curr;
+        curr = s;
+    }
+
+    clearWithoutDestroyingRuns();
 }
 
 template <class Run>
-void BidiRunList<Run>::deleteRuns() {
-  if (!m_firstRun)
-    return;
+void BidiRunList<Run>::reverseRuns(unsigned start, unsigned end)
+{
+    ASSERT(m_runCount);
+    if (start >= end)
+        return;
 
-  Run* curr = m_firstRun;
-  while (curr) {
-    Run* s = curr->next();
-    delete curr;
-    curr = s;
-  }
+    ASSERT(end < m_runCount);
 
-  clearWithoutDestroyingRuns();
+    // Get the item before the start of the runs to reverse and put it in
+    // |beforeStart|. |curr| should point to the first run to reverse.
+    Run* curr = m_firstRun;
+    Run* beforeStart = 0;
+    unsigned i = 0;
+    while (i < start) {
+        i++;
+        beforeStart = curr;
+        curr = curr->next();
+    }
+
+    Run* startRun = curr;
+    while (i < end) {
+        i++;
+        curr = curr->next();
+    }
+    Run* endRun = curr;
+    Run* afterEnd = curr->next();
+
+    i = start;
+    curr = startRun;
+    Run* newNext = afterEnd;
+    while (i <= end) {
+        // Do the reversal.
+        Run* next = curr->next();
+        curr->m_next = newNext;
+        newNext = curr;
+        curr = next;
+        i++;
+    }
+
+    // Now hook up beforeStart and afterEnd to the startRun and endRun.
+    if (beforeStart)
+        beforeStart->m_next = endRun;
+    else
+        m_firstRun = endRun;
+
+    startRun->m_next = afterEnd;
+    if (!afterEnd)
+        m_lastRun = startRun;
 }
 
-template <class Run>
-void BidiRunList<Run>::reverseRuns(unsigned start, unsigned end) {
-  ASSERT(m_runCount);
-  if (start >= end)
-    return;
-
-  ASSERT(end < m_runCount);
-
-  // Get the item before the start of the runs to reverse and put it in
-  // |beforeStart|. |curr| should point to the first run to reverse.
-  Run* curr = m_firstRun;
-  Run* beforeStart = 0;
-  unsigned i = 0;
-  while (i < start) {
-    i++;
-    beforeStart = curr;
-    curr = curr->next();
-  }
-
-  Run* startRun = curr;
-  while (i < end) {
-    i++;
-    curr = curr->next();
-  }
-  Run* endRun = curr;
-  Run* afterEnd = curr->next();
-
-  i = start;
-  curr = startRun;
-  Run* newNext = afterEnd;
-  while (i <= end) {
-    // Do the reversal.
-    Run* next = curr->next();
-    curr->m_next = newNext;
-    newNext = curr;
-    curr = next;
-    i++;
-  }
-
-  // Now hook up beforeStart and afterEnd to the startRun and endRun.
-  if (beforeStart)
-    beforeStart->m_next = endRun;
-  else
-    m_firstRun = endRun;
-
-  startRun->m_next = afterEnd;
-  if (!afterEnd)
-    m_lastRun = startRun;
-}
-
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_TEXT_BIDIRUNLIST_H_

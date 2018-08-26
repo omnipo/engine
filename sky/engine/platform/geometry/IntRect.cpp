@@ -23,10 +23,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/geometry/IntRect.h"
+#include "sky/engine/platform/geometry/IntRect.h"
 
-#include "flutter/sky/engine/platform/geometry/FloatRect.h"
-#include "flutter/sky/engine/platform/geometry/LayoutRect.h"
+#include "sky/engine/platform/geometry/FloatRect.h"
+#include "sky/engine/platform/geometry/LayoutRect.h"
 #include "third_party/skia/include/core/SkRect.h"
 
 #include <algorithm>
@@ -34,131 +34,148 @@
 namespace blink {
 
 IntRect::IntRect(const FloatRect& r)
-    : m_location(clampToInteger(r.x()), clampToInteger(r.y())),
-      m_size(clampToInteger(r.width()), clampToInteger(r.height())) {}
+    : m_location(clampToInteger(r.x()), clampToInteger(r.y()))
+    , m_size(clampToInteger(r.width()), clampToInteger(r.height()))
+{
+}
 
 IntRect::IntRect(const LayoutRect& r)
-    : m_location(r.x(), r.y()), m_size(r.width(), r.height()) {}
-
-bool IntRect::intersects(const IntRect& other) const {
-  // Checking emptiness handles negative widths as well as zero.
-  return !isEmpty() && !other.isEmpty() && x() < other.maxX() &&
-         other.x() < maxX() && y() < other.maxY() && other.y() < maxY();
+    : m_location(r.x(), r.y())
+    , m_size(r.width(), r.height())
+{
 }
 
-bool IntRect::contains(const IntRect& other) const {
-  return x() <= other.x() && maxX() >= other.maxX() && y() <= other.y() &&
-         maxY() >= other.maxY();
+bool IntRect::intersects(const IntRect& other) const
+{
+    // Checking emptiness handles negative widths as well as zero.
+    return !isEmpty() && !other.isEmpty()
+        && x() < other.maxX() && other.x() < maxX()
+        && y() < other.maxY() && other.y() < maxY();
 }
 
-void IntRect::intersect(const IntRect& other) {
-  int left = std::max(x(), other.x());
-  int top = std::max(y(), other.y());
-  int right = std::min(maxX(), other.maxX());
-  int bottom = std::min(maxY(), other.maxY());
-
-  // Return a clean empty rectangle for non-intersecting cases.
-  if (left >= right || top >= bottom) {
-    left = 0;
-    top = 0;
-    right = 0;
-    bottom = 0;
-  }
-
-  m_location.setX(left);
-  m_location.setY(top);
-  m_size.setWidth(right - left);
-  m_size.setHeight(bottom - top);
+bool IntRect::contains(const IntRect& other) const
+{
+    return x() <= other.x() && maxX() >= other.maxX()
+        && y() <= other.y() && maxY() >= other.maxY();
 }
 
-void IntRect::unite(const IntRect& other) {
-  // Handle empty special cases first.
-  if (other.isEmpty())
-    return;
-  if (isEmpty()) {
-    *this = other;
-    return;
-  }
+void IntRect::intersect(const IntRect& other)
+{
+    int left = std::max(x(), other.x());
+    int top = std::max(y(), other.y());
+    int right = std::min(maxX(), other.maxX());
+    int bottom = std::min(maxY(), other.maxY());
 
-  int left = std::min(x(), other.x());
-  int top = std::min(y(), other.y());
-  int right = std::max(maxX(), other.maxX());
-  int bottom = std::max(maxY(), other.maxY());
+    // Return a clean empty rectangle for non-intersecting cases.
+    if (left >= right || top >= bottom) {
+        left = 0;
+        top = 0;
+        right = 0;
+        bottom = 0;
+    }
 
-  m_location.setX(left);
-  m_location.setY(top);
-  m_size.setWidth(right - left);
-  m_size.setHeight(bottom - top);
+    m_location.setX(left);
+    m_location.setY(top);
+    m_size.setWidth(right - left);
+    m_size.setHeight(bottom - top);
 }
 
-void IntRect::uniteIfNonZero(const IntRect& other) {
-  // Handle empty special cases first.
-  if (!other.width() && !other.height())
-    return;
-  if (!width() && !height()) {
-    *this = other;
-    return;
-  }
+void IntRect::unite(const IntRect& other)
+{
+    // Handle empty special cases first.
+    if (other.isEmpty())
+        return;
+    if (isEmpty()) {
+        *this = other;
+        return;
+    }
 
-  int left = std::min(x(), other.x());
-  int top = std::min(y(), other.y());
-  int right = std::max(maxX(), other.maxX());
-  int bottom = std::max(maxY(), other.maxY());
+    int left = std::min(x(), other.x());
+    int top = std::min(y(), other.y());
+    int right = std::max(maxX(), other.maxX());
+    int bottom = std::max(maxY(), other.maxY());
 
-  m_location.setX(left);
-  m_location.setY(top);
-  m_size.setWidth(right - left);
-  m_size.setHeight(bottom - top);
+    m_location.setX(left);
+    m_location.setY(top);
+    m_size.setWidth(right - left);
+    m_size.setHeight(bottom - top);
 }
 
-void IntRect::scale(float s) {
-  m_location.setX((int)(x() * s));
-  m_location.setY((int)(y() * s));
-  m_size.setWidth((int)(width() * s));
-  m_size.setHeight((int)(height() * s));
+void IntRect::uniteIfNonZero(const IntRect& other)
+{
+    // Handle empty special cases first.
+    if (!other.width() && !other.height())
+        return;
+    if (!width() && !height()) {
+        *this = other;
+        return;
+    }
+
+    int left = std::min(x(), other.x());
+    int top = std::min(y(), other.y());
+    int right = std::max(maxX(), other.maxX());
+    int bottom = std::max(maxY(), other.maxY());
+
+    m_location.setX(left);
+    m_location.setY(top);
+    m_size.setWidth(right - left);
+    m_size.setHeight(bottom - top);
 }
 
-static inline int distanceToInterval(int pos, int start, int end) {
-  if (pos < start)
-    return start - pos;
-  if (pos > end)
-    return end - pos;
-  return 0;
+void IntRect::scale(float s)
+{
+    m_location.setX((int)(x() * s));
+    m_location.setY((int)(y() * s));
+    m_size.setWidth((int)(width() * s));
+    m_size.setHeight((int)(height() * s));
 }
 
-IntSize IntRect::differenceToPoint(const IntPoint& point) const {
-  int xdistance = distanceToInterval(point.x(), x(), maxX());
-  int ydistance = distanceToInterval(point.y(), y(), maxY());
-  return IntSize(xdistance, ydistance);
+static inline int distanceToInterval(int pos, int start, int end)
+{
+    if (pos < start)
+        return start - pos;
+    if (pos > end)
+        return end - pos;
+    return 0;
 }
 
-IntRect::operator SkIRect() const {
-  SkIRect rect = {x(), y(), maxX(), maxY()};
-  return rect;
+IntSize IntRect::differenceToPoint(const IntPoint& point) const
+{
+    int xdistance = distanceToInterval(point.x(), x(), maxX());
+    int ydistance = distanceToInterval(point.y(), y(), maxY());
+    return IntSize(xdistance, ydistance);
 }
 
-IntRect::operator SkRect() const {
-  SkRect rect;
-  rect.set(SkIntToScalar(x()), SkIntToScalar(y()), SkIntToScalar(maxX()),
-           SkIntToScalar(maxY()));
-  return rect;
+IntRect::operator SkIRect() const
+{
+    SkIRect rect = { x(), y(), maxX(), maxY() };
+    return rect;
 }
 
-IntRect unionRect(const Vector<IntRect>& rects) {
-  IntRect result;
+IntRect::operator SkRect() const
+{
+    SkRect rect;
+    rect.set(SkIntToScalar(x()), SkIntToScalar(y()), SkIntToScalar(maxX()), SkIntToScalar(maxY()));
+    return rect;
+}
 
-  size_t count = rects.size();
-  for (size_t i = 0; i < count; ++i)
-    result.unite(rects[i]);
+IntRect unionRect(const Vector<IntRect>& rects)
+{
+    IntRect result;
 
-  return result;
+    size_t count = rects.size();
+    for (size_t i = 0; i < count; ++i)
+        result.unite(rects[i]);
+
+    return result;
 }
 
 #ifndef NDEBUG
-// Prints the rect to the screen.
-void IntRect::show() const {
-  LayoutRect(*this).show();
+    // Prints the rect to the screen.
+void IntRect::show() const
+{
+    LayoutRect(*this).show();
 }
 #endif
 
-}  // namespace blink
+} // namespace blink

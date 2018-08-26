@@ -26,28 +26,31 @@
 #ifndef SKY_ENGINE_CORE_RENDERING_STYLE_STYLEFILTERDATA_H_
 #define SKY_ENGINE_CORE_RENDERING_STYLE_STYLEFILTERDATA_H_
 
-#include "flutter/sky/engine/wtf/PassRefPtr.h"
-#include "flutter/sky/engine/wtf/RefCounted.h"
+#include "sky/engine/platform/graphics/filters/FilterOperations.h"
+#include "sky/engine/wtf/PassRefPtr.h"
+#include "sky/engine/wtf/RefCounted.h"
 
 namespace blink {
 
 class StyleFilterData : public RefCounted<StyleFilterData> {
- public:
-  static PassRefPtr<StyleFilterData> create() {
-    return adoptRef(new StyleFilterData);
-  }
-  PassRefPtr<StyleFilterData> copy() const {
-    return adoptRef(new StyleFilterData(*this));
-  }
+public:
+    static PassRefPtr<StyleFilterData> create() { return adoptRef(new StyleFilterData); }
+    PassRefPtr<StyleFilterData> copy() const { return adoptRef(new StyleFilterData(*this)); }
 
-  bool operator==(const StyleFilterData&) const;
-  bool operator!=(const StyleFilterData& o) const { return !(*this == o); }
+    bool operator==(const StyleFilterData&) const;
+    bool operator!=(const StyleFilterData& o) const
+    {
+        return !(*this == o);
+    }
 
- private:
-  StyleFilterData();
-  StyleFilterData(const StyleFilterData&);
+    FilterOperations m_operations;
+
+private:
+    StyleFilterData();
+    StyleFilterData(const StyleFilterData&);
 };
 
-}  // namespace blink
+} // namespace blink
+
 
 #endif  // SKY_ENGINE_CORE_RENDERING_STYLE_STYLEFILTERDATA_H_

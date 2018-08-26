@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import argparse
+import subprocess
+import sys
+import os
+
+SRC_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+def get_out_dir(args):
+    target_dir = ''
+    if args.target_os == 'android':
+        target_dir += 'android_'
+    elif args.target_os == 'ios':
+        target_dir += 'ios_'
+
+    if args.simulator:
+        target_dir += 'sim_'
+
+    if args.debug:
+        target_dir += 'Debug'
+    else:
+        target_dir += 'Release'
+
+    return os.path.join('out', target_dir)
+
+def to_command_line(gn_args):
+    def merge(key, value):
+        if type(value) is bool:
+            return '%s=%s' % (key, 'true' if value else 'false')
+        return '%s="%s"' % (key, value)
+    return [merge(x, y) for x, y in gn_args.iteritems()]
+
+def to_gn_args(args):
+    gn_args = {}
+
+    gn_args['is_debug'] = args.debug
+    gn_args['is_clang'] = args.clang and args.target_os not in ['android']
+
+    ios_target_cpu = 'arm64'
+    if args.ios_force_armv7:
+      ios_target_cpu = 'arm'
+      pass
+
+    if args.target_os == 'android':
+        gn_args['target_os'] = 'android'
+    elif args.target_os == 'ios':
+        gn_args['target_os'] = 'ios'
+        gn_args['ios_deployment_target'] = '7.0'
+        gn_args['use_ios_simulator'] = args.simulator
+        if args.simulator:
+            gn_args['use_libjpeg_turbo'] = False
+        else:
+          # The iOS simulator snapshot is host targetted
+          gn_args['dart_target_arch'] = ios_target_cpu
+    else:
+        gn_args['use_aura'] = False
+        gn_args['use_glib'] = False
+        gn_args['use_system_harfbuzz'] = False
+
+    if args.target_os in ['android', 'ios'] and not args.simulator:
+      if args.target_os == 'ios':
+        # iOS defaults to arm64 builds unless forced to build armv7. This
+        # flag will go away once universal builds are supported
+        gn_args['target_cpu'] = ios_target_cpu
+      else:
+        # There are currently no arm64 Android builds
+        gn_args['target_cpu'] = 'arm'
+    else:
+        gn_args['target_cpu'] = 'x64'
+
+    goma_dir = os.environ.get('GOMA_DIR')
+    goma_home_dir = os.path.join(os.getenv('HOME', ''), 'goma')
+    if args.goma and goma_dir:
+      gn_args['use_goma'] = True
+      gn_args['goma_dir'] = goma_dir
+    elif args.goma and os.path.exists(goma_home_dir):
+      gn_args['use_goma'] = True
+      gn_args['goma_dir'] = goma_home_dir
+    else:
+      gn_args['use_goma'] = False
+      gn_args['goma_dir'] = None
+
+    return gn_args
+
+def parse_args(args):
+  args = args[1:]
+  parser = argparse.ArgumentParser(description='A script run` gn gen`.')
+
+  parser.add_argument('--debug', default=True, action='store_true')
+  parser.add_argument('--release', default=False, dest='debug', action='store_false')
+
+  parser.add_argument('--target-os', type=str, choices=['android', 'ios'])
+  parser.add_argument('--android', dest='target_os', action='store_const', const='android')
+  parser.add_argument('--ios', dest='target_os', action='store_const', const='ios')
+  parser.add_argument('--ios-force-armv7', dest='ios_force_armv7', action='store_true', default=False)
+  parser.add_argument('--simulator', action='store_true', default=False)
+
+  parser.add_argument('--goma', default=True, action='store_true')
+  parser.add_argument('--no-goma', dest='goma', action='store_false')
+
+  parser.add_argument('--clang', default=True, action='store_true')
+  parser.add_argument('--no-clang', dest='clang', action='store_false')
+
+  return parser.parse_args(args)
+
+def main(argv):
+  args = parse_args(argv)
+  command = ['gn', 'gen', '--check']
+  gn_args = to_command_line(to_gn_args(args))
+  out_dir = get_out_dir(args)
+  print "gn gen --check in %s" % out_dir
+  command.append(out_dir)
+  command.append('--args=%s' % ' '.join(gn_args))
+  return subprocess.call(command, cwd=SRC_ROOT)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

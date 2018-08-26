@@ -26,9 +26,9 @@
 #ifndef SKY_ENGINE_WTF_INSTANCECOUNTER_H_
 #define SKY_ENGINE_WTF_INSTANCECOUNTER_H_
 
-#include "flutter/sky/engine/wtf/Compiler.h"
-#include "flutter/sky/engine/wtf/OperatingSystem.h"
-#include "flutter/sky/engine/wtf/WTFExport.h"
+#include "sky/engine/wtf/Compiler.h"
+#include "sky/engine/wtf/OperatingSystem.h"
+#include "sky/engine/wtf/WTFExport.h"
 
 namespace WTF {
 
@@ -36,30 +36,31 @@ class String;
 WTF_EXPORT String dumpRefCountedInstanceCounts();
 
 #if ENABLE(INSTANCE_COUNTER) || ENABLE(GC_PROFILING)
-WTF_EXPORT void incrementInstanceCount(const char* extractNameFunctionName,
-                                       void* ptr);
-WTF_EXPORT void decrementInstanceCount(const char* extractNameFunctionName,
-                                       void* ptr);
+WTF_EXPORT void incrementInstanceCount(const char* extractNameFunctionName, void* ptr);
+WTF_EXPORT void decrementInstanceCount(const char* extractNameFunctionName, void* ptr);
 
 WTF_EXPORT String extractTypeNameFromFunctionName(const char* funcName);
 
-template <typename T>
-inline const char* extractNameFunction() {
-  return WTF_PRETTY_FUNCTION;
+template<typename T>
+inline const char* extractNameFunction()
+{
+    return WTF_PRETTY_FUNCTION;
 }
 
-template <typename T>
-inline void incrementInstanceCount(T* p) {
-  incrementInstanceCount(extractNameFunction<T>(), p);
+template<typename T>
+inline void incrementInstanceCount(T* p)
+{
+    incrementInstanceCount(extractNameFunction<T>(), p);
 }
 
-template <typename T>
-inline void decrementInstanceCount(T* p) {
-  decrementInstanceCount(extractNameFunction<T>(), p);
+template<typename T>
+inline void decrementInstanceCount(T* p)
+{
+    decrementInstanceCount(extractNameFunction<T>(), p);
 }
 
-#endif  // ENABLE(INSTANCE_COUNTER) || ENABLE(GC_PROFILING)
+#endif // ENABLE(INSTANCE_COUNTER) || ENABLE(GC_PROFILING)
 
-}  // namespace WTF
+} // namespace WTF
 
 #endif  // SKY_ENGINE_WTF_INSTANCECOUNTER_H_

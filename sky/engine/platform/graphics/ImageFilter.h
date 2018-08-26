@@ -5,14 +5,16 @@
 #ifndef SKY_ENGINE_PLATFORM_GRAPHICS_IMAGEFILTER_H_
 #define SKY_ENGINE_PLATFORM_GRAPHICS_IMAGEFILTER_H_
 
-#include "flutter/sky/engine/platform/geometry/FloatRect.h"
+#include "sky/engine/platform/geometry/FloatRect.h"
 
 class SkImageFilter;
 
 namespace blink {
 
-PLATFORM_EXPORT FloatRect mapImageFilterRect(SkImageFilter*, const FloatRect&);
+typedef SkImageFilter ImageFilter;
 
-}  // namespace blink
+PLATFORM_EXPORT FloatRect mapImageFilterRect(ImageFilter*, const FloatRect&);
+
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_GRAPHICS_IMAGEFILTER_H_

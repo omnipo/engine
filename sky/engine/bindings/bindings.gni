@@ -1,0 +1,183 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+bindings_scripts_dir = "//sky/engine/bindings/scripts"
+bindings_output_dir = "$root_gen_dir/sky/bindings"
+
+idl_lexer_parser_files = [
+  # PLY (Python Lex-Yacc)
+  "//third_party/ply/lex.py",
+  "//third_party/ply/yacc.py",
+
+  # Web IDL lexer/parser (base parser)
+  "//tools/idl_parser/idl_lexer.py",
+  "//tools/idl_parser/idl_node.py",
+  "//tools/idl_parser/idl_parser.py",
+
+  # Blink IDL lexer/parser/constructor
+  "scripts/blink_idl_lexer.py",
+  "scripts/blink_idl_parser.py",
+]
+
+idl_compiler_files = [
+  "scripts/compiler.py",
+
+  # Blink IDL front end (ex-lexer/parser)
+  "scripts/idl_definitions.py",
+  "scripts/idl_reader.py",
+  "scripts/idl_types.py",
+  "scripts/idl_validator.py",
+  "scripts/interface_dependency_resolver.py",
+
+  # Dart Code gen goes here.
+  "scripts/dart_attributes.py",
+  "scripts/dart_callback_interface.py",
+  "scripts/dart_compiler.py",
+  "scripts/dart_interface.py",
+  "scripts/dart_methods.py",
+  "scripts/dart_types.py",
+  "scripts/dart_utilities.py",
+  "scripts/code_generator_dart.py",
+
+  # The dart files depend on the v8 files. :(
+  "scripts/v8_attributes.py",
+  "scripts/v8_globals.py",
+  "scripts/v8_interface.py",
+  "scripts/v8_methods.py",
+  "scripts/v8_types.py",
+  "scripts/v8_utilities.py",
+]
+
+template("dart_precompile") {
+  assert(defined(invoker.dart_package_root),
+         "The dart package root must be defined")
+  assert(defined(invoker.dart_script),
+         "The dart script must be specified")
+
+  dart_host_toolchain = host_toolchain
+  if (target_os == "ios" && !use_ios_simulator) {
+    # During precompilation, a 64 bit Dart VM cannot generate code for a 32 bit
+    # architecture (and vice-versa). The snapshotter that is running on the host
+    # needs to know about the target architecture and built accordingly.
+    if (target_cpu == "arm") {
+      dart_host_toolchain = "//build/toolchain/mac:clang_i386"
+    } else if (target_cpu == "arm64") {
+      dart_host_toolchain = "//build/toolchain/mac:clang_x64"
+    } else {
+      assert(false, "Unknown active architecture on iOS")
+    }
+  }
+
+  vm_isolate_snapshot_name = target_name + "_vm_isolate.bin"
+  vm_isolate_snapshot = "$target_gen_dir/$vm_isolate_snapshot_name"
+  isolate_snapshot_name = target_name + "_isolate.bin"
+  isolate_snapshot = "$target_gen_dir/$isolate_snapshot_name"
+  
+  assembly_path =
+      "$target_gen_dir/" + target_name + "_instructions.S"
+  instructions_gen_target_name = target_name + "_instructions"
+  action(instructions_gen_target_name) {
+    deps = [
+      "//dart/runtime/bin:gen_snapshot($dart_host_toolchain)",
+      "//sky/engine/bindings:generate_dart_ui"
+    ]
+    embedder_entry_points_manifest =
+        "//sky/engine/bindings/dart_vm_entry_points.txt"
+    inputs = [
+      "//dart/runtime/tools/create_snapshot_bin.py",
+      "//mojo/public/dart/mojo/sdk_ext/internal.dart",
+      "//mojo/public/dart/mojo/sdk_ext/src/handle_watcher.dart",
+      "//mojo/public/dart/mojo/sdk_ext/src/natives.dart",
+      "//mojo/public/dart/mojo/sdk_ext/src/timer_queue.dart",
+      "//sky/engine/bindings/internals.dart",
+      embedder_entry_points_manifest,
+    ]
+    outputs = [
+      vm_isolate_snapshot,
+      isolate_snapshot,
+      assembly_path
+    ]
+
+    dart_mojo_internal_path =
+        rebase_path("//mojo/public/dart/mojo/sdk_ext/internal.dart")
+    dart_ui_internals_path =
+        rebase_path("//sky/engine/bindings/internals.dart")
+    dart_ui_path =
+        rebase_path("$root_build_dir/gen/sky/bindings/dart_ui.dart")
+    service_path =
+        rebase_path("//sky/engine/core/script/dart_service_isolate/main.dart")
+
+    gen_snapshot_dir =
+        get_label_info("//dart/runtime/bin:gen_snapshot($dart_host_toolchain)",
+                       "root_out_dir")
+    script = "//dart/runtime/tools/create_snapshot_bin.py"
+
+    args = [
+      "--executable",
+      rebase_path("$gen_snapshot_dir/gen_snapshot"),
+      "--package_root",
+      rebase_path(invoker.dart_package_root, root_build_dir),
+      "--script",
+      rebase_path(invoker.dart_script, root_build_dir),
+      "--vm_output_bin",
+      rebase_path(vm_isolate_snapshot, root_build_dir),
+      "--output_bin",
+      rebase_path(isolate_snapshot, root_build_dir),
+      "--instructions_bin",
+      rebase_path(assembly_path, root_build_dir),
+      "--embedder_entry_points_manifest",
+      rebase_path(embedder_entry_points_manifest, root_build_dir),
+      "--target_os",
+      target_os,
+      "--url_mapping=dart:mojo.internal,$dart_mojo_internal_path",
+      "--url_mapping=dart:ui,$dart_ui_path",
+      "--url_mapping=dart:ui_internals,$dart_ui_internals_path",
+      "--url_mapping=dart:vmservice_sky,$service_path",
+    ]
+  }
+
+  snapshot_cc = "$target_gen_dir/" + target_name + "_precompiled_snapshot.cc"
+  snapshot_cc_gen_target_name = target_name + "_snapshot_cc"
+  action(snapshot_cc_gen_target_name) {
+    deps = [
+      ":$instructions_gen_target_name",
+    ]
+
+    template_file = "//sky/engine/bindings/snapshot.cc.tmpl"
+
+    inputs = [
+      template_file,
+      vm_isolate_snapshot,
+      isolate_snapshot,
+    ]
+
+    outputs = [
+      snapshot_cc,
+    ]
+
+    script = "//dart/runtime/tools/create_snapshot_file.py"
+    args = [
+      "--vm_input_bin",
+      rebase_path(vm_isolate_snapshot, root_build_dir),
+      "--input_bin",
+      rebase_path(isolate_snapshot, root_build_dir),
+      "--input_cc",
+      rebase_path(template_file, root_build_dir),
+      "--output",
+      rebase_path(snapshot_cc),
+    ]
+  }
+
+  source_set(target_name) {
+    sources = [
+      assembly_path,
+      snapshot_cc,
+    ]
+
+    deps = [
+      ":$instructions_gen_target_name",
+      ":$snapshot_cc_gen_target_name",
+    ]
+  }
+}

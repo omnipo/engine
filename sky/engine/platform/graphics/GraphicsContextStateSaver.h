@@ -29,47 +29,50 @@
 #ifndef SKY_ENGINE_PLATFORM_GRAPHICS_GRAPHICSCONTEXTSTATESAVER_H_
 #define SKY_ENGINE_PLATFORM_GRAPHICS_GRAPHICSCONTEXTSTATESAVER_H_
 
-#include "flutter/sky/engine/platform/PlatformExport.h"
-#include "flutter/sky/engine/platform/graphics/GraphicsContext.h"
+#include "sky/engine/platform/PlatformExport.h"
+#include "sky/engine/platform/graphics/GraphicsContext.h"
 
 namespace blink {
 
 class PLATFORM_EXPORT GraphicsContextStateSaver {
-  WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    GraphicsContextStateSaver(GraphicsContext& context, bool saveAndRestore = true)
+        : m_context(context)
+        , m_saveAndRestore(saveAndRestore)
+    {
+        if (m_saveAndRestore)
+            m_context.save();
+    }
 
- public:
-  GraphicsContextStateSaver(GraphicsContext& context,
-                            bool saveAndRestore = true)
-      : m_context(context), m_saveAndRestore(saveAndRestore) {
-    if (m_saveAndRestore)
-      m_context.save();
-  }
+    ~GraphicsContextStateSaver()
+    {
+        if (m_saveAndRestore)
+            m_context.restore();
+    }
 
-  ~GraphicsContextStateSaver() {
-    if (m_saveAndRestore)
-      m_context.restore();
-  }
+    void save()
+    {
+        ASSERT(!m_saveAndRestore);
+        m_context.save();
+        m_saveAndRestore = true;
+    }
 
-  void save() {
-    ASSERT(!m_saveAndRestore);
-    m_context.save();
-    m_saveAndRestore = true;
-  }
+    void restore()
+    {
+        ASSERT(m_saveAndRestore);
+        m_context.restore();
+        m_saveAndRestore = false;
+    }
 
-  void restore() {
-    ASSERT(m_saveAndRestore);
-    m_context.restore();
-    m_saveAndRestore = false;
-  }
+    GraphicsContext* context() const { return &m_context; }
+    bool saved() const { return m_saveAndRestore; }
 
-  GraphicsContext* context() const { return &m_context; }
-  bool saved() const { return m_saveAndRestore; }
-
- private:
-  GraphicsContext& m_context;
-  bool m_saveAndRestore;
+private:
+    GraphicsContext& m_context;
+    bool m_saveAndRestore;
 };
 
-}  // namespace blink
+} // namespace blink
 
 #endif  // SKY_ENGINE_PLATFORM_GRAPHICS_GRAPHICSCONTEXTSTATESAVER_H_

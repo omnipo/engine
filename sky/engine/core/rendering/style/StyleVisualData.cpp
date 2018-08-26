@@ -19,21 +19,28 @@
  *
  */
 
-#include "flutter/sky/engine/core/rendering/style/StyleVisualData.h"
+#include "sky/engine/core/rendering/style/StyleVisualData.h"
 
-#include "flutter/sky/engine/core/rendering/style/RenderStyle.h"
+#include "sky/engine/core/rendering/style/RenderStyle.h"
 
 namespace blink {
 
 StyleVisualData::StyleVisualData()
-    : hasAutoClip(true), textDecoration(RenderStyle::initialTextDecoration()) {}
+    : hasAutoClip(true)
+    , textDecoration(RenderStyle::initialTextDecoration())
+{
+}
 
-StyleVisualData::~StyleVisualData() {}
+StyleVisualData::~StyleVisualData()
+{
+}
 
 StyleVisualData::StyleVisualData(const StyleVisualData& o)
-    : RefCounted<StyleVisualData>(),
-      clip(o.clip),
-      hasAutoClip(o.hasAutoClip),
-      textDecoration(o.textDecoration) {}
+    : RefCounted<StyleVisualData>()
+    , clip(o.clip)
+    , hasAutoClip(o.hasAutoClip)
+    , textDecoration(o.textDecoration)
+{
+}
 
-}  // namespace blink
+} // namespace blink

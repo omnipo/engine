@@ -30,48 +30,55 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "flutter/sky/engine/platform/fonts/FontCustomPlatformData.h"
+#include "sky/engine/platform/fonts/FontCustomPlatformData.h"
 
-#include "flutter/sky/engine/platform/SharedBuffer.h"
-#include "flutter/sky/engine/platform/fonts/FontCache.h"
-#include "flutter/sky/engine/platform/fonts/FontPlatformData.h"
-#include "flutter/sky/engine/wtf/PassOwnPtr.h"
+#include "sky/engine/platform/LayoutTestSupport.h"
+#include "sky/engine/platform/SharedBuffer.h"
+#include "sky/engine/platform/fonts/FontCache.h"
+#include "sky/engine/platform/fonts/FontPlatformData.h"
+#include "sky/engine/platform/fonts/opentype/OpenTypeSanitizer.h"
+#include "sky/engine/wtf/PassOwnPtr.h"
 #include "third_party/skia/include/core/SkStream.h"
 #include "third_party/skia/include/core/SkTypeface.h"
 
 namespace blink {
 
-FontCustomPlatformData::FontCustomPlatformData(sk_sp<SkTypeface> typeface)
-    : m_typeface(typeface) {}
-
-FontCustomPlatformData::~FontCustomPlatformData() {}
-
-FontPlatformData FontCustomPlatformData::fontPlatformData(
-    float size,
-    bool bold,
-    bool italic,
-    FontOrientation orientation,
-    FontWidthVariant) {
-  ASSERT(m_typeface);
-  return FontPlatformData(m_typeface, "", size, bold && !m_typeface->isBold(),
-                          italic && !m_typeface->isItalic(), orientation);
+FontCustomPlatformData::FontCustomPlatformData(PassRefPtr<SkTypeface> typeface)
+    : m_typeface(typeface)
+{
 }
 
-PassOwnPtr<FontCustomPlatformData> FontCustomPlatformData::create(
-    SharedBuffer* buffer) {
-  ASSERT_ARG(buffer, buffer);
-
-  SkMemoryStream* stream = new SkMemoryStream(buffer->getAsSkData());
-  sk_sp<SkTypeface> typeface = SkTypeface::MakeFromStream(stream);
-  if (!typeface)
-    return nullptr;
-
-  return adoptPtr(new FontCustomPlatformData(typeface));
+FontCustomPlatformData::~FontCustomPlatformData()
+{
 }
 
-bool FontCustomPlatformData::supportsFormat(const String& format) {
-  return equalIgnoringCase(format, "truetype") ||
-         equalIgnoringCase(format, "opentype");
+FontPlatformData FontCustomPlatformData::fontPlatformData(float size, bool bold, bool italic, FontOrientation orientation, FontWidthVariant)
+{
+    ASSERT(m_typeface);
+    return FontPlatformData(m_typeface.get(), "", size, bold && !m_typeface->isBold(), italic && !m_typeface->isItalic(), orientation);
 }
 
-}  // namespace blink
+PassOwnPtr<FontCustomPlatformData> FontCustomPlatformData::create(SharedBuffer* buffer)
+{
+    ASSERT_ARG(buffer, buffer);
+
+    OpenTypeSanitizer sanitizer(buffer);
+    RefPtr<SharedBuffer> transcodeBuffer = sanitizer.sanitize();
+    if (!transcodeBuffer)
+        return nullptr; // validation failed.
+    buffer = transcodeBuffer.get();
+
+    SkMemoryStream* stream = new SkMemoryStream(buffer->getAsSkData().get());
+    RefPtr<SkTypeface> typeface = adoptRef(SkTypeface::CreateFromStream(stream));
+    if (!typeface)
+        return nullptr;
+
+    return adoptPtr(new FontCustomPlatformData(typeface.release()));
+}
+
+bool FontCustomPlatformData::supportsFormat(const String& format)
+{
+    return equalIgnoringCase(format, "truetype") || equalIgnoringCase(format, "opentype") || OpenTypeSanitizer::supportsFormat(format);
+}
+
+} // namespace blink
